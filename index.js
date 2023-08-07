@@ -24,6 +24,11 @@ app.get("/data", (req, res) => {
             },
           });
     }
+    //otra forma mas sencilla de hacer la impresion de info
+    /*req.array.forEach(element => {
+      console.log(element);
+    });
+    */
   });
 });
 
