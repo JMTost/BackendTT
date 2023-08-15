@@ -7,7 +7,7 @@ use TTb040;
 
 create table tipos_profesional(
 id_tipo int auto_increment primary key,
-desc varchar(30)
+descripcion varchar(30)
 );
 
 create table usuarios_profesionales(
@@ -56,7 +56,7 @@ foreign key(id_profesional) references usuarios_profesionales(id_profesional)
 
 create table tipoCitas(
 id_tipoCita int auto_increment primary key,
-desc char(25) not null
+descripcion char(25) not null
 );
 
 create table citas(
@@ -129,7 +129,7 @@ nombre_musculo char(20) not null
 
 create table ejercicios(
 id_ejercicio int auto_increment not null,
-desc char(100) not null,
+descripcion char(100) not null,
 id_musculo int not null,
 foreign key(id_musculo) references musculos(id_musculos)
 );
@@ -152,33 +152,33 @@ foreign key(id_ejercicio) references ejercicios(id_ejercicio)
 --creacion de la parte de menus y de alimento
 create table tipoComida(
 id_comida int auto_increment primary key,
-desc char(50) not null
+descripcion char(50) not null
 );
 
 --tablas con los alimentos para obtener los ID y con ello definir las cantidades de los alimentos
 create table proteinas(
 id_proteinas int auto_increment primary key,
-desc char(50) not null
+descripcion char(50) not null
 );
 
 create table lacteos(
 id_lacteos int auto_increment primary key,
-desc char(50) not null
+descripcion char(50) not null
 );
 
 create table frutas(
 id_frutas int auto_increment primary key,
-desc char(50) not null
+descripcion char(50) not null
 );
 
 create table verduras(
 id_verduras int auto_increment primary key,
-desc char(50) not null
+descripcion char(50) not null
 );
 
 create table granos(
 id_granos int auto_increment primary key,
-desc char(50) not null
+descripcion char(50) not null
 );
 
 
@@ -224,7 +224,7 @@ foreign key(id_paciente) references usuarios_pacientes(id_paciente)
 
 create table c_enfermedades(
 id_enfermedad int auto_increment primary key,
-desc char(50) not null
+descripcion char(50) not null
 );
 
 create table proximas_citas(
