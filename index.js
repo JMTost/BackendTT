@@ -3,6 +3,8 @@ const bodyparser = require("body-parser");
 const conexion = require("./conexionBD");
 //para las pruebas locales haremos uso de cors debido a que este metodo bloquea el mismo origen
 const cors = require("cors");
+//archivo de peticiones
+const apis = require("./peticiones");
 
 const app = express();
 app.use(bodyparser.json());
@@ -43,7 +45,34 @@ app.get("/data", (req, res) => {
 });
 
 app.get("/prueba", (req, res) => {
-  res.json({ mensaje: "info entrada" });
+  apis.apiTiempo()
+  .then(data => {//obtenemos la fecha actual en CDMX
+    //separamos los elementos
+    let partes = data.split('-');
+    const anoAPI = partes[0];
+    const mesAPI = partes[1];
+    const diaAPI = partes[2];
+    console.log(partes);
+    res.send(data);
+  })
+  .catch(error => {
+    console.error("Error dentro de la petición", error);
+    res.send(error);
+  });
+/*
+  var valor;
+  apis.apiTiempo().then(json => {
+    valor = json;
+    console.log(json);
+    res.json({ mensaje: "info entrada", data:json});
+  });
+*/
+});
+
+app.post("/pruebaFecha", (req, res) => {
+    let fechaUser = req.body.fecha;
+    let fechaUserSeparada = fechaUser.split('/');//caso que debemos definir o normalizar 
+    console.log(fechaUser);
 });
 
 app.get("/obtenTipos", (req, res) => {
@@ -136,7 +165,7 @@ app.post("/altaprofesionales", (req, res) => {
         if(resultB.length > 0){
           //marcamos un error
           console.log("error");
-          res.status(500).send({error:"usuario ya existente"});
+          res.status(500).send({error:"Profesional ya existente"});
         }else{
            //hacemos la inserción en la base de datos
             //let info = `INSERT INTO usuarios_profesionales VALUES (0, '${req.body.nombre}', '${req.body.apPaterno}', '${req.body.apMaterno}', '${req.body.email}', ${req.body.edad}, '${req.body.fechaN}', '${req.body.pass}', ${req.body.tipo}, '0')` //en este caso el valor de valido se pone en 0, debido a que debe entrar en proceso de validar los documentos que proporcione
@@ -188,7 +217,32 @@ app.post("/altaPacientes", (req, res) => {
       res.status(400).send("Error. Datos incompletos");
     }else{
       const conn = conexion.cone;
-      
+      let correo = req.body.email;
+      //Comprobamos que no haya un registro de este correo previamente
+      conn.query(`SELECT email FROM usuarios_pacientes WHERE email == '${correo}'`, (errorB, resultB) => {
+        if(errorB){
+          res.send(errorB).status(500);
+          throw errorB;
+        }else{
+          if(resultB.length > 0){
+            //marcamos error debido a que existe un email con el mismo valor
+            console.log("error al insertar un nuevo paciente");
+            res.status(500).send({error:"Paciente ya existente"});
+          }else{
+            //hacemos la inserción en la base de datos
+            conn.query(`INSERT INTO usuarios_pacientesVALUES (0, '${req.body.nombre}', '${req.body.apPaterno}', '${req.body.apMaterno}', '${correo}', ${req.body.edad}, '${req.body.fechaN}', '${req.body.numTel}', '${req.body.pass}', ${req.body.idProfesional})`, function(errInsert, resultInsert){
+              if(errInsert){
+                res.send(errInsert).status(500);
+                throw errInsert;
+              }else{
+                //podemos realizar la creación del historial de profesionales
+
+                res.send({mensaje:"Creación exitosa"}).status(200);
+              }
+            });
+          }
+        }
+      });
     }
 
   }
