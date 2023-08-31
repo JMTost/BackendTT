@@ -212,7 +212,7 @@ app.post("/altaPacientes", (req, res) => {
     console.log("req vacio");
     res.status(400).send({ error: "sin informacion" });
   }else{//contiene información, de modo que validamos cada uno de los elementos que deseamos almacenar
-    if(req.body.nombre === "" || req.body.apPaterno === "" || ReadableByteStreamController.body.apMaterno === "" || req.body.email === "" ||( req.body.edad < 0 || req.body.edad > 100) || req.body.fechaN === "" || req.body.numTel === "" || req.body.pass === "" || req.body.idProfesional === ""){
+    if(req.body.nombre === "" || req.body.apPaterno === "" || req.body.apMaterno === "" || req.body.email === "" ||( req.body.edad < 0 || req.body.edad > 100) || req.body.fechaN === "" || req.body.numTel === "" || req.body.pass === "" || req.body.idProfesional === ""){
       console.log("error no hay datos completos");
       res.status(400).send("Error. Datos incompletos");
     }else{
