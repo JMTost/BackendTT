@@ -14,6 +14,9 @@ app.use(cors({ origin: "*" }));
 
 app.get("/", (req, res) => {
   res.send("Funcionamiendo del servidor de Node.js");
+  const fecha = new Date();
+  //fecha.toLocaleDateString()
+  console.log(fecha.toLocaleDateString());
 });
 
 //PRUEBA DE FUNCIONAMIENTO DE CONEXION A LA BD Y OBTENCIÓN DE DATOS
@@ -75,73 +78,7 @@ app.post("/pruebaFecha", (req, res) => {
     console.log(fechaUser);
 });
 
-app.get("/obtenTipos", (req, res) => {
-  //obtenemos la lista de los tipos que los profesionales de la salud pueden ser
-  const conn = conexion.cone;
-  conn.query("select * from tipos_profesional", (err, result) => {
-    if (err){
-      res.send(err).status(500);
-      throw err;
-    }
-    else {
-      var objeto = {};
-      var data = [];
-      for (let i = 0; i < result.length; i++) {
-        data.push({
-          id: result[i].id_tipo,
-          descripcion: result[i].descripcion,
-        });
-      }
-      objeto.data = data;
-      res.send(objeto).status(200);
-    }
-  });
-});
-
-app.get("/obtenProfesionales", (req, res) => {
-  //obtenemos la lista de profesionales que se encuentren registrados dentro de la base de datos
-  const conn = conexion.cone;
-  conn.query( "select id_profesional, nombre, apPaterno, apMaterno from usuarios_profesionales", (err, result) => {
-     if(err){
-      res.send(err).status(500);
-      throw err;
-     }
-     else{
-      var objeto = {};
-      var data = [];
-      for (let i = 0; i < result.length; i++) {
-        data.push({
-          id: result[i].id_profesional,
-          nombreC: result[i].nombre + " " + result[i].apPaterno + " " + result[i].apMaterno,
-        });
-      }
-      objeto.data = data;
-      res.send(objeto).status(200);
-     }
-    }
-  );
-});
-
-app.get("/obtenTiposCitas", (req, res) => {
-  const conn = conexion.cone;
-  conn.query("SELECT * FROM tipoCitas", (err, result) => {
-    if(err){
-      res.send(err).status(500);
-      throw err;
-    }else{
-      var objeto = {};
-      var data = [];
-      for (let i = 0; i < result.length; i++) {
-        data.push({
-          id: result[i].id_tipoCita,
-          descripcion: result[i].descripcion,
-        });
-      }
-      objeto.data = data;
-      res.send(objeto).status(200);
-    }
-  });
-});
+//METODOS DE ALTA DE INFORMACIÓN
 
 app.post("/altaprofesionales", (req, res) => {
   //valores a almacenar:
@@ -219,7 +156,7 @@ app.post("/altaPacientes", (req, res) => {
       const conn = conexion.cone;
       let correo = req.body.email;
       //Comprobamos que no haya un registro de este correo previamente
-      conn.query(`SELECT email FROM usuarios_pacientes WHERE email == '${correo}'`, (errorB, resultB) => {
+      conn.query(`SELECT email FROM usuarios_pacientes WHERE email = '${correo}'`, (errorB, resultB) => {
         if(errorB){
           res.send(errorB).status(500);
           throw errorB;
@@ -230,14 +167,31 @@ app.post("/altaPacientes", (req, res) => {
             res.status(500).send({error:"Paciente ya existente"});
           }else{
             //hacemos la inserción en la base de datos
-            conn.query(`INSERT INTO usuarios_pacientesVALUES (0, '${req.body.nombre}', '${req.body.apPaterno}', '${req.body.apMaterno}', '${correo}', ${req.body.edad}, '${req.body.fechaN}', '${req.body.numTel}', '${req.body.pass}', ${req.body.idProfesional})`, function(errInsert, resultInsert){
+            conn.query(`INSERT INTO usuarios_pacientes VALUES (0, '${req.body.nombre}', '${req.body.apPaterno}', '${req.body.apMaterno}', '${correo}', ${req.body.edad}, '${req.body.fechaN}', '${req.body.numTel}', '${req.body.pass}', ${req.body.idProfesional})`, function(errInsert, resultInsert){
               if(errInsert){
                 res.send(errInsert).status(500);
                 throw errInsert;
               }else{
                 //podemos realizar la creación del historial de profesionales
-
-                res.send({mensaje:"Creación exitosa"}).status(200);
+                  //obtenemos el id del paciente
+                conn.query(`SELECT id_paciente FROM usuarios_pacientes WHERE email = '${correo}'`, (errorBid, resultBid) => {
+                  if(errorBid) throw errorB;
+                  else{
+                    let id = resultBid[0].id_paciente;
+                    //obtenemos la fecha de forma local del dispositivo
+                    const fecha = new Date(); 
+                    let fechaAct = fecha.toLocaleDateString();//en este casi se almacena de forma DD/M/YYYY
+                    //creamos el historial EN ESTE CASO DEJAMOS EL VALOR DE TERMINO SERA NULO DEBIDO A QUE NO SE CONOCE LA VIGENCIA
+                    conn.query(`INSERT INTO historial_profesionales VALUES (${id}, ${req.body.idProfesional}, '${fecha.getFullYear()+'/'+(fecha.getMonth()+1)+'/'+fecha.getDate()}', ${null})`, (errorIhistorial, resultIhistorial) => {
+                      if(errorIhistorial) throw errorIhistorial;
+                      else{
+                        console.log("Creación de usuario e historial exitoso");
+                        res.send({mensaje:"Creación exitosa"}).status(200);
+                      }
+                    });
+                  }
+                });
+                //res.send({mensaje:"Creación exitosa"}).status(200);
               }
             });
           }
@@ -247,6 +201,102 @@ app.post("/altaPacientes", (req, res) => {
 
   }
 });
+
+app.post("/creacionCitas", (req, res) => {
+  //informacion a obtener: id del tipo de cita, profesional, paciente, fecha y hora (dentro del mismo)
+  if(JSON.stringify(req.body) === "{}"){
+    //validamos que el contenido de la petición no este vació
+    console.log("req vacio");
+    res.status(400).send({error:"sin informacion"});
+  } else {//validamos que cada elemento a almacenar no se encuentren vacios
+    if(req.body.idTipoCita === "" || req.body.idProfesional === "" || req.body.idPaciente === "" || req.body.fechaHora === "" ){
+      console.log("Error no hay datos completos");
+      res.status(400).send("Error. Datos incompletos");
+    } else {
+      //consideramos que al momento de crear dicha cita, los datos se encuentren previamente validados
+      const conn = conexion.cone;
+      conn.query(`INSERT INTO citas VALUES (${req.body.idTipoCita}, ${req.body.idProfesional}, ${req.body.idPaciente}, '${req.body.fechaHora}')`, (errorInsert, resultInsert) => {
+        if(errorInsert) throw errorInsert;
+        else{
+          console.log(resultInsert.affectedRows);
+          res.status(200).send("Creación de cita correcta");
+        }
+      });
+    }
+  }
+});
+
+//METODOS DE OBTENCIÓN DE INFORMACIÓN
+
+app.get("/obtenTipos", (req, res) => {
+  //obtenemos la lista de los tipos que los profesionales de la salud pueden ser
+  const conn = conexion.cone;
+  conn.query("select * from tipos_profesional", (err, result) => {
+    if (err){
+      res.send(err).status(500);
+      throw err;
+    }
+    else {
+      var objeto = {};
+      var data = [];
+      for (let i = 0; i < result.length; i++) {
+        data.push({
+          id: result[i].id_tipo,
+          descripcion: result[i].descripcion,
+        });
+      }
+      objeto.data = data;
+      res.send(objeto).status(200);
+    }
+  });
+});
+
+app.get("/obtenProfesionales", (req, res) => {
+  //obtenemos la lista de profesionales que se encuentren registrados dentro de la base de datos
+  const conn = conexion.cone;
+  conn.query( "select id_profesional, nombre, apPaterno, apMaterno from usuarios_profesionales", (err, result) => {
+     if(err){
+      res.send(err).status(500);
+      throw err;
+     }
+     else{
+      var objeto = {};
+      var data = [];
+      for (let i = 0; i < result.length; i++) {
+        data.push({
+          id: result[i].id_profesional,
+          nombreC: result[i].nombre + " " + result[i].apPaterno + " " + result[i].apMaterno,
+        });
+      }
+      objeto.data = data;
+      res.send(objeto).status(200);
+     }
+    }
+  );
+});
+
+app.get("/obtenTiposCitas", (req, res) => {
+  const conn = conexion.cone;
+  conn.query("SELECT * FROM tipoCitas", (err, result) => {
+    if(err){
+      res.send(err).status(500);
+      throw err;
+    }else{
+      var objeto = {};
+      var data = [];
+      for (let i = 0; i < result.length; i++) {
+        data.push({
+          id: result[i].id_tipoCita,
+          descripcion: result[i].descripcion,
+        });
+      }
+      objeto.data = data;
+      res.send(objeto).status(200);
+    }
+  });
+});
+
+
 
 app.listen(3000, "192.168.100.9", function () {
   console.log("Funcionando en el puerto: 3000");
@@ -289,5 +339,37 @@ datos que obtenemos al hacer el get de obtenTipos
             "descripcion": "Nutriologo y preparador fisico"
         }
     ]
+}
+
+creacion de citas
+
+{
+    "idTipoCita":2,
+    "idProfesional":1,
+    "idPaciente":2,
+    "fechaHora": "2023/09/15 15:30"
+}
+
+alta de pacientes
+
+{
+    "nombre":"Jesus",
+    "apPaterno":"Perez",
+    "apMaterno":"Alva",
+    "email":"jpa_@mail.com",
+    "edad":23,
+    "fechaN":"2000/4/20",
+    "numTel":"5544112233",
+    "pass":"ContraJPA",
+    "idProfesional": 3
+}
+
+creacion de citas 
+
+{
+    "idTipoCita":1,
+    "idProfesional":3,
+    "idPaciente":1,
+    "fechaHora": "2023/09/20 16:00"
 }
 */
