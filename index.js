@@ -226,6 +226,30 @@ app.post("/creacionCitas", (req, res) => {
   }
 });
 
+app.post("/creacionProximaCita", (req, res) => {
+  if(JSON.stringify(req.body) === "{}"){
+     //validamos que el contenido de la petición no este vació
+    console.log("req vacio");
+    res.status(400).send({error:"sin informacion"});
+  }else{//validamos que cada elemento a almacenar no se encuentren vacios
+    if(req.body.idProfesional === "" || req.body.idPaciente === "" || req.body.fechaHora === ""){
+      console.log("Error no hay datos completos");
+      res.status(400).send("Error. Datos incompletos");
+    }else{
+      //consideramos que los datos se encuentran validados para la proxima cita
+      const conn = conexion.cone;
+      conn.query(`INSERT INTO proximas_citas VALUES (${req.body.idProfesional}, ${req.body.idPaciente}, '${req.body.fechaHora}')`, (errorInsert, resultInsert) => {
+        if(errorInsert) throw errorInsert;
+        else{
+          console.log(resultInsert.affectedRows);
+          res.status(200).send("Creación de cita correcta");
+        }
+      });
+    }
+    
+  }
+});
+
 //METODOS DE OBTENCIÓN DE INFORMACIÓN
 
 app.get("/obtenTipos", (req, res) => {
@@ -322,7 +346,7 @@ app.get("/obtenCitasFechaHora", (req, res) => { //metodo que obtendra del body l
       //`SELECT * FROM citas WHERE fecha_hora LIKE ('%${req.body.fecha}% %${req.body.hora}%')`
       const conn = conexion.cone;
       //obtenemos datos de la cita, el nombre del tipo de cita, del profesional y del paciente
-      conn.query(`SELECT c.id_tipoCita, c.id_profesional, c.id_paciente, c.fecha_hora, t.descripcion, p.nombre AS profesionalN, p.apPaterno AS profesionalAPp, p.apMaterno AS profesionalAPm, pa.nombre AS pacienteN, pa.apPaterno AS pacienteAPp, pa.apMaterno AS pacienteAPm FROM servicio_web.citas AS c, servicio_web.tipocitas AS t, servicio_web.usuarios_profesionales AS p, servicio_web.usuarios_pacientes AS pa WHERE fecha_hora LIKE  ('%${req.body.fecha}% %${req.body.hora}%') and t.id_tipoCita = c.id_tipoCita and p.id_profesional = c.id_profesional and pa.id_paciente = c.id_paciente`, (error, result) => {
+      conn.query(`SELECT c.id_tipoCita, c.id_profesional, c.id_paciente, c.fecha_hora, t.descripcion, p.nombre AS profesionalN, p.apPaterno AS profesionalAPp, p.apMaterno AS profesionalAPm, pa.nombre AS pacienteN, pa.apPaterno AS pacienteAPp, pa.apMaterno AS pacienteAPm FROM citas AS c, tipocitas AS t, usuarios_profesionales AS p, usuarios_pacientes AS pa WHERE fecha_hora LIKE  ('%${req.body.fecha}% %${req.body.hora}%') and t.id_tipoCita = c.id_tipoCita and p.id_profesional = c.id_profesional and pa.id_paciente = c.id_paciente`, (error, result) => {
         if(error){
           res.send(error).status(500);
           throw error;
@@ -369,6 +393,8 @@ app.get("/obtenCitasFechaHora", (req, res) => { //metodo que obtendra del body l
   }
 });
 
+    //AGREGAR PARAMETROS PARA OBTENER EL STATUS DE LA CITA MEDIANTE LA FECHA
+
 app.get("/obtenCitasProfesional", (req, res) => {
   if(JSON.stringify(req.body) === '{}'){
     console.log("Error, no hay datos para la busqueda");
@@ -382,10 +408,10 @@ app.get("/obtenCitasProfesional", (req, res) => {
       const conn = conexion.cone;
       var objeto = {};
       var data = [];
-      console.log(req.body)
+      console.log(req.body);
       //obtenemos datos de la cita, el nombre del tipo de cita, del paciente
-      //`SELECT c.id_tipoCita, c.id_profesional, c.id_paciente, c.fecha_hora, t.descripcion, p.nombre AS profesionalN, p.apPaterno AS profesionalAPp, p.apMaterno AS profesionalAPm, pa.nombre AS pacienteN, pa.apPaterno AS pacienteAPp, pa.apMaterno AS pacienteAPm FROM servicio_web.citas AS c, servicio_web.tipocitas AS t, servicio_web.usuarios_profesionales AS p, servicio_web.usuarios_pacientes AS pa WHERE id_profesional = ${req.body.id_profesional} and t.id_tipoCita = c.id_tipoCita and p.id_profesional = c.id_profesional and pa.id_paciente = c.id_paciente` 
-      conn.query(`SELECT c.id_tipoCita, c.id_profesional, c.id_paciente, c.fecha_hora, t.descripcion, p.nombre AS profesionalN, p.apPaterno AS profesionalAPp, p.apMaterno AS profesionalAPm, pa.nombre AS pacienteN, pa.apPaterno AS pacienteAPp, pa.apMaterno AS pacienteAPm FROM servicio_web.citas AS c, servicio_web.tipocitas AS t, servicio_web.usuarios_profesionales AS p, servicio_web.usuarios_pacientes AS pa WHERE c.id_profesional = ${req.body.id} and t.id_tipoCita = c.id_tipoCita and p.id_profesional = ${req.body.id} and pa.id_paciente = c.id_paciente`, (error, result) => {
+      //`SELECT c.id_tipoCita, c.id_profesional, c.id_paciente, c.fecha_hora, t.descripcion, p.nombre AS profesionalN, p.apPaterno AS profesionalAPp, p.apMaterno AS profesionalAPm, pa.nombre AS pacienteN, pa.apPaterno AS pacienteAPp, pa.apMaterno AS pacienteAPm FROM citas AS c, tipocitas AS t, usuarios_profesionales AS p, usuarios_pacientes AS pa WHERE id_profesional = ${req.body.id_profesional} and t.id_tipoCita = c.id_tipoCita and p.id_profesional = c.id_profesional and pa.id_paciente = c.id_paciente` 
+      conn.query(`SELECT c.id_tipoCita, c.id_profesional, c.id_paciente, c.fecha_hora, t.descripcion, p.nombre AS profesionalN, p.apPaterno AS profesionalAPp, p.apMaterno AS profesionalAPm, pa.nombre AS pacienteN, pa.apPaterno AS pacienteAPp, pa.apMaterno AS pacienteAPm FROM citas AS c, tipocitas AS t, usuarios_profesionales AS p, usuarios_pacientes AS pa WHERE c.id_profesional = ${req.body.id} and t.id_tipoCita = c.id_tipoCita and p.id_profesional = ${req.body.id} and pa.id_paciente = c.id_paciente`, (error, result) => {
         for(let i = 0; i < result.length; i++){
            //hacemos la modificación de la hora
            let fecha = new Date(result[i].fecha_hora);
@@ -421,11 +447,225 @@ app.get("/obtenCitasProfesional", (req, res) => {
       });
     }
   }
-})
+});
+
+app.get("/obtenCitasPaciente", (req, res) => {
+  if(JSON.stringify(req.body) === "{}"){
+    console.log("Error, no hay datos para la busqueda");
+    res.status(400).send({error: "sin información"});
+  }else{
+    if(req.body.id === ""){
+      console.log("Error no hay datos completos");
+      res.status(400).send("Error, no hay datos");
+    }else{
+      const conn = conexion.cone;
+      var objeto = {};
+      var data = [];
+      console.log(req.body);
+      conn.query(`SELECT c.id_tipoCita, c.id_profesional, c.id_paciente, c.fecha_hora, t.descripcion, p.nombre AS profesionalN, p.apPaterno AS profesionalAPp, p.apMaterno AS profesionalAPm, pa.nombre AS pacienteN, pa.apPaterno AS pacienteAPp, pa.apMaterno AS pacienteAPm FROM citas AS c, tipocitas AS t, usuarios_profesionales AS p, usuarios_pacientes AS pa WHERE c.id_paciente = ${req.body.id} and t.id_tipoCita = c.id_tipoCita and p.id_profesional = c.id_profesional and pa.id_paciente = ${req.body.id}`, (error, result) => {
+        for(let i = 0; i < result.length; i++){
+           //hacemos la modificación de la hora
+           let fecha = new Date(result[i].fecha_hora);
+           //hacemos el formateo de la fecha y hora respectivamente
+           let fechaANO = fecha.getUTCFullYear();
+           let fechaMES = fecha.getUTCMonth() + 1;
+           let fechaDIA = fecha.getUTCDate();
+           //HORA
+           let hora = fecha.getUTCHours()-6;//diferencia de lo que obtenemos respecto a lo que buscamos
+           let minutos = fecha.getUTCMinutes();
+           let segundos = fecha.getUTCSeconds();
+           
+           let fechaCompleta = ""+fechaDIA+"-"+fechaMES+"-"+fechaANO;
+           let horaCompleta = ""+hora+":"+minutos+":"+segundos;
+
+           //GENERAMOS LOS NOMBRES COMPLETOS DE LOS PACIENTES Y PROFESIONALES
+           let nCpacientes = result[i].pacienteN + " " + result[i].pacienteAPp + " " + result[i].pacienteAPm;
+           let nCprofesionales = result[i].profesionalN + " " + result[i].profesionalAPp + " " + result[i].profesionalAPm;
+           //creamos el objeto de respuesta
+           data.push({
+             idTipoCita : result[i].id_tipoCita,
+             tipoCita : result[i].descripcion,
+             id_profesional : result[i].id_profesional,
+             nombreProfesional : nCprofesionales,
+             id_paciente : result[i].id_paciente,
+             nombrePaciente : nCpacientes,
+             fecha : fechaCompleta,
+             hora : horaCompleta
+           });
+        }
+        objeto.data = data;
+        res.send(objeto).status(200);
+      });
+    }
+  }
+});
+
+  //OBTENCIÓN DE PROXIMAS CITAS SIMILAR A LOS MÉTODOS PASADOS
+
+  app.get("/obtenProximasCitas", (req, res) => { //método que obtendrá del body la fecha o hora a buscar
+    //misma forma que en obtenCitasFechaHora
+    if(JSON.stringify(req.body) === "{}"){
+      console.log("Error, no hay datos para la busqueda");
+      res.status(400).send({error: "sin información"});
+    }else{
+      //comprobamos que existan alguno de los elementos
+      if(req.body.fecha === "" && req.body.hora === ""){
+        console.log("Error no hay datos completos");
+        res.status(400).send("Error, no hay datos en ambos campos");
+      }else{
+        const conn = conexion.cone;
+        conn.query(`SELECT c.id_profesional, c.id_paciente, c.fecha_hora, p.nombre AS profesionalN, p.apPaterno AS profesionalAPp, p.apMaterno AS profesionalAPm, pa.nombre AS pacienteN, pa.apPaterno AS pacienteAPp, pa.apMaterno AS pacienteAPm FROM proximas_citas AS c, usuarios_profesionales AS p, usuarios_pacientes AS pa WHERE fecha_hora LIKE  ('%${req.body.fecha}% %${req.body.hora}%') and p.id_profesional = c.id_profesional and pa.id_paciente = c.id_paciente`, (error, result) => {
+          if(error){
+            res.send(error).status(500);
+            throw error;
+          }else{
+            var objeto = {};
+            var data = [];
+            
+            for(let i = 0; i < result.length; i++){
+                          
+              //hacemos la modificación de la hora
+              let fecha = new Date(result[i].fecha_hora);
+              //hacemos el formateo de la fecha y hora respectivamente
+              let fechaANO = fecha.getUTCFullYear();
+              let fechaMES = fecha.getUTCMonth() + 1;
+              let fechaDIA = fecha.getUTCDate();
+              //HORA
+              let hora = fecha.getUTCHours()-6;//diferencia de lo que obtenemos respecto a lo que buscamos
+              let minutos = fecha.getUTCMinutes();
+              let segundos = fecha.getUTCSeconds();
+              
+              let fechaCompleta = ""+fechaDIA+"-"+fechaMES+"-"+fechaANO;
+              let horaCompleta = ""+hora+":"+minutos+":"+segundos;
+  
+              //GENERAMOS LOS NOMBRES COMPLETOS DE LOS PACIENTES Y PROFESIONALES
+              let nCpacientes = result[i].pacienteN + " " + result[i].pacienteAPp + " " + result[i].pacienteAPm;
+              let nCprofesionales = result[i].profesionalN + " " + result[i].profesionalAPp + " " + result[i].profesionalAPm;
+              //creamos el objeto de respuesta
+              data.push({
+                id_profesional : result[i].id_profesional,
+                nombreProfesional : nCprofesionales,
+                id_paciente : result[i].id_paciente,
+                nombrePaciente : nCpacientes,
+                fecha : fechaCompleta,
+                hora : horaCompleta
+              });
+            }
+            objeto.data = data;
+            res.send(objeto).status(200);
+          }
+        });
+      }
+    }
+  });
+
+  //AGREGAR PARAMETROS PARA OBTENER EL STATUS DE LA CITA MEDIANTE LA FECHA
+
+  app.get("/obtenProximasCitasProfesional", (req, res) => {
+    if(JSON.stringify(req.body) === '{}'){
+      console.log("Error, no hay datos para la busqueda");
+      res.status(400).send({error: "sin información"});
+    }else{
+      //comprobamos que exista el elemento del ID a buscar
+      if(req.body.id === ""){
+        console.log("Error no hay datos completos");
+        res.status(400).send("Error, no hay datos");
+      }else{
+        const conn = conexion.cone;
+        var objeto = {};
+        var data = [];
+        console.log(req.body);
+        //obtenemos datos de la cita, el nombre del tipo de cita, del paciente
+        //`SELECT c.id_tipoCita, c.id_profesional, c.id_paciente, c.fecha_hora, t.descripcion, p.nombre AS profesionalN, p.apPaterno AS profesionalAPp, p.apMaterno AS profesionalAPm, pa.nombre AS pacienteN, pa.apPaterno AS pacienteAPp, pa.apMaterno AS pacienteAPm FROM citas AS c, tipocitas AS t, usuarios_profesionales AS p, usuarios_pacientes AS pa WHERE id_profesional = ${req.body.id_profesional} and t.id_tipoCita = c.id_tipoCita and p.id_profesional = c.id_profesional and pa.id_paciente = c.id_paciente` 
+        conn.query(`SELECT c.id_profesional, c.id_paciente, c.fecha_hora, p.nombre AS profesionalN, p.apPaterno AS profesionalAPp, p.apMaterno AS profesionalAPm, pa.nombre AS pacienteN, pa.apPaterno AS pacienteAPp, pa.apMaterno AS pacienteAPm FROM proximas_citas AS c, usuarios_profesionales AS p, usuarios_pacientes AS pa WHERE c.id_profesional = ${req.body.id} and p.id_profesional = ${req.body.id} and pa.id_paciente = c.id_paciente`, (error, result) => {
+          for(let i = 0; i < result.length; i++){
+             //hacemos la modificación de la hora
+             let fecha = new Date(result[i].fecha_hora);
+             //hacemos el formateo de la fecha y hora respectivamente
+             let fechaANO = fecha.getUTCFullYear();
+             let fechaMES = fecha.getUTCMonth() + 1;
+             let fechaDIA = fecha.getUTCDate();
+             //HORA
+             let hora = fecha.getUTCHours()-6;//diferencia de lo que obtenemos respecto a lo que buscamos
+             let minutos = fecha.getUTCMinutes();
+             let segundos = fecha.getUTCSeconds();
+             
+             let fechaCompleta = ""+fechaDIA+"-"+fechaMES+"-"+fechaANO;
+             let horaCompleta = ""+hora+":"+minutos+":"+segundos;
+  
+             //GENERAMOS LOS NOMBRES COMPLETOS DE LOS PACIENTES Y PROFESIONALES
+             let nCpacientes = result[i].pacienteN + " " + result[i].pacienteAPp + " " + result[i].pacienteAPm;
+             let nCprofesionales = result[i].profesionalN + " " + result[i].profesionalAPp + " " + result[i].profesionalAPm;
+             //creamos el objeto de respuesta
+             data.push({
+               id_profesional : result[i].id_profesional,
+               nombreProfesional : nCprofesionales,
+               id_paciente : result[i].id_paciente,
+               nombrePaciente : nCpacientes,
+               fecha : fechaCompleta,
+               hora : horaCompleta
+             });
+          }
+          objeto.data = data;
+          res.send(objeto).status(200);
+        });
+      }
+    }
+  });
+
+app.get("/obtenProximasCitasPaciente", (req, res) =>{
+  if(JSON.stringify(req.body) === "{}"){
+    console.log("Error, no hay datos para la busqueda");
+    res.status(400).send({error: "sin información"});
+  }else{
+    if(req.body.id === ""){
+      console.log("Error no hay datos completos");
+      res.status(400).send("Error, no hay datos");
+    }else{
+      const conn = conexion.cone;
+      var objeto = {};
+      var data = [];
+      console.log(req.body);
+      conn.query(`SELECT c.id_profesional, c.id_paciente, c.fecha_hora, p.nombre AS profesionalN, p.apPaterno AS profesionalAPp, p.apMaterno AS profesionalAPm, pa.nombre AS pacienteN, pa.apPaterno AS pacienteAPp, pa.apMaterno AS pacienteAPm FROM proximas_citas AS c, usuarios_profesionales AS p, usuarios_pacientes AS pa WHERE c.id_paciente = ${req.body.id} and p.id_profesional = c.id_profesional and pa.id_paciente = ${req.body.id}`, (error, result) => {
+        for(let i = 0; i < result.length; i++){
+           //hacemos la modificación de la hora
+           let fecha = new Date(result[i].fecha_hora);
+           //hacemos el formateo de la fecha y hora respectivamente
+           let fechaANO = fecha.getUTCFullYear();
+           let fechaMES = fecha.getUTCMonth() + 1;
+           let fechaDIA = fecha.getUTCDate();
+           //HORA
+           let hora = fecha.getUTCHours()-6;//diferencia de lo que obtenemos respecto a lo que buscamos
+           let minutos = fecha.getUTCMinutes();
+           let segundos = fecha.getUTCSeconds();
+           
+           let fechaCompleta = ""+fechaDIA+"-"+fechaMES+"-"+fechaANO;
+           let horaCompleta = ""+hora+":"+minutos+":"+segundos;
+
+           //GENERAMOS LOS NOMBRES COMPLETOS DE LOS PACIENTES Y PROFESIONALES
+           let nCpacientes = result[i].pacienteN + " " + result[i].pacienteAPp + " " + result[i].pacienteAPm;
+           let nCprofesionales = result[i].profesionalN + " " + result[i].profesionalAPp + " " + result[i].profesionalAPm;
+           //creamos el objeto de respuesta
+           data.push({
+             id_profesional : result[i].id_profesional,
+             nombreProfesional : nCprofesionales,
+             id_paciente : result[i].id_paciente,
+             nombrePaciente : nCpacientes,
+             fecha : fechaCompleta,
+             hora : horaCompleta
+           });
+        }
+        objeto.data = data;
+        res.send(objeto).status(200);
+      });
+    }
+  }
+});
 
 app.listen(3000, "192.168.100.9", function () {
   console.log("Funcionando en el puerto: 3000");
 });
+
 app.use(function (req, res) {
   res.status(404).send("Error");
 });
@@ -548,6 +788,48 @@ obtenCitasProfesional
             "nombrePaciente": "Jesus Perez Alva",
             "fecha": "15-9-2023",
             "hora": "15:30:0"
+        }
+    ]
+}
+
+obtenCitasPaciente
+  EJEMPLO DEL BODY DE LA PETICIÓN
+  {
+    "id":2
+  }
+
+
+{
+    "data": [
+        {
+            "idTipoCita": 2,
+            "tipoCita": "En linea",
+            "id_profesional": 1,
+            "nombreProfesional": "lsjkld info alkdmaklm",
+            "id_paciente": 2,
+            "nombrePaciente": "Jesus Perez Alva",
+            "fecha": "15-9-2023",
+            "hora": "15:30:0"
+        },
+        {
+            "idTipoCita": 1,
+            "tipoCita": "Presencial",
+            "id_profesional": 4,
+            "nombreProfesional": "Ernesto Gutierrez Macarena",
+            "id_paciente": 2,
+            "nombrePaciente": "Jesus Perez Alva",
+            "fecha": "30-8-2023",
+            "hora": "11:46:0"
+        },
+        {
+            "idTipoCita": 1,
+            "tipoCita": "Presencial",
+            "id_profesional": 2,
+            "nombreProfesional": "Jesus Prueba Prueba",
+            "id_paciente": 2,
+            "nombrePaciente": "Jesus Perez Alva",
+            "fecha": "30-8-2023",
+            "hora": "13:50:0"
         }
     ]
 }
