@@ -255,12 +255,11 @@ app.post("/creacionProximaCita", (req, res) => {
 app.get("/obtenTipos", (req, res) => {
   //obtenemos la lista de los tipos que los profesionales de la salud pueden ser
   const conn = conexion.cone;
-  conn.query("select * from tipos_profesional", (err, result) => {
+  conn.query("SELECT * FROM tipos_profesional", (err, result) => {
     if (err){
       res.send(err).status(500);
       throw err;
-    }
-    else {
+    } else {
       var objeto = {};
       var data = [];
       for (let i = 0; i < result.length; i++) {
@@ -502,7 +501,7 @@ app.get("/obtenCitasPaciente", (req, res) => {
 
   //OBTENCIÓN DE PROXIMAS CITAS SIMILAR A LOS MÉTODOS PASADOS
 
-  app.get("/obtenProximasCitas", (req, res) => { //método que obtendrá del body la fecha o hora a buscar
+app.get("/obtenProximasCitas", (req, res) => { //método que obtendrá del body la fecha o hora a buscar
     //misma forma que en obtenCitasFechaHora
     if(JSON.stringify(req.body) === "{}"){
       console.log("Error, no hay datos para la busqueda");
@@ -561,7 +560,7 @@ app.get("/obtenCitasPaciente", (req, res) => {
 
   //AGREGAR PARAMETROS PARA OBTENER EL STATUS DE LA CITA MEDIANTE LA FECHA
 
-  app.get("/obtenProximasCitasProfesional", (req, res) => {
+app.get("/obtenProximasCitasProfesional", (req, res) => {
     if(JSON.stringify(req.body) === '{}'){
       console.log("Error, no hay datos para la busqueda");
       res.status(400).send({error: "sin información"});
@@ -662,6 +661,101 @@ app.get("/obtenProximasCitasPaciente", (req, res) =>{
   }
 });
 
+app.get("/obtenCatalogoEnfermedades", (req, res) => {
+  const conn = conexion.cone;
+  conn.query("SELECT * FROM c_enfermedades", (err, result) => {
+    if(err){
+      res.send(err).status(500);
+      throw err;
+    } else {
+      var objeto = {}, data = [];
+      for(let i = 0; i < result.length; i++){
+        data.push({
+          id : result[i].id_enfermedad,
+          descripcion : result[i].descripcion
+        });
+      }
+      objeto.data = data;
+      res.send(objeto).status(200);
+    }
+  });
+});
+
+app.get("/obtenMusculos", (req, res) => {
+  const conn = conexion.cone;
+  conn.query("SELECT * FROM musculos", (err, result) => {
+    if(err){
+      res.send(err).status(500);
+      throw err;
+    }else{
+      var objeto = {}, data = [];
+      for(let i = 0; i < result.length; i++){
+        data.push({
+          id : result[i].id_musculos,
+          descripcion : result[i].nombre_musculo
+        });
+      }
+      objeto.data = data;
+      res.send(objeto).status(200);
+    }
+  });
+});
+
+app.get("/obtenTipoComida", (req, res) => {
+  const conn = conexion.cone;
+  conn.query("SELECT * FROM tipoComida", (err, result) => {
+    if(err){
+      res.send(err).status(500);
+      throw err;
+    }else{
+      var objeto = {}, data = [];
+      for(let i = 0; i < result.length; i++){
+        data.push({
+          id : result[i].id_comida,
+          descripcion : result[i].descripcion
+        });
+      }
+      objeto.data = data;
+      res.status(300).send(objeto);
+    }
+  });
+});
+
+  //METODO DE LOGIN DE USUARIOS
+app.get("/login", (req, res) => { //obtenemos del body los datos de correo, password y el tipo de usuario
+  //si retorna el permiso como 0, es que no tendra acceso al contenido; de modo que si es un 1 lo tendrá
+  if(JSON.stringify(req.body) === "{}"){ //validamos que el contenido de la petición no este vació
+    console.log("req vacio");
+    res.status(400).send({error : "sin informacion"});
+  }else{//validamos que cada elemento que deseamos almacenar no se encuentre vacio
+    if(req.body.correo === "" || req.body.password === "" || req.body.tipo === ""){
+      console.log('error no hay datos completos');
+      res.status(400).send("Error. Datos incompletos");
+    }else{
+      const conn = conexion.cone;
+      //comprobamos el tipo de usuario al que desea ingresar
+      /* si es 0 = profesional, si es 1 = paciente */
+      if(req.body.tipo == 0){
+        conn.query(`SELECT * FROM usuarios_profesionales WHERE email = '${req.body.correo}' and password = '${req.body.password}'`, (errorLogin, resultLogin) => {
+          if(errorLogin){
+            res.status(400).send({error : "Profesional no existente"});
+            throw errorLogin;
+          } else{
+            if(resultLogin.length > 0){
+              //existe el usuario
+              res.status(200).send({mensaje : "Usuario encontrado.", permiso : 1});
+            }else{
+              //no existe
+              res.status(400).send({mensaje : "Comprueba los datos", permiso : 0});
+            }
+          }
+        })
+      }
+    }
+  }
+});
+
+  //METODOS DE CONFIGURACIÓN DEL SERVIDOR
 app.listen(3000, "192.168.100.9", function () {
   console.log("Funcionando en el puerto: 3000");
 });
