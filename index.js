@@ -3,14 +3,21 @@ const bodyparser = require("body-parser");
 const conexion = require("./conexionBD");
 //para las pruebas locales haremos uso de cors debido a que este metodo bloquea el mismo origen
 const cors = require("cors");
+const fileUpload = require("express-fileupload");
+let fs = require('node:fs'); //obtenemos el filesystem de node
+  
 //archivo de peticiones
 const apis = require("./peticiones");
+//archivo de subida de archivos a la BD
+const archivoSubida = require("./subidaArchivosBD");
 
 const app = express();
 app.use(bodyparser.json());
 app.use(bodyparser.urlencoded({ extended: true }));
 //usamos cors
 app.use(cors({ origin: "*" }));
+//express-fileupload dependencia que nos permite obtener archivos desde el form-data de una petición
+app.use(fileUpload());
 
 app.get("/", (req, res) => {
   res.send("Funcionamiendo del servidor de Node.js");
@@ -22,6 +29,9 @@ app.get("/", (req, res) => {
 //PRUEBA DE FUNCIONAMIENTO DE CONEXION A LA BD Y OBTENCIÓN DE DATOS
 app.get("/data", (req, res) => {
   const conn = conexion.cone;
+  archivoSubida.obtenArchivos();
+  
+/*
   conn.query("select * from usuarios", (err, result) => {
     if (err){
       res.send(err).status(500);
@@ -39,12 +49,13 @@ app.get("/data", (req, res) => {
         });
       }
       //otra forma mas sencilla de hacer la impresion de info
-      /*req.array.forEach(element => {
-      console.log(element);
-    });
-    */
+    //  req.array.forEach(element => {
+  //    console.log(element);
+//    });
+    
     }
   });
+  */
 });
 
 app.get("/prueba", (req, res) => {
@@ -76,6 +87,34 @@ app.post("/pruebaFecha", (req, res) => {
     let fechaUser = req.body.fecha;
     let fechaUserSeparada = fechaUser.split('/');//caso que debemos definir o normalizar 
     console.log(fechaUser);
+});
+
+  //prueba de obtención de archivos
+app.post("/cargaArchivos", (req, res) => {
+  let archivoObtenido = req.files.archivo;
+  const conn = conexion.cone;
+  for(let i = 0; i < archivoObtenido.length; i++){
+    //creamos el archivo dentro de la carpeta 'archivos'
+    console.log(archivoObtenido[i]);
+    const query = "INSERT INTO archivos VALUES (?, ?, ?)";
+    conn.query(query, [1,'1 '+archivoObtenido[i].name, archivoObtenido[i].data], (error, resultInsert) => {
+      if(error){
+        throw error;
+      }
+    });
+    /*archivoObtenido[i].mv(`./archivos/${archivoObtenido[i].name}`, err => {
+      if(err){
+        return res.status(500).send({mensaje : err});
+      }
+    });
+    */
+  }
+  //conn.query(`INSERT INTO archivos VALUES (1, ${archivos[0]})`);
+  res.status(200).send({mensaje : 'archivo cargado'});
+  
+  /*
+  
+   */
 });
 
 //METODOS DE ALTA DE INFORMACIÓN
@@ -202,7 +241,7 @@ app.post("/altaPacientes", (req, res) => {
   }
 });
 
-app.post("/creacionCitas", (req, res) => {
+app.post("/creacionCitas", (req, res) => { //operación debe ser disponible solo para aquellos usuarios profesionales que se encuentren validados
   //informacion a obtener: id del tipo de cita, profesional, paciente, fecha y hora (dentro del mismo)
   if(JSON.stringify(req.body) === "{}"){
     //validamos que el contenido de la petición no este vació
@@ -274,7 +313,7 @@ app.get("/obtenTipos", (req, res) => {
   });
 });
 
-app.get("/obtenProfesionales", (req, res) => {
+app.get("/obtenProfesionales", (req, res) => {//obtención completa de los profesionales, retornando sus ID y nombre completo
   //obtenemos la lista de profesionales que se encuentren registrados dentro de la base de datos
   const conn = conexion.cone;
   conn.query( "select id_profesional, nombre, apPaterno, apMaterno from usuarios_profesionales", (err, result) => {
@@ -390,6 +429,48 @@ app.get("/obtenCitasFechaHora", (req, res) => { //metodo que obtendra del body l
       });
     }
   }
+});
+
+app.get("/obtenProfesionalesPorValidar", (req, res) => { //metodo para obtener a los profesionales que hagan falta de validar dentro de la BD
+  const conn = conexion.cone;
+  conn.query(`SELECT id_profesional, nombre, apPaterno, apMaterno FROM usuarios_profesionales WHERE valido = '0'`, (err, result) => {
+    if(err){
+      res.status(500).send(err);
+      throw err;
+    }else{
+      var objeto = {};
+      var data = [];
+      for(let i = 0; i < result.length; i++){
+        data.push({
+          id : result[i].id_profesional,
+          nombreC : result[i].nombre + " " + result[i].apPaterno + " " + result[i].apMaterno
+        });
+      }
+      objeto.data = data;
+      res.status(200).send(objeto);
+    }
+  });
+});
+
+app.get("/obtenProfesionalesValidados", (req, res) => { //metodo para obtener a los profesionales que se encuentran validados
+  const conn = conexion.cone;
+  conn.query(`SELECT id_profesional, nombre, apPaterno, apMaterno FROM usuarios_profesionales WHERE valido = '1'`, (err, result) => {
+    if(err){
+      res.status(500).send(err);
+      throw err;
+    }else{
+      var objeto = {};
+      var data = [];
+      for(let i = 0; i < result.length; i++){
+        data.push({
+          id : result[i].id_profesional,
+          nombreC : result[i].nombre + " " + result[i].apPaterno + " " + result[i].apMaterno
+        });
+      }
+      objeto.data = data;
+      res.status(200).send(objeto);
+    }
+  });
 });
 
     //AGREGAR PARAMETROS PARA OBTENER EL STATUS DE LA CITA MEDIANTE LA FECHA
@@ -751,6 +832,95 @@ app.get("/login", (req, res) => { //obtenemos del body los datos de correo, pass
           }
         })
       }
+    }
+  }
+});
+
+  //METODOS DE ELIMINACIÓN DE ELEMENTO
+app.delete("/borraProfesional", (req, res) => {
+  //al eleminar debemos quitar el profesional de la salud o hacer la reasignación en otro metodo 
+
+});
+
+  //METODOS DE ACTUALIZACIÓN DEL ESTADO DEL USUARIO PROFESIONAL
+app.put("/actualizaEstadoProfesional", (req, res) => {
+  //obtenemos del body el ID del profesional, el cual sera validado
+  if(JSON.stringify(req.body) === "{}"){
+    console.log("actualizaEstadoProfesional:\n\treq vacio");
+    res.status(400).send({error : "Sin informacion"});
+  }else{
+    if(req.body.idProfesional === ""){
+      console.log("actualizaEstadoProfesional:\n\tError no hay datos correctos");
+      res.status(400).send({error : "Datos incorrectos"});
+    }else{
+      const conn = conexion.cone;
+      conn.query(`UPDATE usuarios_profesionales SET valido = '1' WHERE id_profesional = ${req.body.idProfesional}`, (errorAct, resultAct) => {
+        if(errorAct){
+          res.status(400).send(errorAct);
+          throw errorAct;
+        }else{
+          //actualización correcta del profesional
+          res.status(200).send({mensaje : "Usuario actualizado"});
+        }
+      });
+    }
+  }
+});
+
+  //METODO PARA OBTENER TODOS LOS ARCHIVOS DE UN USUARIO PROFESIONAL Y ALMACENARLO DENTRO DE LA CARPETA DE ARCHIVOS
+app.get("/obtenArchivosProfesional", (req, res) => {
+  if(JSON.stringify(req.body) === '{}'){
+    console.log("Error, no hay datos para la busqueda");
+    res.status(500).send({error : "sin informacion"});
+  }else{
+    if(req.body.id === ""){
+      console.log("Error no hay datos");
+      res.status(500).send("Error");
+    }else{
+      const conn = conexion.cone;
+      conn.query(`SELECT * FROM archivos WHERE id_profesional = ${req.body.id}`, (err, result) => {
+        if(err){
+            throw err;
+        }else{
+          const nombreFolder = "./archivos/busqueda_certificados_id_"+req.body.id;
+          try{
+            if(!fs.existsSync(nombreFolder)){
+              fs.mkdir(nombreFolder, function(err){
+                if(err){
+                  console.log(err);
+                  res.send({mensaje : "No se pudo crear la carpeta",
+                            error : err});
+                }else{
+                  for(let i = 0; i < result.length; i++){
+                    //var data = Buffer.from(result[i].archivo, 'binary');
+                    //console.log(result[i].archivo.toString('base64'))
+                    fs.writeFile(`./archivos/busqueda_certificados_id_${req.body.id}/${req.body.id}_`+result[i].nombreArchivo, result[i].archivo, (err) => {
+                      if(err){
+                        console.log("Error escritura de archivos decodificado", err);
+                        }
+                    });
+                  }
+                  res.status(200).send({mensaje : `Creación correcta de los archivos del usaurio #${req.body.id} dentro del servidor, en la carpeta: /archivos/busqueda_certificados_id_${req.body.id}/`});
+                }
+              });
+            }else{
+              for(let i = 0; i < result.length; i++){
+                //var data = Buffer.from(result[i].archivo, 'binary');
+                //console.log(result[i].archivo.toString('base64'))
+                fs.writeFile(`./archivos/busqueda_certificados_id_${req.body.id}/${req.body.id}_`+result[i].nombreArchivo, result[i].archivo, (err) => {
+                  if(err){
+                    console.log("Error escritura de archivos decodificado", err);
+                    }
+                });
+              }
+              res.status(200).send({mensaje : `Creación correcta de los archivos del usaurio #${req.body.id} dentro del servidor, en la carpeta: /archivos/busqueda_certificados_id_${req.body.id}/`});
+            }
+          }catch(err){
+            res.status(500).send(err);
+          }
+          
+        }
+    });
     }
   }
 });
