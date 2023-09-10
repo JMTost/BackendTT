@@ -8,8 +8,7 @@ let fs = require('node:fs'); //obtenemos el filesystem de node
   
 //archivo de peticiones
 const apis = require("./peticiones");
-//archivo de subida de archivos a la BD
-const archivoSubida = require("./subidaArchivosBD");
+
 
 const app = express();
 app.use(bodyparser.json());
@@ -29,7 +28,7 @@ app.get("/", (req, res) => {
 //PRUEBA DE FUNCIONAMIENTO DE CONEXION A LA BD Y OBTENCIÓN DE DATOS
 app.get("/data", (req, res) => {
   const conn = conexion.cone;
-  archivoSubida.obtenArchivos();
+  
   
 /*
   conn.query("select * from usuarios", (err, result) => {
@@ -91,30 +90,37 @@ app.post("/pruebaFecha", (req, res) => {
 
   //prueba de obtención de archivos
 app.post("/cargaArchivos", (req, res) => {
-  let archivoObtenido = req.files.archivo;
   const conn = conexion.cone;
-  for(let i = 0; i < archivoObtenido.length; i++){
-    //creamos el archivo dentro de la carpeta 'archivos'
-    console.log(archivoObtenido[i]);
+  let archivoObtenido = req.files.archivo;
+  let id = req.body.id; 
+  if(archivoObtenido.length > 1){
+    for(let i = 0; i < archivoObtenido.length; i++){
+      const query = "INSERT INTO archivos VALUES (?, ?, ?)";
+      conn.query(query, [id, id+' '+archivoObtenido[i].name, archivoObtenido[i].data], (error, resultInsert) => {
+        if(error){
+          throw error;
+        }
+      });
+    }
+    res.status(200).send({mensaje : 'archivo cargado'});
+  }else{
     const query = "INSERT INTO archivos VALUES (?, ?, ?)";
-    conn.query(query, [1,'1 '+archivoObtenido[i].name, archivoObtenido[i].data], (error, resultInsert) => {
-      if(error){
-        throw error;
-      }
-    });
-    /*archivoObtenido[i].mv(`./archivos/${archivoObtenido[i].name}`, err => {
+      conn.query(query, [id, id+' '+archivoObtenido.name, archivoObtenido.data], (error, resultInsert) => {
+        if(error){
+          throw error;
+        }else{
+          res.status(200).send({mensaje : 'archivo cargado'});
+        }
+      });
+  }
+    /*
+    //creamos el archivo dentro de la carpeta 'archivos'
+    archivoObtenido[i].mv(`./archivos/${archivoObtenido[i].name}`, err => {
       if(err){
         return res.status(500).send({mensaje : err});
       }
     });
     */
-  }
-  //conn.query(`INSERT INTO archivos VALUES (1, ${archivos[0]})`);
-  res.status(200).send({mensaje : 'archivo cargado'});
-  
-  /*
-  
-   */
 });
 
 //METODOS DE ALTA DE INFORMACIÓN
@@ -1096,5 +1102,14 @@ obtenCitasPaciente
             "hora": "13:50:0"
         }
     ]
+}
+
+cargaArchivos
+  el body debe de enviarse como form-data, donde se tienen las key's
+  archivo : es donde estan los archivos a enviar
+  id : identificador del usuario asignar el archivo
+
+  salida: {
+    "mensaje": "archivo cargado"
 }
 */
