@@ -28,7 +28,7 @@ app.get("/", (req, res) => {
 //PRUEBA DE FUNCIONAMIENTO DE CONEXION A LA BD Y OBTENCIÓN DE DATOS
 app.get("/data", (req, res) => {
   const conn = conexion.cone;
-  
+  //console.log(__dirname) obtenemos el path de donde se encuentra el archivo actual
   
 /*
   conn.query("select * from usuarios", (err, result) => {
@@ -136,7 +136,7 @@ app.post("/altaprofesionales", (req, res) => {
     res.status(400).send({ error: "sin informacion" });
   } else {
     //validamos que cada elemento que deseamos almacenar no se encuentre vacio
-    if (req.body.nombre === "" || req.body.apPaterno === "" || req.body.apMaterno === "" || req.body.email === "" ||( req.body.edad < 0 || req.body.edad > 100) || req.body.fechaN === "" || req.body.pass === "" || req.body.archivos.length == 0 ) {
+    if (req.body.nombre === "" || req.body.apPaterno === "" || req.body.apMaterno === "" || req.body.email === "" ||( req.body.edad < 0 || req.body.edad > 100) || req.body.fechaN === "" || req.body.pass === "" ) {
       console.log("error no hay datos completos");
       res.status(400).send("Error. Datos incompletos");
     } else {
@@ -155,9 +155,11 @@ app.post("/altaprofesionales", (req, res) => {
               if (errInsert) throw errInsert;
                 else {
                   console.log(resultInsert.affectedRows);
+                  res.status(200).send({mensaje : "Creacion exitosa de usuario"});
                 }
               }
             );
+            /*  EN ESTE CASO YA NO SERÁ NECESARIO OBTENER LOS ARCHIVOS AL MOMENTO DE CREAR AL USUARIO, SERÍA MEJOR HACER UNA INTERFAZ PARA EL ENVIO DE LOS ARCHIVOS
             //inserción de los archivos del profesional, para este caso haremos un recorrido de la cantidad de los archivos
             //let obten_id = `SELECT id_profesional FROM usuarios_profesionales WHERE email = ${correo}`;
             conn.query(`SELECT id_profesional FROM usuarios_profesionales WHERE email = '${correo}'`, function (err, rows) {
@@ -181,7 +183,7 @@ app.post("/altaprofesionales", (req, res) => {
                 }
               }
             );
-            res.status(200).send("OK");
+            */
         }
       });
     }
@@ -293,6 +295,56 @@ app.post("/creacionProximaCita", (req, res) => {
     }
     
   }
+});
+
+  //METODO PARA EL ENVIO DE IMG DE USUARIO PROFESIONAL 
+  /*
+    para el caso de cargaArchivos y estos metodos, el body debe cumplir con un requisito de envio, el cual es, se debe enviar mediante form-data, donde los campos a utilizar son:
+      img de tipo file, el cual debe ser a lo mucho una imagen y el id de tipo texto, el cual nos pemitirá hacer el registro de este archivo
+  */
+app.post("/altaFotoProfesional", (req, res) => {//validamos desde el cliente que solo se podra seleccionar un solo archivo
+  const conn = conexion.cone;
+  //obtenemos el archivo y el id del profesional
+  let archivoObtenido = req.files.img;
+  let id = req.body.id;
+  let extension = archivoObtenido.name.split('.');
+    //console.log(extension[1])
+  //podemos hacer un select para comprobar que no exista una imagen previa y con ello, si hay, eliminar y subir la nueva, sino crear el registro
+  conn.query(`SELECT * FROM imgUsuariosProfesionales WHERE id_profesional = ${id}`, (errBusqueda, resultBusqueda) => {
+    if(errBusqueda){
+      res.status(500).send(errBusqueda);
+      throw errBusqueda;
+    }else{
+      if(resultBusqueda.length > 0){//eliminamos la imagen
+        conn.query(`DELETE FROM imgUsuariosProfesionales WHERE id_profesional = ${id}`, (errorBorrado, resultBorrado) => {
+          if(errorBorrado){
+            res.status(500).send({mensaje : "Error al borrar la img pasada"});
+            throw errorBorrado;
+          }else{
+            const query = "INSERT INTO imgUsuariosProfesionales VALUES (?, ?, ?)";
+            conn.query(query, [id, extension[1], archivoObtenido.data], (error, resultInsert) => {
+              if(error){
+                res.status(500).send({error : error});
+                throw error;
+              }else{
+                res.status(200).send({mensaje : "Imagen subida y eliminada la anterior"});
+              }
+            });
+          }
+        })
+      }else{//creamos la imagen
+        const query = "INSERT INTO imgUsuariosProfesionales VALUES (?, ?, ?)";
+        conn.query(query, [id, extension[1], archivoObtenido.data], (error, resultInsert) => {
+          if(error){
+            res.status(500).send({error : error});
+            throw error;
+          }else{
+            res.status(200).send({mensaje : "Imagen subida"});
+          }
+        });
+      }
+    }
+  });
 });
 
 //METODOS DE OBTENCIÓN DE INFORMACIÓN
@@ -806,6 +858,141 @@ app.get("/obtenTipoComida", (req, res) => {
       res.status(300).send(objeto);
     }
   });
+});
+
+  //METODO PARA OBTENER LA IMAGEN DEL PROFESIONAL DENTRO DE LA BD
+app.get("/obtenImgProfesional", (req, res) => {
+  if(JSON.stringify(req.body) === '{}'){
+    console.log("Error, no hay datos para la busqueda");
+    res.status(500).send({error : "sin informacion"});
+  }else{
+    if(req.body.id === ""){
+      console.log("Error no hay datos");
+      res.send(500).send("Error");
+    }else{
+      const conn = conexion.cone;
+      conn.query(`SELECT * FROM imgUsuariosProfesionales WHERE id_profesional = ${req.body.id}`, (err, result) =>{
+        if(err){
+          res.status(500).send({error : err});
+          throw err;
+        }else{
+          const nombreFolderPadre = "./archivos/imgProfesionales";
+          try{
+            if(!fs.existsSync(nombreFolderPadre)){
+              fs.mkdir(nombreFolderPadre, function(errorFolderB){
+                if(errorFolderB){
+                  console.log(errorFolderB);
+                  res.send({
+                    mensaje : "No se pudo crear la carpeta",
+                    error : errorFolderB
+                  });
+                }else{
+                  const nombreFolder = "./archivos/imgProfesionales/id_"+req.body.id;
+                  try{
+                    if(!fs.existsSync(nombreFolder)){
+                      fs.mkdir(nombreFolder, function(error){
+                        if(error){
+                          console.log(error);
+                          res.send({mensaje: "No se pudo crear la carpeta",
+                                    error : error});
+                        }else{
+                          var url = `${nombreFolder}/${req.body.id}_img.`+result[0].extension;
+                          fs.writeFile(url, result[0].img, (err) => {
+                            if(err){
+                              console.log("Error escritura de archivos decodificado", err);
+                              }else{
+                                //intentamos hacer el envio de la img
+                                var stat = fs.statSync(`./archivos/imgProfesionales/id_${req.body.id}_img.${result[0].extension}`);
+                                res.writeHead(200, {
+                                  'Content-Type' : `image/${result[0].extension}`,
+                                  'Content-Length' : stat.size
+                                });
+                                var lectura = fs.createReadStream(url);
+                                lectura.pipe(res);
+                              }
+                          });
+                        }
+                      });
+                    }else{
+                      var url = `${nombreFolder}/${req.body.id}_img.`+result[0].extension;
+                      fs.writeFile(url, result[0].img, (err) => {
+                        if(err){
+                          console.log("Error escritura de archivos decodificado", err);
+                          }else{
+                            //intentamos hacer el envio de la img
+                            var stat = fs.statSync(url);
+                            res.writeHead(200, {
+                              'Content-Type' : `image/${result[0].extension}`,
+                              'Content-Length' : stat.size
+                            });
+                            var lectura = fs.createReadStream(url);
+                            lectura.pipe(res);
+                          }
+                      });
+                      
+                    }
+                  }catch(err){
+                    res.status(500).send(err);
+                  }
+                }
+              });
+            }else{
+              const nombreFolder = "./archivos/imgProfesionales/id_"+req.body.id;
+              try{
+                if(!fs.existsSync(nombreFolder)){
+                  fs.mkdir(nombreFolder, function(error){
+                    if(error){
+                      console.log(error);
+                      res.send({mensaje: "No se pudo crear la carpeta",
+                                error : error});
+                    }else{
+                      var url = `${nombreFolder}/${req.body.id}_img.`+result[0].extension;
+                      fs.writeFile(url, result[0].img, (err) => {
+                        if(err){
+                          console.log("Error escritura de archivos decodificado", err);
+                          }else{
+                            //intentamos hacer el envio de la img
+                            var stat = fs.statSync(url);
+                            res.writeHead(200, {
+                              'Content-Type' : `image/${result[0].extension}`,
+                              'Content-Length' : stat.size
+                            });
+                            var lectura = fs.createReadStream(url);
+                            lectura.pipe(res);
+                          }
+                      });
+                      
+                    }
+                  });
+                }else{
+                  var url = `${nombreFolder}/${req.body.id}_img.`+result[0].extension;
+                  fs.writeFile(url, result[0].img, (err) => {
+                    if(err){
+                      console.log("Error escritura de archivos decodificado", err);
+                      }else{
+                        //intentamos hacer el envio de la img
+                        var stat = fs.statSync(url);
+                        res.writeHead(200, {
+                          'Content-Type' : `image/${result[0].extension}`,
+                          'Content-Length' : stat.size
+                        });
+                        var lectura = fs.createReadStream(url);
+                        lectura.pipe(res);
+                      }
+                  });
+                }
+              }catch(err){
+                res.status(500).send(err);
+              }
+            }
+          }catch(errorFolderBase){
+            res.status(500).send(errorFolderBase);
+          }
+          
+        }
+      });
+    }
+  }
 });
 
   //METODO DE LOGIN DE USUARIOS

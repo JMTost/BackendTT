@@ -106,6 +106,7 @@ create table videos(
 
 create table imgUsuariosProfesionales(
     id_profesional int not null,
+    extension char(5) not null,
     img blob not null,
     foreign key(id_profesional) references usuarios_profesionales(id_profesional) ON DELETE CASCADE
 );
