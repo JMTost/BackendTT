@@ -1061,6 +1061,7 @@ app.put("/actualizaEstadoProfesional", (req, res) => {
 });
 
   //METODO PARA OBTENER TODOS LOS ARCHIVOS DE UN USUARIO PROFESIONAL Y ALMACENARLO DENTRO DE LA CARPETA DE ARCHIVOS
+    //EN COMPARACIÓN CON LA VERSIÓN PASADA, AHORA ENVIA LA INFORMACIÓN DE LOS ARCHIVOS DENTRO DEL RESPONSE DE LA PETICIÓN
 app.get("/obtenArchivosProfesional", (req, res) => {
   if(JSON.stringify(req.body) === '{}'){
     console.log("Error, no hay datos para la busqueda");
@@ -1075,43 +1076,132 @@ app.get("/obtenArchivosProfesional", (req, res) => {
         if(err){
             throw err;
         }else{
-          const nombreFolder = "./archivos/busqueda_certificados_id_"+req.body.id;
-          try{
-            if(!fs.existsSync(nombreFolder)){
-              fs.mkdir(nombreFolder, function(err){
-                if(err){
-                  console.log(err);
-                  res.send({mensaje : "No se pudo crear la carpeta",
-                            error : err});
+          const nombreFolderPadre = __dirname + "/archivos/archivosProfesionales";
+          try {
+            if (!fs.existsSync(nombreFolderPadre)) {
+              fs.mkdir(nombreFolderPadre, function (errorFolderB) {
+                if (errorFolderB) {
+                  res.send({
+                    mensaje: "No se pudo crear la carpeta",
+                    error: errorFolderB,
+                  });
+                } else {
+                  const nombreFolder = __dirname+"/archivos/archivosProfesionales/busqueda_certificados_id_"+req.body.id;
+                  try{
+                    if(!fs.existsSync(nombreFolder)){
+                      fs.mkdir(nombreFolder, function(err){
+                        if(err){
+                          console.log(err);
+                          res.send({mensaje : "No se pudo crear la carpeta",
+                                    error : err});
+                        }else{
+                          var objeto = {};
+                          var data = [];
+                          for(let i = 0; i < result.length; i++){
+                            //var data = Buffer.from(result[i].archivo, 'binary');
+                            //console.log(result[i].archivo.toString('base64'))
+                            fs.writeFile(`${__dirname}/archivos/archivosProfesionales/busqueda_certificados_id_${req.body.id}/${req.body.id}_`+result[i].nombreArchivo, result[i].archivo, (err) => {
+                              if(err){
+                                console.log("Error escritura de archivos decodificado", err);
+                              }
+                            });
+                            data.push({
+                              nombre : result[i].nombreArchivo,
+                              info : result[i].archivo
+                            });
+                          }
+                          objeto.data = data;
+                          res.status(200).send({mensaje : `Creación correcta de los archivos del usaurio #${req.body.id} dentro del servidor, en la carpeta: /archivos/archivosProfesionales/busqueda_certificados_id_${req.body.id}/`, 
+                                              archivos : objeto});
+                        }
+                      });
+                    }else{
+                      var objeto = {};
+                      var data = [];
+                      for(let i = 0; i < result.length; i++){
+                        //var data = Buffer.from(result[i].archivo, 'binary');
+                        //console.log(result[i].archivo.toString('base64'))
+                        fs.writeFile(`${__dirname}/archivos/archivosProfesionales/busqueda_certificados_id_${req.body.id}/${req.body.id}_`+result[i].nombreArchivo, result[i].archivo, (err) => {
+                          if(err){
+                            console.log("Error escritura de archivos decodificado", err);
+                            }
+                        });
+                        data.push({
+                          nombre : result[i].nombreArchivo,
+                          info : result[i].archivo
+                        });
+                      }
+                      objeto.data = data;
+                      res.status(200).send({mensaje : `Creación correcta de los archivos del usaurio #${req.body.id} dentro del servidor, en la carpeta: /archivos/archivosProfesionales/busqueda_certificados_id_${req.body.id}/`, 
+                                          archivos : objeto});
+                    }
+                  }catch(err){
+                    res.status(500).send(err);
+                  }
+                }
+              });
+            }else{
+              const nombreFolder = __dirname+"/archivos/archivosProfesionales/busqueda_certificados_id_"+req.body.id;
+              try{
+                if(!fs.existsSync(nombreFolder)){
+                  fs.mkdir(nombreFolder, function(err){
+                    if(err){
+                      console.log(err);
+                      res.send({mensaje : "No se pudo crear la carpeta",
+                                error : err});
+                    }else{
+                      var objeto = {};
+                      var data = [];
+                      for(let i = 0; i < result.length; i++){
+                        //var data = Buffer.from(result[i].archivo, 'binary');
+                        //console.log(result[i].archivo.toString('base64'))
+                        fs.writeFile(`${__dirname}/archivos/archivosProfesionales/busqueda_certificados_id_${req.body.id}/${req.body.id}_`+result[i].nombreArchivo, result[i].archivo, (err) => {
+                          if(err){
+                            console.log("Error escritura de archivos decodificado", err);
+                            }
+                        });
+                        data.push({
+                          nombre : result[i].nombreArchivo,
+                          info : result[i].archivo
+                        });
+                      }
+                      objeto.data = data;
+                      res.status(200).send({mensaje : `Creación correcta de los archivos del usaurio #${req.body.id} dentro del servidor, en la carpeta: /archivos/archivosProfesionales/busqueda_certificados_id_${req.body.id}/`, 
+                                          archivos : objeto});
+                    }
+                  });
                 }else{
+                  var objeto = {};
+                  var data = [];
                   for(let i = 0; i < result.length; i++){
                     //var data = Buffer.from(result[i].archivo, 'binary');
                     //console.log(result[i].archivo.toString('base64'))
-                    fs.writeFile(`./archivos/busqueda_certificados_id_${req.body.id}/${req.body.id}_`+result[i].nombreArchivo, result[i].archivo, (err) => {
+                    fs.writeFile(`${__dirname}/archivos/archivosProfesionales/busqueda_certificados_id_${req.body.id}/${req.body.id}_`+result[i].nombreArchivo, result[i].archivo, (err) => {
                       if(err){
                         console.log("Error escritura de archivos decodificado", err);
                         }
                     });
+                    data.push({
+                      nombre : result[i].nombreArchivo,
+                      info : result[i].archivo
+                    });
                   }
-                  res.status(200).send({mensaje : `Creación correcta de los archivos del usaurio #${req.body.id} dentro del servidor, en la carpeta: /archivos/busqueda_certificados_id_${req.body.id}/`});
+                  objeto.data = data;
+                  res.status(200).send({mensaje : `Creación correcta de los archivos del usaurio #${req.body.id} dentro del servidor, en la carpeta: /archivos/archivosProfesionales/busqueda_certificados_id_${req.body.id}/`, 
+                                      archivos : objeto});
                 }
-              });
-            }else{
-              for(let i = 0; i < result.length; i++){
-                //var data = Buffer.from(result[i].archivo, 'binary');
-                //console.log(result[i].archivo.toString('base64'))
-                fs.writeFile(`./archivos/busqueda_certificados_id_${req.body.id}/${req.body.id}_`+result[i].nombreArchivo, result[i].archivo, (err) => {
-                  if(err){
-                    console.log("Error escritura de archivos decodificado", err);
-                    }
-                });
+              }catch(err){
+                res.status(500).send(err);
               }
-              res.status(200).send({mensaje : `Creación correcta de los archivos del usaurio #${req.body.id} dentro del servidor, en la carpeta: /archivos/busqueda_certificados_id_${req.body.id}/`});
             }
-          }catch(err){
-            res.status(500).send(err);
+          } catch (errorFolderPadre) {
+            res.status(500)
+              .send({
+                mensaje: "Error al crear la carpeta padre",
+                error: errorFolderPadre,
+              });
+            throw errorFolderPadre;
           }
-          
         }
     });
     }
