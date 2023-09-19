@@ -3,3 +3,5 @@ se debe colocar la carpeta dentro del disco local C, justo en la raiz, despues s
 dentro de la misma se debe colocar el comando:
     setx /m PATH "C:\ffmpeg\bin;%PATH%"
 en dado caso de tener dudas, consultar el siguiente recurso: https://www.geeksforgeeks.org/how-to-install-ffmpeg-on-windows/
+
+Enlace con el programa con extension .zip: https://drive.google.com/drive/folders/1wEv9KjrCh0m4aT60DJ4FCdoiKZeTCqaF?usp=drive_link
