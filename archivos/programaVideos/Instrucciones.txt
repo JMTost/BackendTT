@@ -1,0 +1,5 @@
+Para instalar el programa de ffmpeg, primero se debera de extraer el contenido del archivo .zip, seguido a eso,
+se debe colocar la carpeta dentro del disco local C, justo en la raiz, despues se debe abrir una terminal en modo administrador,
+dentro de la misma se debe colocar el comando:
+    setx /m PATH "C:\ffmpeg\bin;%PATH%"
+en dado caso de tener dudas, consultar el siguiente recurso: https://www.geeksforgeeks.org/how-to-install-ffmpeg-on-windows/
