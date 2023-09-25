@@ -104,7 +104,13 @@ create table videos(
     video longblob not null,
     foreign key(id_profesional) references usuarios_profesionales(id_profesional) ON DELETE CASCADE
 );
-
+/*DENTRO DE ESTA TABLA DEBEMOS DE CONTENER UN REGISTRO QUE FUNCIONE COMO VALOR NULL, EL CUAL SOLO SERA PARA TENER UN VALOR QUE ASIGNAR CUANDO NO EXISTE UN VIDEO PREVIAMENTE CREADO
+    CON ESTO DEBEMOS DE TENER UN REGISTRO DE PROFESIONAL DE LA SALUD QUE SEA EL DE PRUEBA O BASE*/
+UPDATE usuarios_profesionales set id_profesional = 0 where id_profesional = 1;
+ALTER TABLE usuarios_profesionales AUTO_INCREMENT = 1;
+INSERT INTO videos VALUES (0, 0, "Sin video", "");
+UPDATE videos set id_video = 0 where id_video = 1;
+ALTER TABLE videos AUTO_INCREMENT = 1;
 create table imgUsuariosProfesionales(
     id_profesional int not null,
     extension char(5) not null,
@@ -138,19 +144,20 @@ create table ejercicios(
 );
 
 create table ejercicio_rutina(
-    id_profesional int not null,
+	id_ER int auto_increment primary key,
+	id_profesional int not null,
     id_paciente int not null,
     cantidad char(20) not null,
-    id_video int not null,
+    id_video int default 0,
     id_ejercicio int not null,
     fechaInicio date not null,
     fechaFin date not null,
     vigencia char(1) not null,
     foreign key(id_profesional) references usuarios_profesionales(id_profesional) ON UPDATE CASCADE ON DELETE CASCADE,
     foreign key(id_paciente) references usuarios_pacientes(id_paciente) ON UPDATE CASCADE ON DELETE CASCADE,
-    foreign key(id_video) references videos(id_video) ON UPDATE CASCADE ON DELETE CASCADE,
     foreign key(id_ejercicio) references ejercicios(id_ejercicio) ON DELETE CASCADE
-);
+    );
+
 
 
 create table tipoComida(
@@ -573,3 +580,38 @@ INSERT INTO c_enfermedades VALUES (0, "Enfermedad de Huntington.");
 INSERT INTO c_enfermedades VALUES (0, "Distrofia muscular.");
 INSERT INTO c_enfermedades VALUES (0, "Fenilcetonuria (PKU).");
 INSERT INTO c_enfermedades VALUES (0, "Enfermedad de Tay-Sachs.");
+
+/*REGISTROS DE EJEMPLO DE EJERCICIOS CON LA LISTA DE MUSCULOS OBTENIDA*/
+INSERT INTO ejercicios VALUES (0, "Press de banca", 1);
+INSERT INTO ejercicios VALUES (0, "Fondos en paralelas", 1);
+INSERT INTO ejercicios VALUES (0, "Aperturas con mancuernas", 1);
+INSERT INTO ejercicios VALUES (0, "Dominadas", 2);
+INSERT INTO ejercicios VALUES (0, "Lagartijas", 2);
+INSERT INTO ejercicios VALUES (0, "Remo con barra T", 2);
+INSERT INTO ejercicios VALUES (0, "Press militar", 3);
+INSERT INTO ejercicios VALUES (0, "Elevaciones laterales con mancuernas", 3);
+INSERT INTO ejercicios VALUES (0, "Elevaciones frontales con barra o mancuernas", 3);
+INSERT INTO ejercicios VALUES (0, "Ecogimientos de hombros con barra", 4);
+INSERT INTO ejercicios VALUES (0, "Encogimientos de hombros con mancuernas", 4);
+INSERT INTO ejercicios VALUES (0, "Elevaciones de trapecio con polea alta", 4);
+INSERT INTO ejercicios VALUES (0, "Curl de biceps con barra", 5);
+INSERT INTO ejercicios VALUES (0, "Curl de biceps con mancuernas", 5);
+INSERT INTO ejercicios VALUES (0, "Curl martillo", 5);
+INSERT INTO ejercicios VALUES (0, "Sentadillas", 6);
+INSERT INTO ejercicios VALUES (0, "Extensiones de cuadriceps en maquina", 6);
+INSERT INTO ejercicios VALUES (0, "Prensa de piernas", 6);
+INSERT INTO ejercicios VALUES (0, "Curl de piernas tumbado", 7);
+INSERT INTO ejercicios VALUES (0, "Peso muerto", 7);
+INSERT INTO ejercicios VALUES (0, "Levantamiento de cadera", 7);
+INSERT INTO ejercicios VALUES (0, "Sentadillas profundas", 8);
+INSERT INTO ejercicios VALUES (0, "Zancadas", 8);
+INSERT INTO ejercicios VALUES (0, "Puentes de gluteos", 8);
+INSERT INTO ejercicios VALUES (0, "Encogimientos abdominal", 9);
+INSERT INTO ejercicios VALUES (0, "Plancha", 9);
+INSERT INTO ejercicios VALUES (0, "Elevacion de piernas en suspension", 9);
+INSERT INTO ejercicios VALUES (0, "Elevacion de talones de pie", 10);
+INSERT INTO ejercicios VALUES (0, "Elevacion de talones sentado", 10);
+INSERT INTO ejercicios VALUES (0, "Saltos de pantorrilla", 10);
+INSERT INTO ejercicios VALUES (0, "Sentadillas de sumo", 11);
+INSERT INTO ejercicios VALUES (0, "Patada de gluteo", 11);
+INSERT INTO ejercicios VALUES (0, "Elevacion de piernas en posición prono", 11);
