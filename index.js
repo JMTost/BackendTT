@@ -10,7 +10,7 @@ const videos = require("./videos_redimensionar");
   
 //archivo de peticiones
 const apis = require("./peticiones");
-
+var fechaApi; //variable que tendra la fecha de México CDMX
 
 const app = express();
 app.use(bodyparser.json());
@@ -59,7 +59,12 @@ app.get("/data", (req, res) => {
   */
 });
 
-app.get("/prueba", (req, res) => {
+app.get("/prueba", (req, res) => {//Método empleado para comprobar la obtención de datos de API´s externas
+  console.log(fechaApi);
+  res.send({mensaje : "Fecha de la Ciudad de México: "+fechaApi});
+});
+
+app.get("/actualiza/fecha", (req, res) =>{//Método para actualizar la variable de la fecha
   apis.apiTiempo()
   .then(data => {//obtenemos la fecha actual en CDMX
     //separamos los elementos
@@ -67,21 +72,14 @@ app.get("/prueba", (req, res) => {
     const anoAPI = partes[0];
     const mesAPI = partes[1];
     const diaAPI = partes[2];
-    console.log(partes);
-    res.send(data);
+    fechaApi += anoAPI+'-'+mesAPI+"-"+diaAPI;
+    //console.log(fechaApi);
+    res.status(200).send({mensaje : "actualización de fecha exitoso: "+fechaApi});
   })
   .catch(error => {
     console.error("Error dentro de la petición", error);
-    res.send(error);
+    res.status(500).send({mensaje : "Error al obtener el dato", error : error});
   });
-/*
-  var valor;
-  apis.apiTiempo().then(json => {
-    valor = json;
-    console.log(json);
-    res.json({ mensaje: "info entrada", data:json});
-  });
-*/
 });
 
 app.post("/pruebaFecha", (req, res) => {
@@ -1038,7 +1036,7 @@ app.get("/obtenTipoComida", (req, res) => {
         });
       }
       objeto.data = data;
-      res.status(300).send(objeto);
+      res.status(200).send(objeto);
     }
   });
 });
@@ -1194,6 +1192,13 @@ app.get("/obtenImgPaciente", (req, res) => {
           res.status(500).send({error : errorBusqueda});
           throw errorBusqueda;
         }else{
+          console.log(resultBusqueda.length)
+          if(resultBusqueda.length > 0){//contamos con una img del paciente
+
+          }else{
+            res.status(404).sendFile(__dirname+"/archivos/imgGeneral/noPhotoUser.png");
+          }
+          /*
           const nombreFolderPadre = __dirname+"/archivos/imgPacientes";
           try{
             if(!fs.existsSync(nombreFolderPadre)){
@@ -1304,6 +1309,7 @@ app.get("/obtenImgPaciente", (req, res) => {
           }catch(errorFP){
             res.status(500).send(errorFP);
           }
+          */
         }
       });
     }
@@ -1324,135 +1330,139 @@ app.get("/obtenVideosProfesional", (req, res) => {
           res.status(500).send({error : errorBusqueda});
           throw errorBusqueda;
         }else{
-          const nombreFolderPadre = __dirname+"/archivos/videosProfesionales";
-          try {
-            if(!fs.existsSync(nombreFolderPadre)){
-              fs.mkdir(nombreFolderPadre, function (errorFolderP){
-                if(errorFolderP){
-                  res.send({
-                    mensaje : "No se pudo crear la carpeta",
-                    error : errorFolderP
-                  });
-                }else{
-                  const nombreFolder = __dirname+"/archivos/videosProfesionales/video_"+req.body.id;
-                  try {
-                    if(!fs.existsSync(nombreFolder)){
-                      fs.mkdir(nombreFolder, function(err){
-                        if(err){
-                          res.send({mensaje : "No se pudo crear la carpeta", error : err});
-                        }else{
-                          var objeto = {}, data = [];
-                          for(let i = 0; i < resultBusqueda.length; i++){
-                            fs.writeFile(`${nombreFolder}/${resultBusqueda[i].nombreVideo}`, resultBusqueda[i].video, async (errorCreacion) => {
-                              if(errorCreacion){
-                                console.log("Error escritura de archivos");
-                              }
+          if(resultBusqueda.length > 0){//contamos con videos
+            const nombreFolderPadre = __dirname+"/archivos/videosProfesionales";
+            try {
+              if(!fs.existsSync(nombreFolderPadre)){
+                fs.mkdir(nombreFolderPadre, function (errorFolderP){
+                  if(errorFolderP){
+                    res.send({
+                      mensaje : "No se pudo crear la carpeta",
+                      error : errorFolderP
+                    });
+                  }else{
+                    const nombreFolder = __dirname+"/archivos/videosProfesionales/video_"+req.body.id;
+                    try {
+                      if(!fs.existsSync(nombreFolder)){
+                        fs.mkdir(nombreFolder, function(err){
+                          if(err){
+                            res.send({mensaje : "No se pudo crear la carpeta", error : err});
+                          }else{
+                            var objeto = {}, data = [];
+                            for(let i = 0; i < resultBusqueda.length; i++){
+                              fs.writeFile(`${nombreFolder}/${resultBusqueda[i].nombreVideo}`, resultBusqueda[i].video, async (errorCreacion) => {
+                                if(errorCreacion){
+                                  console.log("Error escritura de archivos");
+                                }
+                              });
+                              data.push({
+                                nombre : resultBusqueda[i].nombreVideo,
+                                data : resultBusqueda[i].video
+                              });
+                            }
+                            objeto.data = data;
+                            res.set({
+                              'Content-Type' : "application/json",
+                              'Content-Length' : ""+data[0].length * 2
                             });
-                            data.push({
-                              nombre : resultBusqueda[i].nombreVideo,
-                              data : resultBusqueda[i].video
-                            });
+                            //res.setHeader('Content-Length', ""+data[0].length * 2);
+                            res.status(200).send(objeto);
+                            /*
+                            res.status(200).send({
+                              mensaje : "Obtencion de los archivos",
+                              archivos : objeto});
+                              */
                           }
-                          objeto.data = data;
-                          res.set({
-                            'Content-Type' : "application/json",
-                            'Content-Length' : ""+data[0].length * 2
+                        });
+                      }else{
+                        var objeto = {}, data = [];
+                        for(let i = 0; i < resultBusqueda.length; i++){
+                          fs.writeFile(`${nombreFolder}/${resultBusqueda[i].nombreVideo}`, resultBusqueda[i].video, async (errorCreacion) => {
+                            if(errorCreacion){
+                              console.log("Error escritura de archivos");
+                            }
                           });
-                          //res.setHeader('Content-Length', ""+data[0].length * 2);
-                          res.status(200).send(objeto);
-                          /*
-                          res.status(200).send({
-                            mensaje : "Obtencion de los archivos",
-                            archivos : objeto});
-                            */
+                          data.push({
+                            nombre : resultBusqueda[i].nombreVideo,
+                            data : resultBusqueda[i].video
+                          });
+                        }
+                        objeto.data = data;
+                        res.set({
+                          'Content-Type' : "application/json",
+                          'Content-Length' : ""+data[0].length * 2
+                        });
+                        //res.setHeader('Content-Length', ""+data[0].length * 2);
+                        res.status(200).send(objeto);
+                      }
+                    } catch (errorNombreF) {
+                      res.status(500).send(errorNombreF);
+                    }
+                  }
+                });
+              }else{
+                const nombreFolder = __dirname+"/archivos/videosProfesionales/video_"+req.body.id;
+                try {
+                  if(!fs.existsSync(nombreFolder)){
+                    fs.mkdir(nombreFolder, function(err){
+                      if(err){
+                        res.send({mensaje : "No se pudo crear la carpeta", error : err});
+                      }else{
+                        var objeto = {}, data = [];
+                        for(let i = 0; i < resultBusqueda.length; i++){
+                          fs.writeFile(`${nombreFolder}/${resultBusqueda[i].nombreVideo}`, resultBusqueda[i].video, async (errorCreacion) => {
+                            if(errorCreacion){
+                              console.log("Error escritura de archivos");
+                            }
+                          });
+                          data.push({
+                            nombre : resultBusqueda[i].nombreVideo,
+                            data : resultBusqueda[i].video
+                          });
+                        }
+                        objeto.data = data;
+                        res.set({
+                          'Content-Type' : "application/json",
+                          'Content-Length' : ""+data[0].length * 2
+                        });
+                        //res.setHeader('Content-Length', ""+data[0].length * 2);
+                        res.status(200).send(objeto);
+                      }
+                    });
+                  }else{
+                    var objeto = {}, data = [];
+                    for(let i = 0; i < resultBusqueda.length; i++){
+                      fs.writeFile(`${nombreFolder}/${resultBusqueda[i].nombreVideo}`, resultBusqueda[i].video, async (errorCreacion) => {
+                        if(errorCreacion){
+                          console.log("Error escritura de archivos");
                         }
                       });
-                    }else{
-                      var objeto = {}, data = [];
-                      for(let i = 0; i < resultBusqueda.length; i++){
-                        fs.writeFile(`${nombreFolder}/${resultBusqueda[i].nombreVideo}`, resultBusqueda[i].video, async (errorCreacion) => {
-                          if(errorCreacion){
-                            console.log("Error escritura de archivos");
-                          }
-                        });
-                        data.push({
-                          nombre : resultBusqueda[i].nombreVideo,
-                          data : resultBusqueda[i].video
-                        });
-                      }
-                      objeto.data = data;
-                      res.set({
-                        'Content-Type' : "application/json",
-                        'Content-Length' : ""+data[0].length * 2
+                      data.push({
+                        nombre : resultBusqueda[i].nombreVideo,
+                        data : resultBusqueda[i].video
                       });
-                      //res.setHeader('Content-Length', ""+data[0].length * 2);
-                      res.status(200).send(objeto);
                     }
-                  } catch (errorNombreF) {
-                    res.status(500).send(errorNombreF);
-                  }
-                }
-              });
-            }else{
-              const nombreFolder = __dirname+"/archivos/videosProfesionales/video_"+req.body.id;
-              try {
-                if(!fs.existsSync(nombreFolder)){
-                  fs.mkdir(nombreFolder, function(err){
-                    if(err){
-                      res.send({mensaje : "No se pudo crear la carpeta", error : err});
-                    }else{
-                      var objeto = {}, data = [];
-                      for(let i = 0; i < resultBusqueda.length; i++){
-                        fs.writeFile(`${nombreFolder}/${resultBusqueda[i].nombreVideo}`, resultBusqueda[i].video, async (errorCreacion) => {
-                          if(errorCreacion){
-                            console.log("Error escritura de archivos");
-                          }
-                        });
-                        data.push({
-                          nombre : resultBusqueda[i].nombreVideo,
-                          data : resultBusqueda[i].video
-                        });
-                      }
-                      objeto.data = data;
-                      res.set({
-                        'Content-Type' : "application/json",
-                        'Content-Length' : ""+data[0].length * 2
-                      });
-                      //res.setHeader('Content-Length', ""+data[0].length * 2);
-                      res.status(200).send(objeto);
-                    }
-                  });
-                }else{
-                  var objeto = {}, data = [];
-                  for(let i = 0; i < resultBusqueda.length; i++){
-                    fs.writeFile(`${nombreFolder}/${resultBusqueda[i].nombreVideo}`, resultBusqueda[i].video, async (errorCreacion) => {
-                      if(errorCreacion){
-                        console.log("Error escritura de archivos");
-                      }
+                    objeto.data = data;
+                    res.set({
+                      'Content-Type' : "application/json",
+                      'Content-Length' : ""+data[0].length * 2
                     });
-                    data.push({
-                      nombre : resultBusqueda[i].nombreVideo,
-                      data : resultBusqueda[i].video
-                    });
+                    //res.setHeader('Content-Length', ""+data[0].length * 2);
+                    res.status(200).send(objeto);
                   }
-                  objeto.data = data;
-                  res.set({
-                    'Content-Type' : "application/json",
-                    'Content-Length' : ""+data[0].length * 2
-                  });
-                  //res.setHeader('Content-Length', ""+data[0].length * 2);
-                  res.status(200).send(objeto);
+                } catch (errorNombreF) {
+                  res.status(500).send(errorNombreF);
                 }
-              } catch (errorNombreF) {
-                res.status(500).send(errorNombreF);
               }
+            } catch (errorFolderPadre) {
+              res.status(500).send({
+                  mensaje: "Error al crear la carpeta padre",
+                  error: errorFolderPadre,
+                });
+              throw errorFolderPadre;
             }
-          } catch (errorFolderPadre) {
-            res.status(500).send({
-                mensaje: "Error al crear la carpeta padre",
-                error: errorFolderPadre,
-              });
-            throw errorFolderPadre;
+          }else{//no hay videos
+            res.status(200).send({mensaje : "El profesional no cuenta con videos que mostrar"});
           }
         }
       });
@@ -1476,16 +1486,21 @@ app.get("/obtenListaVideoProfesional", (req, res) => {//OBTENEMOS EL ID DEL PROF
           res.status(500).send({error : errorBusqueda});
           throw errorBusqueda;
         }else{
-          var objeto = {}, data = [];
-          for(let i = 0; i < resultadoBusqueda.length; i++){
-            data.push({
-              id_video : resultadoBusqueda[i].id_video,
-              nombre : resultadoBusqueda[i].nombreVideo,
-              id_profesional : req.body.id
-            });
+          console.log(resultadoBusqueda.length);
+          if(resultadoBusqueda.length > 0){//obtenemos los videos
+            var objeto = {}, data = [];
+            for(let i = 0; i < resultadoBusqueda.length; i++){
+              data.push({
+                id_video : resultadoBusqueda[i].id_video,
+                nombre : resultadoBusqueda[i].nombreVideo,
+                id_profesional : req.body.id
+              });
+            }
+            objeto.data = data;
+            res.status(200).send(objeto);
+          }else{//no hay videos dado el valor a buscar
+            res.status(200).send({mensaje : "Este profesional no cuenta con videos para enlistar"});
           }
-          objeto.data = data;
-          res.status(200).send(objeto);
         }
       });
     }
@@ -1584,110 +1599,116 @@ app.get("/obtenVideoPorId", (req, res) => {
         if(errorBusquedaVideo){
           res.status(500).send({mensaje : errorBusquedaVideo.message, codigo : errorBusquedaVideo.code});
         }else{
-          const nombreFolderPadre = __dirname+"/archivos/videosProfesionales";
-          try {
-            //comprobación de que exista los directorios necesarios
-            if(!fs.existsSync(nombreFolderPadre)){
-              fs.mkdir(nombreFolderPadre, function(errorFolderP){
-                if(errorFolderP){
-                  res.send({mensaje : "No se pudo crear la carpeta: "+nombreFolderPadre, error : errorFolderP});
-                }else{
-                  const nombreFolder = __dirname+"/archivos/videosProfesionales/video_"+resultadoBusquedaVideo[0].id_profesional;
-                  try {
-                    if(!fs.existsSync(nombreFolder)){
-                      fs.mkdir(nombreFolder, function(errorNF){
-                        if(errorNF){
-                          res.send({mensaje : "No se pudo crear la carpeta: "+nombreFolder, error : errorNF});
-                        }else{
-                          var url = `${nombreFolder}/${resultadoBusquedaVideo[0].nombreVideo}`;
-                          fs.writeFile(url, resultadoBusquedaVideo[0].video, (err) => {
-                            if(err){
-                              res.send({mensaje : "Error de escrutira del archivo de video"});
-                            }else{
-                              //realizamos el envio del video
-                              var stat = fs.statSync(url);
-                              res.writeHead(200, {
-                                'Content-Type' : 'video/mp4',
-                                'Content-Length' : stat.size
-                              });
-                              var lectura = fs.createReadStream(url);
-                              lectura.pipe(res);
-                            }
-                          });
-                        }
-                      });
-                    }else{
-                      var url = `${nombreFolder}/${resultadoBusquedaVideo[0].nombreVideo}`;
-                      fs.writeFile(url, resultadoBusquedaVideo[0].video, (err) => {
-                        if(err){
-                          res.send({mensaje : "Error de escrutira del archivo de video"});
-                        }else{
-                          //realizamos el envio del video
-                          var stat = fs.statSync(url);
-                          res.writeHead(200, {
-                            'Content-Type' : 'video/mp4',
-                            'Content-Length' : stat.size
-                          });
-                          var lectura = fs.createReadStream(url);
-                          lectura.pipe(res);
-                        }
-                      });
+          //validamos que haya registros
+          if(resultadoBusquedaVideo.length > 0){//encontramos el video
+            const nombreFolderPadre = __dirname+"/archivos/videosProfesionales";
+            try {
+              //comprobación de que exista los directorios necesarios
+              if(!fs.existsSync(nombreFolderPadre)){
+                fs.mkdir(nombreFolderPadre, function(errorFolderP){
+                  if(errorFolderP){
+                    res.send({mensaje : "No se pudo crear la carpeta: "+nombreFolderPadre, error : errorFolderP});
+                  }else{
+                    const nombreFolder = __dirname+"/archivos/videosProfesionales/video_"+resultadoBusquedaVideo[0].id_profesional;
+                    try {
+                      if(!fs.existsSync(nombreFolder)){
+                        fs.mkdir(nombreFolder, function(errorNF){
+                          if(errorNF){
+                            res.send({mensaje : "No se pudo crear la carpeta: "+nombreFolder, error : errorNF});
+                          }else{
+                            var url = `${nombreFolder}/${resultadoBusquedaVideo[0].nombreVideo}`;
+                            fs.writeFile(url, resultadoBusquedaVideo[0].video, (err) => {
+                              if(err){
+                                res.send({mensaje : "Error de escrutira del archivo de video"});
+                              }else{
+                                //realizamos el envio del video
+                                var stat = fs.statSync(url);
+                                res.writeHead(200, {
+                                  'Content-Type' : 'video/mp4',
+                                  'Content-Length' : stat.size
+                                });
+                                var lectura = fs.createReadStream(url);
+                                lectura.pipe(res);
+                              }
+                            });
+                          }
+                        });
+                      }else{
+                        var url = `${nombreFolder}/${resultadoBusquedaVideo[0].nombreVideo}`;
+                        fs.writeFile(url, resultadoBusquedaVideo[0].video, (err) => {
+                          if(err){
+                            res.send({mensaje : "Error de escrutira del archivo de video"});
+                          }else{
+                            //realizamos el envio del video
+                            var stat = fs.statSync(url);
+                            res.writeHead(200, {
+                              'Content-Type' : 'video/mp4',
+                              'Content-Length' : stat.size
+                            });
+                            var lectura = fs.createReadStream(url);
+                            lectura.pipe(res);
+                          }
+                        });
+                      }
+                    } catch (errorFolderB) {
+                      res.status(500).send({mensaje : errorFolderB})
                     }
-                  } catch (errorFolderB) {
-                    res.status(500).send({mensaje : errorFolderB})
                   }
+                });
+              }else{
+                const nombreFolder = __dirname+"/archivos/videosProfesionales/video_"+resultadoBusquedaVideo[0].id_profesional;
+                try {
+                  if(!fs.existsSync(nombreFolder)){
+                    fs.mkdir(nombreFolder, function(errorNF){
+                      if(errorNF){
+                        res.send({mensaje : "No se pudo crear la carpeta: "+nombreFolder, error : errorNF});
+                      }else{
+                        var url = `${nombreFolder}/${resultadoBusquedaVideo[0].nombreVideo}`;
+                        fs.writeFile(url, resultadoBusquedaVideo[0].video, (err) => {
+                          if(err){
+                            res.send({mensaje : "Error de escrutira del archivo de video"});
+                          }else{
+                            //realizamos el envio del video
+                            var stat = fs.statSync(url);
+                            res.writeHead(200, {
+                              'Content-Type' : 'video/mp4',
+                              'Content-Length' : stat.size
+                            });
+                            var lectura = fs.createReadStream(url);
+                            lectura.pipe(res);
+                          }
+                        });
+                      }
+                    });
+                  }else{
+                    var url = `${nombreFolder}/${resultadoBusquedaVideo[0].nombreVideo}`;
+                    fs.writeFile(url, resultadoBusquedaVideo[0].video, (err) => {
+                      if(err){
+                        res.send({mensaje : "Error de escrutira del archivo de video"});
+                      }else{
+                        //realizamos el envio del video
+                        var stat = fs.statSync(url);
+                        res.writeHead(200, resultadoBusquedaVideo[0].nombreVideo, 
+                          {
+                          'Content-Type' : 'video/mp4',
+                          'Content-Length' : stat.size
+                        });
+                        //res.write(resultadoBusquedaVideo[0].nombreVideo);
+                        var lectura = fs.createReadStream(url);
+                        lectura.pipe(res);
+                      }
+                    });
+                  }
+                } catch (errorFolderB) {
+                  res.status(500).send({mensaje : errorFolderB})
                 }
-              });
-            }else{
-              const nombreFolder = __dirname+"/archivos/videosProfesionales/video_"+resultadoBusquedaVideo[0].id_profesional;
-              try {
-                if(!fs.existsSync(nombreFolder)){
-                  fs.mkdir(nombreFolder, function(errorNF){
-                    if(errorNF){
-                      res.send({mensaje : "No se pudo crear la carpeta: "+nombreFolder, error : errorNF});
-                    }else{
-                      var url = `${nombreFolder}/${resultadoBusquedaVideo[0].nombreVideo}`;
-                      fs.writeFile(url, resultadoBusquedaVideo[0].video, (err) => {
-                        if(err){
-                          res.send({mensaje : "Error de escrutira del archivo de video"});
-                        }else{
-                          //realizamos el envio del video
-                          var stat = fs.statSync(url);
-                          res.writeHead(200, {
-                            'Content-Type' : 'video/mp4',
-                            'Content-Length' : stat.size
-                          });
-                          var lectura = fs.createReadStream(url);
-                          lectura.pipe(res);
-                        }
-                      });
-                    }
-                  });
-                }else{
-                  var url = `${nombreFolder}/${resultadoBusquedaVideo[0].nombreVideo}`;
-                  fs.writeFile(url, resultadoBusquedaVideo[0].video, (err) => {
-                    if(err){
-                      res.send({mensaje : "Error de escrutira del archivo de video"});
-                    }else{
-                      //realizamos el envio del video
-                      var stat = fs.statSync(url);
-                      res.writeHead(200, resultadoBusquedaVideo[0].nombreVideo, 
-                        {
-                        'Content-Type' : 'video/mp4',
-                        'Content-Length' : stat.size
-                      });
-                      //res.write(resultadoBusquedaVideo[0].nombreVideo);
-                      var lectura = fs.createReadStream(url);
-                      lectura.pipe(res);
-                    }
-                  });
-                }
-              } catch (errorFolderB) {
-                res.status(500).send({mensaje : errorFolderB})
               }
+            } catch (errorFolderPadre) {
+              res.status(500).send({mensaje : errorFolderPadre});
             }
-          } catch (errorFolderPadre) {
-            res.status(500).send({mensaje : errorFolderPadre});
+            
+          }else{
+            res.status(200).send({mensaje : "No hay archivos de video que se puedan obtener dado el identificador"});
           }
         }
       });
@@ -1764,7 +1785,7 @@ app.get("/obtenEjerciciosRutinaProfesional", (req, res) => {
         }else{
           for(let i = 0; i < resultadoBusquedaER.length; i++){
             let fechaI = new Date(resultadoBusquedaER[i].fechaInicio);
-            let fechaIC = fechaI.getUTCFullYear() + "-" + (fechaI.getUTCMonth()+1) + "-" + fechaI.getUTCDate();:
+            let fechaIC = fechaI.getUTCFullYear() + "-" + (fechaI.getUTCMonth()+1) + "-" + fechaI.getUTCDate();
             data.push({
               id_paciente : resultadoBusquedaER[i].id_paciente,
               nombrePaciente : resultadoBusquedaER[i].nombre + " " + resultadoBusquedaER[i].apPaterno + " " + resultadoBusquedaER[i].apMaterno,
@@ -1809,24 +1830,332 @@ app.get("/login", (req, res) => { //obtenemos del body los datos de correo, pass
             res.status(500).send({error : "Profesional no existente"});
             throw errorLogin;
           } else{
+            if(resultLogin.length > 0 && resultLogin[0].valido != '2'){
+              //existe el usuario
+              res.status(200).send({
+                mensaje : "Usuario encontrado.", 
+                permiso : 1,
+                tipo : "profesional",
+                id : resultLogin[0].id_profesional,
+                nombreC : resultLogin[0].nombre + " " + resultLogin[0].apPaterno + " " + resultLogin[0].apMaterno,
+                valido : resultLogin[0].valido
+              });
+              //console.log(resultLogin);
+            }else{
+              //no existe
+              let razon = "";
+              if(resultLogin[0].valido === '2')
+                razon = "Usuario deshabilitado";
+              else
+                razon = "Valores erroneos";
+              res.status(500).send({mensaje : "Comprueba los datos", permiso : 0, razon : razon});
+            }
+          }
+        });
+      }else{ //caso de usuario paciente
+        conn.query(`SELECT * FROM usuarios_pacientes WHERE email = '${req.body.correo}' and password = '${req.body.password}'`, (errorLogin, resultLogin) => {
+          if(errorLogin){
+            res.status(500).send({error : errorLogin.message, codigo : errorLogin.code});
+          }else{
             if(resultLogin.length > 0){
               //existe el usuario
-              res.status(200).send({mensaje : "Usuario encontrado.", permiso : 1});
+              res.status(200).send({
+                mensaje : "Usuario encontrado.", 
+                permiso : 1, 
+                tipo : "paciente",
+                id : resultLogin[0].id_paciente,
+                nombreC : resultLogin[0].nombre + " " + resultLogin[0].apPaterno + " " + resultLogin[0].apMaterno
+              });
+              //console.log(resultLogin);
             }else{
               //no existe
               res.status(500).send({mensaje : "Comprueba los datos", permiso : 0});
             }
           }
-        })
+        });
       }
     }
   }
 });
 
-  //METODOS DE ELIMINACIÓN DE ELEMENTO
-app.delete("/borraProfesional", (req, res) => {
-  //al eleminar debemos quitar el profesional de la salud o hacer la reasignación en otro metodo 
+  //METODO PARA OBTENER TODOS LOS ARCHIVOS DE UN USUARIO PROFESIONAL Y ALMACENARLO DENTRO DE LA CARPETA DE ARCHIVOS
+    //EN COMPARACIÓN CON LA VERSIÓN PASADA, AHORA ENVIA LA INFORMACIÓN DE LOS ARCHIVOS DENTRO DEL RESPONSE DE LA PETICIÓN
+app.get("/obtenArchivosProfesional", (req, res) => {
+  if(JSON.stringify(req.body) === '{}'){
+    console.log("Error, no hay datos para la busqueda");
+    res.status(500).send({error : "sin informacion"});
+  }else{
+    if(req.body.id === ""){
+      console.log("Error no hay datos");
+      res.status(500).send("Error");
+    }else{
+      const conn = conexion.cone;
+      conn.query(`SELECT * FROM archivos WHERE id_profesional = ${req.body.id}`, (err, result) => {
+        if(err){
+            throw err;
+        }else{
+          //validamos que el profesional tenga archivos que obtener
+          if(result.length > 0){ // realizamos la creación de los archivos
+            const nombreFolderPadre = __dirname + "/archivos/archivosProfesionales";
+            try {
+              if (!fs.existsSync(nombreFolderPadre)) {
+                fs.mkdir(nombreFolderPadre, function (errorFolderB) {
+                  if (errorFolderB) {
+                    res.send({
+                      mensaje: "No se pudo crear la carpeta",
+                      error: errorFolderB,
+                    });
+                  } else {
+                    const nombreFolder = __dirname+"/archivos/archivosProfesionales/busqueda_certificados_id_"+req.body.id;
+                    try{
+                      if(!fs.existsSync(nombreFolder)){
+                        fs.mkdir(nombreFolder, function(err){
+                          if(err){
+                            console.log(err);
+                            res.send({mensaje : "No se pudo crear la carpeta",
+                                      error : err});
+                          }else{
+                            var objeto = {};
+                            var data = [];
+                            for(let i = 0; i < result.length; i++){
+                              //var data = Buffer.from(result[i].archivo, 'binary');
+                              //console.log(result[i].archivo.toString('base64'))
+                              fs.writeFile(`${__dirname}/archivos/archivosProfesionales/busqueda_certificados_id_${req.body.id}/${req.body.id}_`+result[i].nombreArchivo, result[i].archivo, (err) => {
+                                if(err){
+                                  console.log("Error escritura de archivos decodificado", err);
+                                }
+                              });
+                              data.push({
+                                nombre : result[i].nombreArchivo,
+                                info : result[i].archivo //Buffer.from(result[i].archivo).toString()// esta es una prueba de funcionamiento
+                              });
+                            }
+                            objeto.data = data;
+                            res.status(200).send({mensaje : `Creación correcta de los archivos del usaurio #${req.body.id} dentro del servidor, en la carpeta: /archivos/archivosProfesionales/busqueda_certificados_id_${req.body.id}/`, 
+                                                archivos : objeto});
+                          }
+                        });
+                      }else{
+                        var objeto = {};
+                        var data = [];
+                        for(let i = 0; i < result.length; i++){
+                          //var data = Buffer.from(result[i].archivo, 'binary');
+                          //console.log(result[i].archivo.toString('base64'))
+                          fs.writeFile(`${__dirname}/archivos/archivosProfesionales/busqueda_certificados_id_${req.body.id}/${req.body.id}_`+result[i].nombreArchivo, result[i].archivo, (err) => {
+                            if(err){
+                              console.log("Error escritura de archivos decodificado", err);
+                              }
+                          });
+                          data.push({
+                            nombre : result[i].nombreArchivo,
+                            info : result[i].archivo //Buffer.from(result[i].archivo).toString()// esta es una prueba de funcionamiento
+                          });
+                        }
+                        objeto.data = data;
+                        res.status(200).send({mensaje : `Creación correcta de los archivos del usaurio #${req.body.id} dentro del servidor, en la carpeta: /archivos/archivosProfesionales/busqueda_certificados_id_${req.body.id}/`, 
+                                            archivos : objeto});
+                      }
+                    }catch(err){
+                      res.status(500).send(err);
+                    }
+                  }
+                });
+              }else{
+                const nombreFolder = __dirname+"/archivos/archivosProfesionales/busqueda_certificados_id_"+req.body.id;
+                try{
+                  if(!fs.existsSync(nombreFolder)){
+                    fs.mkdir(nombreFolder, function(err){
+                      if(err){
+                        console.log(err);
+                        res.send({mensaje : "No se pudo crear la carpeta",
+                                  error : err});
+                      }else{
+                        var objeto = {};
+                        var data = [];
+                        for(let i = 0; i < result.length; i++){
+                          //var data = Buffer.from(result[i].archivo, 'binary');
+                          //console.log(result[i].archivo.toString('base64'))
+                          fs.writeFile(`${__dirname}/archivos/archivosProfesionales/busqueda_certificados_id_${req.body.id}/${req.body.id}_`+result[i].nombreArchivo, result[i].archivo, (err) => {
+                            if(err){
+                              console.log("Error escritura de archivos decodificado", err);
+                              }
+                          });
+                          data.push({
+                            nombre : result[i].nombreArchivo,
+                            info : result[i].archivo //Buffer.from(result[i].archivo).toString()// esta es una prueba de funcionamiento
+                          });
+                        }
+                        objeto.data = data;
+                        res.status(200).send({mensaje : `Creación correcta de los archivos del usaurio #${req.body.id} dentro del servidor, en la carpeta: /archivos/archivosProfesionales/busqueda_certificados_id_${req.body.id}/`, 
+                                            archivos : objeto});
+                      }
+                    });
+                  }else{
+                    var objeto = {};
+                    var data = [];
+                    for(let i = 0; i < result.length; i++){
+                      //var data = Buffer.from(result[i].archivo, 'binary');
+                      //console.log(result[i].archivo.toString('base64'))
+                      fs.writeFile(`${__dirname}/archivos/archivosProfesionales/busqueda_certificados_id_${req.body.id}/${req.body.id}_`+result[i].nombreArchivo, result[i].archivo, (err) => {
+                        if(err){
+                          console.log("Error escritura de archivos decodificado", err);
+                          }
+                      });
+                      data.push({
+                        nombre : result[i].nombreArchivo,
+                        info : result[i].archivo //Buffer.from(result[i].archivo).toString()// esta es una prueba de funcionamiento
+                      });
+                    }
+                    objeto.data = data;
+                    res.status(200).send({mensaje : `Creación correcta de los archivos del usaurio #${req.body.id} dentro del servidor, en la carpeta: /archivos/archivosProfesionales/busqueda_certificados_id_${req.body.id}/`, 
+                                        archivos : objeto});
+                  }
+                }catch(err){
+                  res.status(500).send(err);
+                }
+              }
+          } catch (errorFolderPadre) {
+            res.status(500)
+              .send({
+                mensaje: "Error al crear la carpeta padre",
+                error: errorFolderPadre,
+              });
+            throw errorFolderPadre;
+          }
+          }else{
+            res.status(200).send({mensaje : "No hay archivos que correspondan al profesional"});
+          }
+        }
+    });
+    }
+  }
+});
 
+  //METODOS DE ELIMINACIÓN DE ELEMENTO
+    //se eliminan todos los registros relacionados con el profesional, solo se modifican los usuarios_pacientes, historial_profesionales, mediciones, alimento_dieta
+    //ELIMINAR imgusuarioprofesional, archivos, videos, usuarios_profesionales, citas, proximas_citas
+    //MODIFICAR usuarios_pacientes, ejercicio_rutina, alimento_dieta, historial_profesionales, mediciones   COLOCAMOS EL VALOR DE 0 DENTRO DE LA COLUMNA
+      //hechos:
+          /*  ELIMINADOS
+            proximas_citas, citas, imgusuariosprofesionales, videos, archivos
+          */
+          /*  MODIFICADOS
+            mediciones, alimento_dieta, ejercicio_rutina, usuarios_pacientes, historial_profesionales
+            dentro de la tabla de usuariosProfesionales modificamos el valor de valido como 2 el cual se considera como registro no valido
+          */
+  //PROBAR
+app.delete("/borraProfesional", (req, res) => {//obtenemos el id del profesional
+  //al eleminar debemos quitar el profesional de la salud o hacer la reasignación en otro metodo 
+  if(JSON.stringify(req.body) === '{}'){
+    res.status(500).send({mensaje : "Sin informacion"});
+  }else{
+    if(req.body.id === ""){
+      res.status(500).send({mensaje : "Error, datos incompletos"});
+    }else{
+      const conn = conexion.cone;
+      conn.query(`SELECT * FROM usuarios_profesionales WHERE id_profesional = ${req.body.id}`, (errorBusqueda, resultadoBusqueda) => {
+        if(errorBusqueda){
+          res.status(500).send({mensaje : errorBusqueda.message, codigo : errorBusqueda.code});
+        }else{
+          if(resultadoBusqueda.length > 0){//existe
+            //usuarios_profesionales; usuarios_pacientes; archivos; historial_profesionales; citas; videos; imgUsuariosProfesionales; ejercicio_rutina; alimento_dieta; mediciones; proximas_citas
+            //proximas_citas : ELIMINAR
+            var obj = {}, data = [];
+            conn.query(`DELETE FROM proximas_citas WHERE id_profesional = ${req.body.id}`, (errorBorraProximasCitas, resultBorraProximasCitas) => {
+              if(errorBorraProximasCitas){
+                conn.rollback(() => {res.status(500).send({mensaje : errorBorraProximasCitas.message, codigo : errorBorraProximasCitas.code, objeto : obj});});
+              }else{
+                obj.proximasCitas = {proximasCitas : "OK"};
+              }
+            });
+            //mediciones : ACTUALIZAMOS, COLOCAMOS EL VALOR DEL PROFESIONAL COMO 0
+            conn.query(`UPDATE mediciones SET id_profesional = 0 WHERE id_profesional = ${req.body.id}`, (errorActualizaMedicion, resultActualizaMedicion) => {
+              if(errorActualizaMedicion){
+                conn.rollback(() => {res.status(500).code({mensaje : errorActualizaMedicion.message, codigo : errorActualizaMedicion.code, objeto : obj});});
+              }else{
+                obj.mediciones = {mediciones : "Actualizado"};
+              }
+            });
+            //alimento_dieta : ACTUALIZAMOS, COLOCAMOS EL VALOR DEL PROFESIONAL COMO 0
+            conn.query(`UPDATE alimento_dieta SET id_profesional = 0 WHERE id_profesional = ${req.body.id}`, (errorActualizaAlimento, resultActualizaAlimento) => {
+              if(errorActualizaAlimento){
+                conn.rollback(() => {res.status(500).send({mensaje : errorActualizaAlimento.message, codigo : errorActualizaAlimento.code, objeto : obj});});
+              }else{
+                obj.alimentoDieta = {alimentoDieta : "Actualizado"};
+              }
+            });
+            //ejercicio_rutina : ACTUALIZAMOS, COLOCAMOS EL VALOR DEL PROFESIONAL COMO 0
+            conn.query(`UPDATE ejercicio_rutina id_profesional = 0 WHERE id_profesional = ${req.body.id}`, (errorActualizaEJ, resultActualizaEJ) => {
+              if(errorActualizaEJ){
+                conn.rollback(() => {res.status(500).send({mensaje : errorActualizaEJ.message, codigo : errorActualizaEJ.code, objeto : obj});});
+              }else{
+                obj.ejercicioRutina = {ejercicioRutina : "Actualizado"};
+              }
+            });
+            //usuarios_pacientes : ACTUALIZAMOS, COLOCAMOS EL VALOR DEL PROFESIONAL COMO 0
+            conn.query(`UPDATE usaurios_pacientes SET id_profesional = 0 WHERE id_profesional = ${req.body.id}`, (errorActualizaUpacientes, resultActualizaUpacientes) => {
+              if(errorActualizaUpacientes){
+                conn.rollback(() => {res.status(500).send({mensaje : errorActualizaUpacientes.message, codigo : errorActualizaUpacientes.code, objeto : obj});});
+              }else{
+                obj.usuariosPacientes = {usuariosPacientes : "Actualizado"};
+              }
+            });
+            //historial_profesionales : ACTUALIZAMOS, COLOCAMOS EL VALOR DEL PROFESIONAL COMO 0
+            conn.query(`UPDATE historial_profesionales SET fechaTer = ${fechaApi} WHERE id_profesional = ${req.body.id}`, (errorActualizaHP, resultActualizaHP) => {
+              if(errorActualizaHP){
+                conn.rollback(() => {res.status(500).send({mensaje : errorActualizaHP.message, codigo : errorActualizaHP.code, objeto : obj});})
+              }else{
+                obj.historialProfesionales = {historialProfesionales : "Actualizado"};
+              }
+            });
+            //citas : ELIMINAR 
+            conn.query(`DELETE FROM citas WHERE id_profesional = ${req.body.id}`, (errorBorraCitas, resultBorraCitas) => {
+              if(errorBorraCitas){
+                conn.rollback(() => {res.status(500).send({mensaje : errorBorraCitas.message, codigo : errorBorraCitas.code, objeto : obj});});
+              }else{
+                obj.citas = {citas : "OK"};
+              }
+            });
+            //imgusuariosprofesionales : ELIMINAR 
+            conn.query(`DELETE FROM imgUsuariosProfesionales WHERE id_profesional = ${req.body.id}`, (errorBorraIMG, resultBorraIMG) => {
+              if(errorBorraIMG){
+                conn.rollback(() => {res.status(500).send({mensaje : errorBorraIMG.message, codigo : errorBorraIMG.code, objeto : obj});});
+              }else{
+                obj.img = {imgUsuarios : "OK"};
+              }
+            });
+            //videos : ELIMINAR
+            conn.query(`DELETE FROM videos WHERE id_profesional = ${req.body.id}`, (errorBorraVideos, resultBorraVideos) => {
+              if(errorBorraVideos){
+                conn.rollback(() => {res.status(500).send({mensaje : errorBorraVideos.message, codigo : errorBorraVideos.code, objeto : obj});});
+              }else{
+                obj.videos = {videos : "OK"};
+              }
+            });
+            //archivos : ELIMINAR 
+            conn.query(`DELETE FROM archivos WHERE id_profesional = ${req.body.id}`, (errorBorraArchivos, resultBorraArchivos) => {
+              if(errorBorraArchivos){
+                conn.rollback(() => {res.status(500).send({mensaje : errorBorraArchivos.message, codigo : errorBorraArchivos.code, objeto : obj});});
+              }else{
+                obj.archivos = {archivos : "OK"};
+              }
+            });
+            //usuarios_profesionales : MODIICAMOS EL VALOR DE VALIDO
+            conn.query(`UPDATE usuarios_profesionales SET valido = '2' WHERE id_profesional = ${req.body.id}`, (errorActualizaUP, resultActualizaUP) => {
+              if(errorActualizaUP){
+                conn.rollback(() => {res.status(500).send({mensaje : errorActualizaUP.message, codigo : errorActualizaUP.code, objeto : obj});});
+              }else{
+                obj.usuariosProfesionales = {usuariosProfesionales : "Actualizado"};
+              }
+            });
+            res.status(200).send({mensaje : "Eliminación exitosa", objeto : obj});
+          }else{//no existe
+            res.status(500).send({mensaje : "Usuario no existente"});
+          }
+        }
+      });
+    }
+  }
 });
 
   //METODO PARA ELIMINAR EL CONTENIDO DE UNA CARPETA, EN ESTE CASO videosProfesionales
@@ -1852,7 +2181,7 @@ app.delete("/borraVideoId", (req, res) => {
     res.status(500).send({mensaje : "Sin informacion"});
   }else{
     if(req.body.id === ""){
-      res.status(500).send({mensaje : "Error, datos incompetos"});
+      res.status(500).send({mensaje : "Error, datos incompletos"});
     }else{
       const conn = conexion.cone; //primero realizamos la busqueda de id de eliminacion para comprobar que no exista dentro de alguna rutina de ejercicio
       conn.query(`SELECT * FROM ejercicio_rutina WHERE id_video = ${req.body.id}`, (errorBusquedaER, resultadoBusquedaER) => {
@@ -1915,9 +2244,10 @@ app.put("/actualizaRutinaEjercicio", (req, res) => {
     if(req.body.id_ER === "" || req.body.id_profesional === "" || req.body.id_paciente === "" || req.body.cantidad === "" || req.body.id_video === "" || req.body.id_ejercicio === "" || req.body.fechaInicio === "" || req.body.fechaFin === "" ){
       res.status(500).send({mensaje : "Error, datos incompletos"});
     }else{
+      //console.log(req.body);
       const conn = conexion.cone;
       //realizamos la actualizacion de datos
-      conn.query(`UPDATE ejercicio_rutina SET cantidad = ${req.body.cantidad}, id_video = ${req.body.id_video}, id_ejercicio = ${req.body.id_ejercicio}, fechaInicio = ${req.body.fechaInicio}, fechaFin = ${req.body.fechaFin} WHERE id_ER = ${body.req.id_ER}`, (errorActua, resultActua) => {
+      conn.query(`UPDATE ejercicio_rutina SET cantidad = '${req.body.cantidad}', id_video = ${req.body.id_video}, id_ejercicio = ${req.body.id_ejercicio}, fechaInicio = '${req.body.fechaInicio}', fechaFin = '${req.body.fechaFin}' WHERE id_ER = ${req.body.id_ER}`, (errorActua, resultActua) => {
         if(errorActua){
           res.status(500).send({error : errorActua.message, codigo : errorActua.code});
         }else{
@@ -1928,157 +2258,23 @@ app.put("/actualizaRutinaEjercicio", (req, res) => {
   }
 });
 
-  //METODO PARA OBTENER TODOS LOS ARCHIVOS DE UN USUARIO PROFESIONAL Y ALMACENARLO DENTRO DE LA CARPETA DE ARCHIVOS
-    //EN COMPARACIÓN CON LA VERSIÓN PASADA, AHORA ENVIA LA INFORMACIÓN DE LOS ARCHIVOS DENTRO DEL RESPONSE DE LA PETICIÓN
-app.get("/obtenArchivosProfesional", (req, res) => {
-  if(JSON.stringify(req.body) === '{}'){
-    console.log("Error, no hay datos para la busqueda");
-    res.status(500).send({error : "sin informacion"});
-  }else{
-    if(req.body.id === ""){
-      console.log("Error no hay datos");
-      res.status(500).send("Error");
-    }else{
-      const conn = conexion.cone;
-      conn.query(`SELECT * FROM archivos WHERE id_profesional = ${req.body.id}`, (err, result) => {
-        if(err){
-            throw err;
-        }else{
-          const nombreFolderPadre = __dirname + "/archivos/archivosProfesionales";
-          try {
-            if (!fs.existsSync(nombreFolderPadre)) {
-              fs.mkdir(nombreFolderPadre, function (errorFolderB) {
-                if (errorFolderB) {
-                  res.send({
-                    mensaje: "No se pudo crear la carpeta",
-                    error: errorFolderB,
-                  });
-                } else {
-                  const nombreFolder = __dirname+"/archivos/archivosProfesionales/busqueda_certificados_id_"+req.body.id;
-                  try{
-                    if(!fs.existsSync(nombreFolder)){
-                      fs.mkdir(nombreFolder, function(err){
-                        if(err){
-                          console.log(err);
-                          res.send({mensaje : "No se pudo crear la carpeta",
-                                    error : err});
-                        }else{
-                          var objeto = {};
-                          var data = [];
-                          for(let i = 0; i < result.length; i++){
-                            //var data = Buffer.from(result[i].archivo, 'binary');
-                            //console.log(result[i].archivo.toString('base64'))
-                            fs.writeFile(`${__dirname}/archivos/archivosProfesionales/busqueda_certificados_id_${req.body.id}/${req.body.id}_`+result[i].nombreArchivo, result[i].archivo, (err) => {
-                              if(err){
-                                console.log("Error escritura de archivos decodificado", err);
-                              }
-                            });
-                            data.push({
-                              nombre : result[i].nombreArchivo,
-                              info : result[i].archivo
-                            });
-                          }
-                          objeto.data = data;
-                          res.status(200).send({mensaje : `Creación correcta de los archivos del usaurio #${req.body.id} dentro del servidor, en la carpeta: /archivos/archivosProfesionales/busqueda_certificados_id_${req.body.id}/`, 
-                                              archivos : objeto});
-                        }
-                      });
-                    }else{
-                      var objeto = {};
-                      var data = [];
-                      for(let i = 0; i < result.length; i++){
-                        //var data = Buffer.from(result[i].archivo, 'binary');
-                        //console.log(result[i].archivo.toString('base64'))
-                        fs.writeFile(`${__dirname}/archivos/archivosProfesionales/busqueda_certificados_id_${req.body.id}/${req.body.id}_`+result[i].nombreArchivo, result[i].archivo, (err) => {
-                          if(err){
-                            console.log("Error escritura de archivos decodificado", err);
-                            }
-                        });
-                        data.push({
-                          nombre : result[i].nombreArchivo,
-                          info : result[i].archivo
-                        });
-                      }
-                      objeto.data = data;
-                      res.status(200).send({mensaje : `Creación correcta de los archivos del usaurio #${req.body.id} dentro del servidor, en la carpeta: /archivos/archivosProfesionales/busqueda_certificados_id_${req.body.id}/`, 
-                                          archivos : objeto});
-                    }
-                  }catch(err){
-                    res.status(500).send(err);
-                  }
-                }
-              });
-            }else{
-              const nombreFolder = __dirname+"/archivos/archivosProfesionales/busqueda_certificados_id_"+req.body.id;
-              try{
-                if(!fs.existsSync(nombreFolder)){
-                  fs.mkdir(nombreFolder, function(err){
-                    if(err){
-                      console.log(err);
-                      res.send({mensaje : "No se pudo crear la carpeta",
-                                error : err});
-                    }else{
-                      var objeto = {};
-                      var data = [];
-                      for(let i = 0; i < result.length; i++){
-                        //var data = Buffer.from(result[i].archivo, 'binary');
-                        //console.log(result[i].archivo.toString('base64'))
-                        fs.writeFile(`${__dirname}/archivos/archivosProfesionales/busqueda_certificados_id_${req.body.id}/${req.body.id}_`+result[i].nombreArchivo, result[i].archivo, (err) => {
-                          if(err){
-                            console.log("Error escritura de archivos decodificado", err);
-                            }
-                        });
-                        data.push({
-                          nombre : result[i].nombreArchivo,
-                          info : result[i].archivo
-                        });
-                      }
-                      objeto.data = data;
-                      res.status(200).send({mensaje : `Creación correcta de los archivos del usaurio #${req.body.id} dentro del servidor, en la carpeta: /archivos/archivosProfesionales/busqueda_certificados_id_${req.body.id}/`, 
-                                          archivos : objeto});
-                    }
-                  });
-                }else{
-                  var objeto = {};
-                  var data = [];
-                  for(let i = 0; i < result.length; i++){
-                    //var data = Buffer.from(result[i].archivo, 'binary');
-                    //console.log(result[i].archivo.toString('base64'))
-                    fs.writeFile(`${__dirname}/archivos/archivosProfesionales/busqueda_certificados_id_${req.body.id}/${req.body.id}_`+result[i].nombreArchivo, result[i].archivo, (err) => {
-                      if(err){
-                        console.log("Error escritura de archivos decodificado", err);
-                        }
-                    });
-                    data.push({
-                      nombre : result[i].nombreArchivo,
-                      info : result[i].archivo
-                    });
-                  }
-                  objeto.data = data;
-                  res.status(200).send({mensaje : `Creación correcta de los archivos del usaurio #${req.body.id} dentro del servidor, en la carpeta: /archivos/archivosProfesionales/busqueda_certificados_id_${req.body.id}/`, 
-                                      archivos : objeto});
-                }
-              }catch(err){
-                res.status(500).send(err);
-              }
-            }
-          } catch (errorFolderPadre) {
-            res.status(500)
-              .send({
-                mensaje: "Error al crear la carpeta padre",
-                error: errorFolderPadre,
-              });
-            throw errorFolderPadre;
-          }
-        }
-    });
-    }
-  }
-});
 
   //METODOS DE CONFIGURACIÓN DEL SERVIDOR
 app.listen(3000, "192.168.100.9", function () {
   console.log("Funcionando en el puerto: 3000");
+  //obtenemos la fecha actual de CDMX
+  apis.apiTiempo()
+  .then(data => {//obtenemos la fecha actual en CDMX
+    //separamos los elementos
+    let partes = data.split('-');
+    const anoAPI = partes[0];
+    const mesAPI = partes[1];
+    const diaAPI = partes[2];
+    fechaApi = anoAPI+"-"+mesAPI+"-"+diaAPI;
+  })
+  .catch(error => {
+    console.error("Error dentro de la petición", error);
+  });
 });
 
 app.use(function (req, res) {
