@@ -152,7 +152,7 @@ app.post("/altaprofesionales", (req, res) => {
            //hacemos la inserción en la base de datos
             //let info = `INSERT INTO usuarios_profesionales VALUES (0, '${req.body.nombre}', '${req.body.apPaterno}', '${req.body.apMaterno}', '${req.body.email}', ${req.body.edad}, '${req.body.fechaN}', '${req.body.pass}', ${req.body.tipo}, '0')` //en este caso el valor de valido se pone en 0, debido a que debe entrar en proceso de validar los documentos que proporcione
             conn.query(`INSERT INTO usuarios_profesionales VALUES (0, '${req.body.nombre}', '${req.body.apPaterno}', '${req.body.apMaterno}', '${req.body.email}', ${req.body.edad}, '${req.body.fechaN}', '${req.body.pass}', ${req.body.tipo}, '0')`, function (errInsert, resultInsert) {
-              if (errInsert) throw errInsert;
+              if (errInsert) if (errInsert) res.status(500).send({mensaje : errInsert.message, codigo : errInsert.code});
                 else {
                   console.log(resultInsert.affectedRows);
                   res.status(200).send({mensaje : "Creacion exitosa de usuario"});
@@ -1057,119 +1057,122 @@ app.get("/obtenImgProfesional", (req, res) => {
           res.status(500).send({error : err});
           throw err;
         }else{
-          const nombreFolderPadre = "./archivos/imgProfesionales";
-          try{
-            if(!fs.existsSync(nombreFolderPadre)){
-              fs.mkdir(nombreFolderPadre, function(errorFolderB){
-                if(errorFolderB){
-                  console.log(errorFolderB);
-                  res.send({
-                    mensaje : "No se pudo crear la carpeta",
-                    error : errorFolderB
-                  });
-                }else{
-                  const nombreFolder = "./archivos/imgProfesionales/id_"+req.body.id;
-                  try{
-                    if(!fs.existsSync(nombreFolder)){
-                      fs.mkdir(nombreFolder, function(error){
-                        if(error){
-                          console.log(error);
-                          res.send({mensaje: "No se pudo crear la carpeta",
-                                    error : error});
-                        }else{
-                          var url = `${nombreFolder}/${req.body.id}_img.`+result[0].extension;
-                          fs.writeFile(url, result[0].img, (err) => {
-                            if(err){
-                              console.log("Error escritura de archivos decodificado", err);
-                              }else{
-                                //intentamos hacer el envio de la img
-                                var stat = fs.statSync(`./archivos/imgProfesionales/id_${req.body.id}_img.${result[0].extension}`);
-                                res.writeHead(200, {
-                                  'Content-Type' : `image/${result[0].extension}`,
-                                  'Content-Length' : stat.size
-                                });
-                                var lectura = fs.createReadStream(url);
-                                lectura.pipe(res);
-                              }
-                          });
-                        }
-                      });
-                    }else{
-                      var url = `${nombreFolder}/${req.body.id}_img.`+result[0].extension;
-                      fs.writeFile(url, result[0].img, (err) => {
-                        if(err){
-                          console.log("Error escritura de archivos decodificado", err);
+          if(result.length > 0){
+            const nombreFolderPadre = "./archivos/imgProfesionales";
+            try{
+              if(!fs.existsSync(nombreFolderPadre)){
+                fs.mkdir(nombreFolderPadre, function(errorFolderB){
+                  if(errorFolderB){
+                    console.log(errorFolderB);
+                    res.send({
+                      mensaje : "No se pudo crear la carpeta",
+                      error : errorFolderB
+                    });
+                  }else{
+                    const nombreFolder = "./archivos/imgProfesionales/id_"+req.body.id;
+                    try{
+                      if(!fs.existsSync(nombreFolder)){
+                        fs.mkdir(nombreFolder, function(error){
+                          if(error){
+                            console.log(error);
+                            res.send({mensaje: "No se pudo crear la carpeta",
+                                      error : error});
                           }else{
-                            //intentamos hacer el envio de la img
-                            var stat = fs.statSync(url);
-                            res.writeHead(200, {
-                              'Content-Type' : `image/${result[0].extension}`,
-                              'Content-Length' : stat.size
+                            var url = `${nombreFolder}/${req.body.id}_img.`+result[0].extension;
+                            fs.writeFile(url, result[0].img, (err) => {
+                              if(err){
+                                console.log("Error escritura de archivos decodificado", err);
+                                }else{
+                                  //intentamos hacer el envio de la img
+                                  var stat = fs.statSync(`./archivos/imgProfesionales/id_${req.body.id}_img.${result[0].extension}`);
+                                  res.writeHead(200, {
+                                    'Content-Type' : `image/${result[0].extension}`,
+                                    'Content-Length' : stat.size
+                                  });
+                                  var lectura = fs.createReadStream(url);
+                                  lectura.pipe(res);
+                                }
                             });
-                            var lectura = fs.createReadStream(url);
-                            lectura.pipe(res);
                           }
-                      });
-                      
-                    }
-                  }catch(err){
-                    res.status(500).send(err);
-                  }
-                }
-              });
-            }else{
-              const nombreFolder = "./archivos/imgProfesionales/id_"+req.body.id;
-              try{
-                if(!fs.existsSync(nombreFolder)){
-                  fs.mkdir(nombreFolder, function(error){
-                    if(error){
-                      console.log(error);
-                      res.send({mensaje: "No se pudo crear la carpeta",
-                                error : error});
-                    }else{
-                      var url = `${nombreFolder}/${req.body.id}_img.`+result[0].extension;
-                      fs.writeFile(url, result[0].img, (err) => {
-                        if(err){
-                          console.log("Error escritura de archivos decodificado", err);
-                          }else{
-                            //intentamos hacer el envio de la img
-                            var stat = fs.statSync(url);
-                            res.writeHead(200, {
-                              'Content-Type' : `image/${result[0].extension}`,
-                              'Content-Length' : stat.size
-                            });
-                            var lectura = fs.createReadStream(url);
-                            lectura.pipe(res);
-                          }
-                      });
-                      
-                    }
-                  });
-                }else{
-                  var url = `${nombreFolder}/${req.body.id}_img.`+result[0].extension;
-                  fs.writeFile(url, result[0].img, (err) => {
-                    if(err){
-                      console.log("Error escritura de archivos decodificado", err);
-                      }else{
-                        //intentamos hacer el envio de la img
-                        var stat = fs.statSync(url);
-                        res.writeHead(200, {
-                          'Content-Type' : `image/${result[0].extension}`,
-                          'Content-Length' : stat.size
                         });
-                        var lectura = fs.createReadStream(url);
-                        lectura.pipe(res);
+                      }else{
+                        var url = `${nombreFolder}/${req.body.id}_img.`+result[0].extension;
+                        fs.writeFile(url, result[0].img, (err) => {
+                          if(err){
+                            console.log("Error escritura de archivos decodificado", err);
+                            }else{
+                              //intentamos hacer el envio de la img
+                              var stat = fs.statSync(url);
+                              res.writeHead(200, {
+                                'Content-Type' : `image/${result[0].extension}`,
+                                'Content-Length' : stat.size
+                              });
+                              var lectura = fs.createReadStream(url);
+                              lectura.pipe(res);
+                            }
+                        });
+                        
                       }
-                  });
+                    }catch(err){
+                      res.status(500).send(err);
+                    }
+                  }
+                });
+              }else{
+                const nombreFolder = "./archivos/imgProfesionales/id_"+req.body.id;
+                try{
+                  if(!fs.existsSync(nombreFolder)){
+                    fs.mkdir(nombreFolder, function(error){
+                      if(error){
+                        console.log(error);
+                        res.send({mensaje: "No se pudo crear la carpeta",
+                                  error : error});
+                      }else{
+                        var url = `${nombreFolder}/${req.body.id}_img.`+result[0].extension;
+                        fs.writeFile(url, result[0].img, (err) => {
+                          if(err){
+                            console.log("Error escritura de archivos decodificado", err);
+                            }else{
+                              //intentamos hacer el envio de la img
+                              var stat = fs.statSync(url);
+                              res.writeHead(200, {
+                                'Content-Type' : `image/${result[0].extension}`,
+                                'Content-Length' : stat.size
+                              });
+                              var lectura = fs.createReadStream(url);
+                              lectura.pipe(res);
+                            }
+                        });
+                        
+                      }
+                    });
+                  }else{
+                    var url = `${nombreFolder}/${req.body.id}_img.`+result[0].extension;
+                    fs.writeFile(url, result[0].img, (err) => {
+                      if(err){
+                        console.log("Error escritura de archivos decodificado", err);
+                        }else{
+                          //intentamos hacer el envio de la img
+                          var stat = fs.statSync(url);
+                          res.writeHead(200, {
+                            'Content-Type' : `image/${result[0].extension}`,
+                            'Content-Length' : stat.size
+                          });
+                          var lectura = fs.createReadStream(url);
+                          lectura.pipe(res);
+                        }
+                    });
+                  }
+                }catch(err){
+                  res.status(500).send(err);
                 }
-              }catch(err){
-                res.status(500).send(err);
               }
+            }catch(errorFolderBase){
+              res.status(500).send(errorFolderBase);
             }
-          }catch(errorFolderBase){
-            res.status(500).send(errorFolderBase);
+          }else{
+            res.status(404).sendFile(__dirname+"/archivos/imgGeneral/noPhotoUser.png");
           }
-          
         }
       });
     }
@@ -1192,124 +1195,120 @@ app.get("/obtenImgPaciente", (req, res) => {
           res.status(500).send({error : errorBusqueda});
           throw errorBusqueda;
         }else{
-          console.log(resultBusqueda.length)
           if(resultBusqueda.length > 0){//contamos con una img del paciente
-
+            const nombreFolderPadre = __dirname+"/archivos/imgPacientes";
+            try{
+              if(!fs.existsSync(nombreFolderPadre)){
+                fs.mkdir(nombreFolderPadre, function(errorFolderB){
+                  if(errorFolderB){
+                    console.log(errorFolderB);
+                    res.send({
+                      mensaje : "Ni se pudo crear la carpeta",
+                      error : errorFolderB
+                    });
+                  }else{
+                  const nombreFolder = __dirname+"/archivos/imgPacientes/id_" +req.body.id;
+                  try{
+                    if(!fs.existsSync(nombreFolder)){
+                      fs.mkdir(nombreFolder, function(error){
+                        if(error){
+                          console.log(error);
+                          res.send({mensaje : "No se pudo crear la carpeta base",
+                                    error : error});
+                        }else{
+                          var url = `${nombreFolder}/${req.body.id}_img.`+resultBusqueda[0].extension;
+                          fs.writeFile(url, resultBusqueda[0].img, (err) => {
+                            if(err){
+                              console.log("Error escritura de archivos decodificado", err);
+                            }else{
+                              //intentamos hacer el envio de la img
+                              var stat = fs.statSync(`${__dirname}/archivos/imgPacientes/id_${req.body.id}/${req.body.id}_img.${resultBusqueda[0].extension}`);
+                              res.writeHead(200, {
+                                'Content-Type' : `image/${resultBusqueda[0].extension}`,
+                                'Content-Length' : stat.size
+                              });
+                              var lectura = fs.createReadStream(url);
+                              lectura.pipe(res);
+                            }
+                          });
+                        }
+                      });
+                    }else{
+                      var url = `${nombreFolder}/${req.body.id}_img.`+resultBusqueda[0].extension;
+                      fs.writeFile(url, resultBusqueda[0].img, (err) => {
+                        if(err){
+                          console.log("Error escritura de archivos decodificado", err);
+                        }else{
+                          //intentamos hacer el envio de la img
+                          var stat = fs.statSync(`${__dirname}/archivos/imgPacientes/id_${req.body.id}/${req.body.id}_img.${resultBusqueda[0].extension}`);
+                          res.writeHead(200, {
+                            'Content-Type' : `image/${resultBusqueda[0].extension}`,
+                            'Content-Length' : stat.size
+                          });
+                          var lectura = fs.createReadStream(url);
+                          lectura.pipe(res);
+                        }
+                      });
+                    }
+                  }catch(errorFolderB){
+                    res.status(500).send(errorFolderB);
+                  }
+                  }
+                });
+              }else{
+                const nombreFolder = __dirname+"/archivos/imgPacientes/id_" +req.body.id;
+                  try{
+                    if(!fs.existsSync(nombreFolder)){
+                      fs.mkdir(nombreFolder, function(error){
+                        if(error){
+                          console.log(error);
+                          res.send({mensaje : "No se pudo crear la carpeta base",
+                                    error : error});
+                        }else{
+                          var url = `${nombreFolder}/${req.body.id}_img.`+resultBusqueda[0].extension;
+                          fs.writeFile(url, resultBusqueda[0].img, (err) => {
+                            if(err){
+                              console.log("Error escritura de archivos decodificado", err);
+                            }else{
+                              //intentamos hacer el envio de la img
+                              var stat = fs.statSync(`${__dirname}/archivos/imgPacientes/id_${req.body.id}/${req.body.id}_img.${resultBusqueda[0].extension}`);
+                              res.writeHead(200, {
+                                'Content-Type' : `image/${resultBusqueda[0].extension}`,
+                                'Content-Length' : stat.size
+                              });
+                              var lectura = fs.createReadStream(url);
+                              lectura.pipe(res);
+                            }
+                          });
+                        }
+                      });
+                    }else{
+                      var url = `${nombreFolder}/${req.body.id}_img.`+resultBusqueda[0].extension;
+                      fs.writeFile(url, resultBusqueda[0].img, (err) => {
+                        if(err){
+                          console.log("Error escritura de archivos decodificado", err);
+                        }else{
+                          //intentamos hacer el envio de la img
+                          var stat = fs.statSync(`${__dirname}/archivos/imgPacientes/id_${req.body.id}/${req.body.id}_img.${resultBusqueda[0].extension}`);
+                          res.writeHead(200, {
+                            'Content-Type' : `image/${resultBusqueda[0].extension}`,
+                            'Content-Length' : stat.size
+                          });
+                          var lectura = fs.createReadStream(url);
+                          lectura.pipe(res);
+                        }
+                      });
+                    }
+                  }catch(errorFolderB){
+                    res.status(500).send(errorFolderB);
+                  }
+              }
+            }catch(errorFP){
+              res.status(500).send(errorFP);
+            }
           }else{
             res.status(404).sendFile(__dirname+"/archivos/imgGeneral/noPhotoUser.png");
           }
-          /*
-          const nombreFolderPadre = __dirname+"/archivos/imgPacientes";
-          try{
-            if(!fs.existsSync(nombreFolderPadre)){
-              fs.mkdir(nombreFolderPadre, function(errorFolderB){
-                if(errorFolderB){
-                  console.log(errorFolderB);
-                  res.send({
-                    mensaje : "Ni se pudo crear la carpeta",
-                    error : errorFolderB
-                  });
-                }else{
-                 const nombreFolder = __dirname+"/archivos/imgPacientes/id_" +req.body.id;
-                 try{
-                  if(!fs.existsSync(nombreFolder)){
-                    fs.mkdir(nombreFolder, function(error){
-                      if(error){
-                        console.log(error);
-                        res.send({mensaje : "No se pudo crear la carpeta base",
-                                  error : error});
-                      }else{
-                        var url = `${nombreFolder}/${req.body.id}_img.`+resultBusqueda[0].extension;
-                        fs.writeFile(url, resultBusqueda[0].img, (err) => {
-                          if(err){
-                            console.log("Error escritura de archivos decodificado", err);
-                          }else{
-                            //intentamos hacer el envio de la img
-                            var stat = fs.statSync(`${__dirname}/archivos/imgPacientes/id_${req.body.id}/${req.body.id}_img.${resultBusqueda[0].extension}`);
-                            res.writeHead(200, {
-                              'Content-Type' : `image/${resultBusqueda[0].extension}`,
-                              'Content-Length' : stat.size
-                            });
-                            var lectura = fs.createReadStream(url);
-                            lectura.pipe(res);
-                          }
-                        });
-                      }
-                    });
-                  }else{
-                    var url = `${nombreFolder}/${req.body.id}_img.`+resultBusqueda[0].extension;
-                    fs.writeFile(url, resultBusqueda[0].img, (err) => {
-                      if(err){
-                        console.log("Error escritura de archivos decodificado", err);
-                      }else{
-                        //intentamos hacer el envio de la img
-                        var stat = fs.statSync(`${__dirname}/archivos/imgPacientes/id_${req.body.id}/${req.body.id}_img.${resultBusqueda[0].extension}`);
-                        res.writeHead(200, {
-                          'Content-Type' : `image/${resultBusqueda[0].extension}`,
-                          'Content-Length' : stat.size
-                        });
-                        var lectura = fs.createReadStream(url);
-                        lectura.pipe(res);
-                      }
-                    });
-                  }
-                 }catch(errorFolderB){
-                  res.status(500).send(errorFolderB);
-                 }
-                }
-              });
-            }else{
-              const nombreFolder = __dirname+"/archivos/imgPacientes/id_" +req.body.id;
-                 try{
-                  if(!fs.existsSync(nombreFolder)){
-                    fs.mkdir(nombreFolder, function(error){
-                      if(error){
-                        console.log(error);
-                        res.send({mensaje : "No se pudo crear la carpeta base",
-                                  error : error});
-                      }else{
-                        var url = `${nombreFolder}/${req.body.id}_img.`+resultBusqueda[0].extension;
-                        fs.writeFile(url, resultBusqueda[0].img, (err) => {
-                          if(err){
-                            console.log("Error escritura de archivos decodificado", err);
-                          }else{
-                            //intentamos hacer el envio de la img
-                            var stat = fs.statSync(`${__dirname}/archivos/imgPacientes/id_${req.body.id}/${req.body.id}_img.${resultBusqueda[0].extension}`);
-                            res.writeHead(200, {
-                              'Content-Type' : `image/${resultBusqueda[0].extension}`,
-                              'Content-Length' : stat.size
-                            });
-                            var lectura = fs.createReadStream(url);
-                            lectura.pipe(res);
-                          }
-                        });
-                      }
-                    });
-                  }else{
-                    var url = `${nombreFolder}/${req.body.id}_img.`+resultBusqueda[0].extension;
-                    fs.writeFile(url, resultBusqueda[0].img, (err) => {
-                      if(err){
-                        console.log("Error escritura de archivos decodificado", err);
-                      }else{
-                        //intentamos hacer el envio de la img
-                        var stat = fs.statSync(`${__dirname}/archivos/imgPacientes/id_${req.body.id}/${req.body.id}_img.${resultBusqueda[0].extension}`);
-                        res.writeHead(200, {
-                          'Content-Type' : `image/${resultBusqueda[0].extension}`,
-                          'Content-Length' : stat.size
-                        });
-                        var lectura = fs.createReadStream(url);
-                        lectura.pipe(res);
-                      }
-                    });
-                  }
-                 }catch(errorFolderB){
-                  res.status(500).send(errorFolderB);
-                 }
-            }
-          }catch(errorFP){
-            res.status(500).send(errorFP);
-          }
-          */
         }
       });
     }
@@ -1462,7 +1461,7 @@ app.get("/obtenVideosProfesional", (req, res) => {
               throw errorFolderPadre;
             }
           }else{//no hay videos
-            res.status(200).send({mensaje : "El profesional no cuenta con videos que mostrar"});
+            res.status(404).send({mensaje : "El profesional no cuenta con videos que mostrar"});
           }
         }
       });
@@ -1499,7 +1498,7 @@ app.get("/obtenListaVideoProfesional", (req, res) => {//OBTENEMOS EL ID DEL PROF
             objeto.data = data;
             res.status(200).send(objeto);
           }else{//no hay videos dado el valor a buscar
-            res.status(200).send({mensaje : "Este profesional no cuenta con videos para enlistar"});
+            res.status(404).send({mensaje : "Este profesional no cuenta con videos para enlistar"});
           }
         }
       });
@@ -1825,22 +1824,44 @@ app.get("/login", (req, res) => { //obtenemos del body los datos de correo, pass
       //comprobamos el tipo de usuario al que desea ingresar
       /* si es 0 = profesional, si es 1 = paciente */
       if(req.body.tipo == 0){
-        conn.query(`SELECT * FROM usuarios_profesionales WHERE email = '${req.body.correo}' and password = '${req.body.password}'`, (errorLogin, resultLogin) => {
+        //actualizacion del query para obtener las imagenes de los profesoinales y eniarlo directo al cliente
+        conn.query(`SELECT u.id_profesional, u.nombre, u.apPaterno, u.apMaterno, u.valido, img.extension, img.img FROM usuarios_profesionales as u LEFT JOIN imgUsuariosProfesionales as img ON u.id_profesional = img.id_profesional WHERE u.email = '${req.body.correo}' AND u.password = '${req.body.password}'`, (errorLogin, resultLogin) => {
           if(errorLogin){
             res.status(500).send({error : "Profesional no existente"});
             throw errorLogin;
           } else{
             if(resultLogin.length > 0 && resultLogin[0].valido != '2'){
               //existe el usuario
-              res.status(200).send({
-                mensaje : "Usuario encontrado.", 
-                permiso : 1,
-                tipo : "profesional",
-                id : resultLogin[0].id_profesional,
-                nombreC : resultLogin[0].nombre + " " + resultLogin[0].apPaterno + " " + resultLogin[0].apMaterno,
-                valido : resultLogin[0].valido
-              });
-              //console.log(resultLogin);
+              if(resultLogin[0].img !== null){//comprobaamos que tenga una imagen asignada
+                res.status(200).send({
+                  mensaje : "Usuario encontrado.", 
+                  permiso : 1,
+                  tipo : "profesional",
+                  id : resultLogin[0].id_profesional,
+                  nombreC : resultLogin[0].nombre + " " + resultLogin[0].apPaterno + " " + resultLogin[0].apMaterno,
+                  valido : resultLogin[0].valido,
+                  imgExtension : resultLogin[0].extension,
+                  img : resultLogin[0].img
+                });
+              }else{//caso que no cuenta con una imagen
+                //realizamos la lectura del archivo general de usuario
+                fs.readFile(__dirname+"/archivos/imgGeneral/noPhotoUser.png", (errorLectura, dataLectura) => {
+                  if(errorLectura){
+                    res.status(500).send({mensaje : errorLectura.message, codigo : errorLectura.code});
+                  }else{
+                    res.status(200).send({
+                      mensaje : "Usuario encontrado.", 
+                      permiso : 1,
+                      tipo : "profesional",
+                      id : resultLogin[0].id_profesional,
+                      nombreC : resultLogin[0].nombre + " " + resultLogin[0].apPaterno + " " + resultLogin[0].apMaterno,
+                      valido : resultLogin[0].valido,
+                      imgExtension : 'png',
+                      img : dataLectura
+                    });
+                  }
+                });
+              }
             }else{
               //no existe
               let razon = "";
@@ -1853,20 +1874,41 @@ app.get("/login", (req, res) => { //obtenemos del body los datos de correo, pass
           }
         });
       }else{ //caso de usuario paciente
-        conn.query(`SELECT * FROM usuarios_pacientes WHERE email = '${req.body.correo}' and password = '${req.body.password}'`, (errorLogin, resultLogin) => {
+        conn.query(`SELECT u.id_paciente, u.nombre, u.apPaterno, u.apMaterno, img.extension, img.img FROM usuarios_pacientes as u LEFT JOIN imgUsuariosPacientes as img ON u.id_paciente = img.id_paciente WHERE u.email = '${req.body.correo}' AND u.password = '${req.body.password}'`, (errorLogin, resultLogin) => {
           if(errorLogin){
             res.status(500).send({error : errorLogin.message, codigo : errorLogin.code});
           }else{
-            if(resultLogin.length > 0){
+            //console.log(resultLogin);
+            if(resultLogin.length > 0 && resultLogin[0].valido != '2'){
               //existe el usuario
-              res.status(200).send({
-                mensaje : "Usuario encontrado.", 
-                permiso : 1, 
-                tipo : "paciente",
-                id : resultLogin[0].id_paciente,
-                nombreC : resultLogin[0].nombre + " " + resultLogin[0].apPaterno + " " + resultLogin[0].apMaterno
-              });
-              //console.log(resultLogin);
+              if(resultLogin[0].img !== null){//comprobamos que tenga una imagen asignada
+                res.status(200).send({
+                  mensaje : "Usuario encontrado.", 
+                  permiso : 1, 
+                  tipo : "paciente",
+                  id : resultLogin[0].id_paciente,
+                  nombreC : resultLogin[0].nombre + " " + resultLogin[0].apPaterno + " " + resultLogin[0].apMaterno,
+                  imgExtension : resultLogin[0].extension,
+                  img : resultLogin[0].img
+                });
+              }else{//caso que no cuenta con una imagen
+                //realizamos la lectura del archivo general de usuario
+                fs.readFile(__dirname+"/archivos/imgGeneral/noPhotoUser.png", (errorLectura, dataLectura) => {
+                  if(errorLectura){
+                    res.status(500).send({mensaje : errorLectura.message, codigo : errorLectura.code});
+                  }else{
+                    res.status(200).send({
+                     mensaje : "Usuario encontrado.", 
+                      permiso : 1, 
+                      tipo : "paciente",
+                      id : resultLogin[0].id_paciente,
+                      nombreC : resultLogin[0].nombre + " " + resultLogin[0].apPaterno + " " + resultLogin[0].apMaterno,
+                      imgExtension : 'png',
+                      img : dataLectura
+                    });
+                  }
+                });
+              }
             }else{
               //no existe
               res.status(500).send({mensaje : "Comprueba los datos", permiso : 0});
