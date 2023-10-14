@@ -131,7 +131,7 @@ app.post("/altaprofesionales", (req, res) => {
     nombre, apPaterno, apMaterno, email, edad, fechaN, pass, tipo, archivos, valido = 0
     */
   if (JSON.stringify(req.body) === "{}") {
-    //validamos que el contenido de la petición no este vació
+    //validamos que el contenido de la petición no este vacío
     console.error("req vacio");
     res.status(500).send({ error: "sin informacion" });
   } else {
@@ -522,6 +522,30 @@ app.post("/altaEjercicioRutina", (req, res) => {
           throw errorInsert;
         }else{
           res.status(200).send({mensaje : "Creacion de ejercicio de rutina"});
+        }
+      });
+    }
+  }
+});
+
+  //METODO DE ALTA DE MEDICIONES 
+app.post("/altaMedicion", (req, res) => {
+  if(JSON.stringify(req.body) === '{}'){//validamos que el contenido de la petición no este vacío
+    res.status(500).send({error : "Sin información"});
+  }else{
+    //validamos que contamos con los datos necesarios
+    if(req.body.id_profesional === "" || req.body.id_paciente === "" || req.body.peso === "" || req.body.axiliar_media === "" || req.body.abdominal === "" || req.body.bicipital === "" || req.body.muslo === "" || req.body.suprailiaco === "" || req.body.triceps === "" || req.body.subescapular === "" || req.body.toracica === "" || req.body.pantorrilla_medial === "" || req.body.cintura === "" || req.body.fecha === ""){
+      res.status(500).send({mensaje : "Error. Datos incompletos"});
+    }else{
+      const conn = conexion.cone;
+      //console.log(req.body);
+      conn.query(`INSERT INTO mediciones VALUES (${req.body.id_profesional}, ${req.body.id_paciente}, ${req.body.peso}, ${req.body.axiliar_media}, ${req.body.abdominal}, ${req.body.bicipital}, ${req.body.muslo}, ${req.body.suprailiaco}, ${req.body.triceps}, ${req.body.subescapular}, ${req.body.toracica}, ${req.body.pantorrilla_medial}, ${req.body.cintura}, '${req.body.fecha}')`, (errorInsert, resultInsert) => {
+        if(errorInsert){
+          //console.log(errorInsert)
+          res.status(500).send({mensaje : errorInsert.message, codigo : errorInsert.code});
+        }
+        else{
+          res.status(200).send({mensaje : "Creación correcta de medicion"});
         }
       });
     }
@@ -2073,6 +2097,75 @@ app.get("/obtenArchivosProfesional", (req, res) => {
   }
 });
 
+  //MÉTODO DE BUSQUEDA DE MEDICIONES POR PACIENTE 
+app.get("/busquedaMediciones", (req, res) => {
+  //La busqueda se realizara mediante el identificador del paciente
+  if(JSON.stringify(req.body) === '{}'){//validamos que el contenido de la petición no este vacío
+    res.status(500).send({error : "Sin información"});
+  }else{
+    //validamos que se cuente con el valor dentro del cuerpo de la petición
+    if(req.body.id === ""){
+      res.status(500).send({mensaje : "Error. Datos incompletos"});
+    }else{
+      const conn = conexion.cone;
+      //realizamos una busqueda para comprobar que hay
+      conn.query(`SELECT COUNT(*) as total FROM mediciones WHERE id_paciente = ${req.body.id}`, (errorBusqueda, resultBusqueda) => {
+        if(errorBusqueda){
+          console.log(errorBusqueda);
+          res.status(500).send({mensaje : errorBusqueda.message, codigo : errorBusqueda.code});
+        }else{
+          if(resultBusqueda[0].total > 0){//contamos con mediciones
+            //hacemos la busqueda
+            conn.query(`SELECT * FROM mediciones WHERE id_paciente = ${req.body.id}`, (errorBMediciones, resultBMediciones) => {
+              if(errorBMediciones){
+                console.log(errorBMediciones);
+                res.status(500).send({mensaje : errorBMediciones.message, codigo : errorBMediciones.code});
+              }else{
+                var obj = {}, fecha = [], peso = [], axiliar_media = [], abdominal = [], bicipital = [], muslo = [], suprailiaco = [], triceps = [], subescapular = [], toracica = [], pantorrilla = [], cintura = [];
+                for(let i = 0; i < resultBMediciones.length; i++){
+                  let fechaIni = new Date(resultBMediciones[i].fecha);
+                  peso.push(resultBMediciones[i].peso);
+                  axiliar_media.push(resultBMediciones[i].axiliar_media);
+                  abdominal.push(resultBMediciones[i].abdominal);
+                  bicipital.push(resultBMediciones[i].bicipital);
+                  muslo.push(resultBMediciones[i].muslo);
+                  suprailiaco.push(resultBMediciones[i].suprailiaco);
+                  triceps.push(resultBMediciones[i].triceps);
+                  subescapular.push(resultBMediciones[i].subescapular);
+                  toracica.push(resultBMediciones[i].toracica);
+                  pantorrilla.push(resultBMediciones[i].pantorrilla_medial);
+                  cintura.push(resultBMediciones[i].cintura);
+                  fecha.push(fechaIni.getUTCDate()+"-"+(fechaIni.getUTCMonth()+1)+"-"+fechaIni.getUTCFullYear());
+                }
+                obj = {
+                  "peso" : peso,
+                  "axiliar" : axiliar_media,
+                  "abdominal" : abdominal,
+                  "bicipital" : bicipital,
+                  "muslo" : muslo,
+                  "suprailiaco" : suprailiaco,
+                  "triceps" : triceps,
+                  "subescapular" : subescapular,
+                  "toracica" : toracica,
+                  "pantorrilla" : pantorrilla,
+                  "cintura" : cintura, 
+                  "fecha" : fecha
+                };
+                res.status(200).send({mensaje : "OK", objeto : obj});
+                //console.log(resultBMediciones);
+              }
+            });
+          }else{
+            console.log("ERROR");
+            res.status(404).send({mensaje : "No existen mediciones que mostrar"});
+          }
+        }
+      });
+    }
+  }
+});
+  
+
   //METODOS DE ELIMINACIÓN DE ELEMENTO
     //se eliminan todos los registros relacionados con el profesional, solo se modifican los usuarios_pacientes, historial_profesionales, mediciones, alimento_dieta
     //ELIMINAR imgusuarioprofesional, archivos, videos, usuarios_profesionales, citas, proximas_citas
@@ -2252,6 +2345,79 @@ app.delete("/borraVideoId", (req, res) => {
   }
 });
 
+  //MÉTODO PARA ELIMINACIÓN DE MEDICION POR FECHA E IDENTIFICADOR DE PACIENTE
+  //fecha AÑO MES DIA
+app.delete("/eliminarMedicion", (req, res) => {
+  if(JSON.stringify(req.body) === '{}'){
+    res.status(500).send({mensaje : "Sin información"});
+  }else{
+    if(req.body.id === "" || req.body.fecha === ""){//Comprobamos que ambos valores se encuentren con valor
+      res.status(500).send({mensaje : "Error, datos incompletos"});
+    }else{
+      const conn = conexion.cone;
+      //hacemos la busqueda de que exista el elemento 
+      conn.query(`SELECT * FROM mediciones WHERE id_paciente = ${req.body.id} and fecha = '${req.body.fecha}'`, (errorBusqueda, resultBusqueda) => {
+        if(errorBusqueda){
+          console.log(errorBusqueda)
+          res.status(500).send({mensaje : errorBusqueda.message, codigo : errorBusqueda.code});
+        }else{
+          if(resultBusqueda.length > 0){
+            //hacemos la eliminación
+            conn.query(`DELETE FROM mediciones WHERE id_paciente = ${req.body.id} and fecha = '${req.body.fecha}'`, (errorEliminar, resultEliminar) => {
+              if(errorEliminar){
+                console.log(errorEliminar)
+                res.status(500).send({mensaje : errorEliminar.message, codigo : errorEliminar.code});
+              }else{
+                if(resultEliminar.affectedRows > 0){
+                  //console.log(resultEliminar);
+                  res.status(200).send({mensaje : "Eliminación exitosa"});
+                }
+              }
+            });
+          }
+        }
+      });
+    }
+  }
+});
+
+  //MÉTODO PARA ELIMINACIÓN DE MEDICIONES POR PACIENTE OBTENEMOS IDENTIFICADOR
+app.delete("/eliminarMediciones", (req, res) => {
+  if(JSON.stringify(req.body) === '{}'){
+    res.status(500).send({mensaje : "Sin información"});
+  }else{
+    if(req.body.id === ""){
+      res.status(500).send({mensaje : "Error, datos incompletos"});
+    }else{
+      const conn = conexion.cone;
+      //buscamos si hay mediciones que borrar
+      conn.query(`SELECT COUNT(id_paciente) as total FROM mediciones WHERE id_paciente = ${req.body.id}`, (errorBusqueda, resultBusqueda) => {
+        if(errorBusqueda){
+          console.log(errorBusqueda)
+          res.status(500).send({mensaje : errorBusqueda.message, codigo : errorBusqueda.code});
+        }else{
+          if(resultBusqueda[0].total > 0){//si se cuenta con mediciones
+            //console.log(resultBusqueda)
+            //res.status(200).send({mensaje : "OK valor actual"});
+            conn.query(`DELETE FROM mediciones WHERE id_paciente = ${req.body.id}`, (errorBorrar, resultBorrar) =>{
+              if(errorBorrar){
+                console.log(errorBorrar);
+                res.status(500).send({mensaje : errorBorrar.message, codigo : errorBorrar.code});
+              }else{
+                if(resultBorrar.affectedRows > 0){
+                  res.status(200).send({mensaje : "Eliminación de mediciones de forma correcta"});
+                }
+              }
+            });
+          }else{
+            res.status(404).send({mensaje : "No hay mediciones"});
+          }
+        }
+      });
+    }
+  }
+});
+
   //METODOS DE ACTUALIZACIÓN DEL ESTADO DEL USUARIO PROFESIONAL
 app.put("/actualizaEstadoProfesional", (req, res) => {
   //obtenemos del body el ID del profesional, el cual sera validado
@@ -2300,6 +2466,29 @@ app.put("/actualizaRutinaEjercicio", (req, res) => {
   }
 });
 
+  //MÉTODO PARA ACTUALIZACIÓN DE MEDICIÓN, USANDO COMO VALOR LA FECHA 
+app.put("/actualizaMedicion", (req, res) => {
+  //obtenemos todos los valores que se obtienen de la alta, las mediciones, junto con la fecha e id del paciente
+  if(JSON.stringify(req.body) === '{}'){
+    res.status(500).send({mensaje : "Sin información"});
+  }else{
+    if(req.body.id_profesional === "" || req.body.id_paciente === "" || req.body.peso === "" || req.body.axiliar_media === "" || req.body.abdominal === "" || req.body.bicipital === "" || req.body.muslo === "" || req.body.suprailiaco === "" || req.body.triceps === "" || req.body.subescapular === "" || req.body.toracica === "" || req.body.pantorrilla_medial === "" || req.body.cintura === "" || req.body.fecha === ""){
+      res.status(500).send({mensaje : "Error. Datos incompletos"});
+    }else{
+      const conn = conexion.cone;
+      conn.query(`UPDATE mediciones SET peso = ${req.body.peso}, axiliar_media = ${req.body.axiliar_media}, abdominal = ${req.body.abdominal}, bicipital = ${req.body.bicipital}, muslo = ${req.body.muslo}, suprailiaco = ${req.body.suprailiaco}, triceps = ${req.body.triceps}, subescapular = ${req.body.subescapular}, toracica = ${req.body.toracica}, pantorrilla_medial = ${req.body.pantorrilla_medial}, cintura = ${req.body.cintura} WHERE id_profesional = ${req.body.id_profesional} and id_paciente = ${req.body.id_paciente} and fecha = '${req.body.fecha}'`, (errorActualizacion, resultActualizacion) => {
+        if(errorActualizacion){
+          console.log(errorActualizacion);
+          res.status(500).send({mensaje : errorActualizacion.message, codigo : errorActualizacion.code})
+        }else{
+          if(resultActualizacion.affectedRows > 0){
+            res.status(200).send("Actualización de datos correcta");
+          }
+        }
+      });
+    }
+  }
+});
 
   //METODOS DE CONFIGURACIÓN DEL SERVIDOR
 app.listen(3000, "192.168.100.9", function () {
