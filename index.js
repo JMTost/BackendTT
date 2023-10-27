@@ -2707,7 +2707,135 @@ app.delete("/habitoAlimenticio/eliminarRegistro", (req, res) => {
     }
   }
 });
-  
+
+//habito personal 
+/*
+id_paciente	int horaD	time horaS	time desc_fisica	char(100) rutinaDia	char(100)
+*/
+
+//MÉTODO DE ALTA DE HABITO PERSONAL
+app.post("/habitoPersonal/alta", (req, res) => {
+  if(JSON.stringify(req.body) === "{}"){
+    res.status(500).send({mensaje : "Sin información en la solicitud"});
+  }else{
+    if(req.body.id === "" || req.body.horaD === "" || req.body.horaS === "" || req.body.descFisica === "" || req.body.rutinaDia === ""){
+      res.status(500).send({mensaje : "Error. Datos incompletos"});
+    }else{
+      //comprobamos la longitud de los elementos
+      if(req.body.descFisica.length > 100 || req.body.rutinaDia > 100){
+        res.status(500).send({mensaje : "No se cumple con la longitud esperada"});
+      }else{
+        const conn = conexion.cone;
+        conn.query(`INSERT INTO habito_personal VALUES (${req.body.id}, '${req.body.horaD}', '${req.body.horaS}', '${req.body.descFisica}', '${req.body.rutinaDia}')`, (errorInsert, resultInsert) => {
+          if(errorInsert){
+            console.log(errorInsert);
+            res.status(500).send({mensaje : errorInsert.message, codigo : errorInsert.code});
+          }else{
+            res.status(200).send({mensaje : "Creación de habito personal exitosa"});
+          }
+        });
+      }
+    }
+  }
+});
+//MÉTODO DE BUSQUEDA DE HABITO PERSONAL MEDIANTE ID DEL PACIENTE
+app.get("/habitoPersonal/busqueda", (req, res)=>{
+  if(JSON.stringify(req.body) === "{}"){
+    res.status(500).send({mensaje : "Sin información en la solicitud"});
+  }else{
+    if(req.body.id === ""){
+      res.status(500).send({mensaje : "Error. Datos incompletos"});
+    }else{ 
+      const conn = conexion.cone;
+      const query = `SELECT up.id_paciente, up.nombre, up.apPaterno, up.apMaterno, hp.horaD, hp.horaS, hp.desc_fisica, hp.rutinaDia FROM usuarios_pacientes as up, habito_personal as hp WHERE hp.id_paciente = ? and hp.id_paciente = up.id_paciente`;
+      conn.query(query, (req.body.id), (errorBusqueda, resultBusqueda) => {
+        if(errorBusqueda){
+          console.log(errorBusqueda);
+          res.status(500).send({mensaje : errorBusqueda.message, codigo : errorBusqueda.code});
+        }else{
+          if(resultBusqueda.length > 0){
+            var objeto = {};
+            objeto = {
+              "id" : resultBusqueda[0].id_paciente,
+              "nombreC" : resultBusqueda[0].nombre + " " + resultBusqueda[0].apPaterno + " " + resultBusqueda[0].apMaterno,
+              "horaD" : resultBusqueda[0].horaD,
+              "horaS" : resultBusqueda[0].horaS,
+              "desc_fisica" : resultBusqueda[0].desc_fisica,
+              "rutinaDia" : resultBusqueda[0].rutinaDia
+            }
+            res.status(200).send(objeto);
+          }else{
+            res.status(404).send({mensaje : "Información no encontrada"});
+          }
+        }
+      });
+    }
+  }
+});
+//MÉTODO DE ACTUALIZACIÓN DE HABITO PERSONAL MEDIANTE ID DEL PACIENTE
+app.put("/habitoPersonal/actualiza", (req, res)=>{
+  if(JSON.stringify(req.body) === "{}"){
+    res.status(500).send({mensaje : "Sin información en la solicitud"});
+  }else{
+    if(req.body.id === "" || req.body.horaD === "" || req.body.horaS === "" || req.body.descFisica === "" || req.body.rutinaDia === ""){
+      res.status(500).send({mensaje : "Error. Datos incompletos"});
+    }else{
+      if(req.body.descFisica.length > 100 || req.body.rutinaDia.length > 100){
+        res.status(500).send({mensaje : "No se cumple con la longitud esperada"});
+      }else{
+        const conn = conexion.cone;
+        var query = 'SELECT * FROM habito_personal WHERE id_paciente = ?';
+        conn.query(query, (req.body.id), (errorBusqueda, resultBusqueda) => {
+          if(errorBusqueda){
+            console.log(errorBusqueda);
+            res.status(500).send({mensaje : errorBusqueda.message, codigo : errorBusqueda.code});
+          }else{
+            if(resultBusqueda.length > 0){
+              //hacemos la actualización 
+              let actualizaQuery = 'UPDATE habito_personal SET horaD = ?, horaS = ?, desc_fisica = ?, rutinaDia = ? WHERE id_paciente = ?';
+              conn.query(actualizaQuery, [req.body.horaD, req.body.horaS, req.body.descFisica, req.body.rutinaDia, req.body.id], (errorActualiza, resultActualiza) => {
+                if(errorActualiza){
+                  console.log("actualiza", errorActualiza);
+                  res.status(500).send({mensaje : errorActualiza.message, codigo : errorActualiza.code});
+                }else{
+                  if(resultActualiza.affectedRows > 0){
+                    res.status(200).send({mensaje : "Registro actualizado"});
+                  }
+                }
+              });
+            }else{
+              res.status(404).send({mensaje : "No se encuentra el usuario"});
+            }
+          }
+        });
+      }
+    }
+  }
+});
+//MÉTODO DE ELIMINACIÓN DE HABITO PERSONAL MEDIANTE ID DEL PACIENTE
+app.delete("/habitoPersonal/elimina", (req, res)=>{
+  if(JSON.stringify(req.body) === '{}'){
+    res.status(500).send({mensaje : "Sin información en la solicitud"});
+  }else{
+    if(req.body.id === ""){
+      res.status(500).send({mensaje : "Error. Datos incompletos"});
+    }else{
+      const conn = conexion.cone;
+      const query = "DELETE FROM habito_personal WHERE id_paciente = ?";
+      conn.query(query, req.body.id, (errorEliminar, resultEliminar)=>{
+        if(errorEliminar){
+          console.log(errorEliminar);
+          res.status(500).send({mensaje : errorEliminar.message, codigo : errorEliminar.code});
+        }else{
+          if(resultEliminar.affectedRows > 0){
+            res.status(200).send({mensaje : "Registro de habito personal eliminado de forma exitosa"});
+          }
+        }
+      });
+    }
+  }
+});
+
   //METODOS DE CONFIGURACIÓN DEL SERVIDOR
 app.listen(3000, "192.168.100.9", function () {
   console.log("Funcionando en el puerto: 3000");
