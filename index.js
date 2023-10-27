@@ -599,6 +599,28 @@ app.get("/obtenProfesionales", (req, res) => {//obtención completa de los profe
     }
   );
 });
+//actualizacion
+app.get("/obtenPacientes", (req, res) => {
+  const conn = conexion.cone;
+  conn.query("select id_paciente, nombre, apPaterno, apMaterno from usuarios_pacientes", (err, result) => {
+    if(err){
+      res.send(err).status(500);
+      throw err;
+    }else{
+      var objeto = {};
+      var data = [];
+      for (let i = 0; i < result.length; i++) {
+        data.push({
+          id: result[i].id_paciente,
+          nombreC: result[i].nombre + " " + result[i].apPaterno + " " + result[i].apMaterno,
+        });
+      }
+      objeto.data = data;
+      res.send(objeto).status(200);
+    }
+  });
+});
+
 
 app.get("/obtenTiposCitas", (req, res) => {
   const conn = conexion.cone;
@@ -2178,7 +2200,7 @@ app.get("/busquedaMediciones", (req, res) => {
             mediciones, alimento_dieta, ejercicio_rutina, usuarios_pacientes, historial_profesionales
             dentro de la tabla de usuariosProfesionales modificamos el valor de valido como 2 el cual se considera como registro no valido
           */
-  //PROBAR
+  //ULTIMA PRUEBA, ESTADO : FUNCIONAL
 app.delete("/borraProfesional", (req, res) => {//obtenemos el id del profesional
   //al eleminar debemos quitar el profesional de la salud o hacer la reasignación en otro metodo 
   if(JSON.stringify(req.body) === '{}'){
@@ -2188,17 +2210,54 @@ app.delete("/borraProfesional", (req, res) => {//obtenemos el id del profesional
       res.status(500).send({mensaje : "Error, datos incompletos"});
     }else{
       const conn = conexion.cone;
+      var obj = {}, data = [];
       conn.query(`SELECT * FROM usuarios_profesionales WHERE id_profesional = ${req.body.id}`, (errorBusqueda, resultadoBusqueda) => {
         if(errorBusqueda){
           res.status(500).send({mensaje : errorBusqueda.message, codigo : errorBusqueda.code});
         }else{
           if(resultadoBusqueda.length > 0){//existe
+            const operaciones = [
+              //valor de 1 actualizacion, 2 eliminacion
+              {operacion : 2, tabla : "proximas_citas", id : req.body.id, conexion : conn},
+              {operacion : 1, tabla : "mediciones", id : req.body.id, valor : 0, conexion : conn},
+              {operacion : 1, tabla : "alimento_dieta", id : req.body.id, valor : 0, conexion : conn},
+              {operacion : 1, tabla : "ejercicio_rutina", id : req.body.id, valor : 0, conexion : conn},
+              {operacion : 1, tabla : "usuarios_pacientes", id : req.body.id, valor : 0, conexion : conn},
+              {operacion : 1, tabla : "historial_profesionales", id : req.body.id, valor : 0, conexion : conn},
+              {operacion : 2, tabla : "citas", id : req.body.id, conexion : conn},
+              {operacion : 2, tabla : "imgUsuariosProfesionales", id : req.body.id, conexion : conn},
+              {operacion : 2, tabla : "videos", id : req.body.id , conexion : conn},
+              {operacion : 2, tabla : "archivos", id : req.body.id , conexion : conn},
+              {operacion : 1, tabla : "usuarios_profesionales", id : req.body.id, valor : 2, conexion : conn},
+            ];
+
+            const promesasOP = operaciones.map(operacion => {
+              if(operacion.operacion == 1){//actualizamos
+                return actualizaRegistroProfesional(operacion.tabla, operacion.id, operacion.valor, operacion.conexion);
+              }else if(operacion.operacion == 2){//borramos
+                return eliminaRegistroProfesional(operacion.tabla, operacion.id, operacion.conexion);
+              }
+            });
+            
+            Promise.all(promesasOP).then(resultados => {
+              const errores = resultados.filter(resultado => !resultado.exitosa).length;
+              if(errores > 0){
+                res.status(500).send({mensaje : "Error en las operaciones", error : errores});
+              }else{
+                res.status(200).send({mensaje : "Eliminación exitosa"});
+              }
+            }).catch(error => {
+              res.status(500).send({mensaje : "Error en las promesas", error : error});
+            });
+            /*
             //usuarios_profesionales; usuarios_pacientes; archivos; historial_profesionales; citas; videos; imgUsuariosProfesionales; ejercicio_rutina; alimento_dieta; mediciones; proximas_citas
             //proximas_citas : ELIMINAR
-            var obj = {}, data = [];
             conn.query(`DELETE FROM proximas_citas WHERE id_profesional = ${req.body.id}`, (errorBorraProximasCitas, resultBorraProximasCitas) => {
               if(errorBorraProximasCitas){
-                conn.rollback(() => {res.status(500).send({mensaje : errorBorraProximasCitas.message, codigo : errorBorraProximasCitas.code, objeto : obj});});
+                console.log("Error");
+                obj = {error : "Error"}
+                console.log(errorBorraProximasCitas)
+                res.status(500).send({mensaje : errorBorraProximasCitas.message, codigo : errorBorraProximasCitas.code, objeto : obj});
               }else{
                 obj.proximasCitas = {proximasCitas : "OK"};
               }
@@ -2206,7 +2265,8 @@ app.delete("/borraProfesional", (req, res) => {//obtenemos el id del profesional
             //mediciones : ACTUALIZAMOS, COLOCAMOS EL VALOR DEL PROFESIONAL COMO 0
             conn.query(`UPDATE mediciones SET id_profesional = 0 WHERE id_profesional = ${req.body.id}`, (errorActualizaMedicion, resultActualizaMedicion) => {
               if(errorActualizaMedicion){
-                conn.rollback(() => {res.status(500).code({mensaje : errorActualizaMedicion.message, codigo : errorActualizaMedicion.code, objeto : obj});});
+                  console.log(errorActualizaMedicion)
+                  res.status(500).code({mensaje : errorActualizaMedicion.message, codigo : errorActualizaMedicion.code, objeto : obj});
               }else{
                 obj.mediciones = {mediciones : "Actualizado"};
               }
@@ -2214,23 +2274,26 @@ app.delete("/borraProfesional", (req, res) => {//obtenemos el id del profesional
             //alimento_dieta : ACTUALIZAMOS, COLOCAMOS EL VALOR DEL PROFESIONAL COMO 0
             conn.query(`UPDATE alimento_dieta SET id_profesional = 0 WHERE id_profesional = ${req.body.id}`, (errorActualizaAlimento, resultActualizaAlimento) => {
               if(errorActualizaAlimento){
-                conn.rollback(() => {res.status(500).send({mensaje : errorActualizaAlimento.message, codigo : errorActualizaAlimento.code, objeto : obj});});
+                  console.log(errorActualizaAlimento)
+                  res.status(500).send({mensaje : errorActualizaAlimento.message, codigo : errorActualizaAlimento.code, objeto : obj});
               }else{
                 obj.alimentoDieta = {alimentoDieta : "Actualizado"};
               }
             });
             //ejercicio_rutina : ACTUALIZAMOS, COLOCAMOS EL VALOR DEL PROFESIONAL COMO 0
-            conn.query(`UPDATE ejercicio_rutina id_profesional = 0 WHERE id_profesional = ${req.body.id}`, (errorActualizaEJ, resultActualizaEJ) => {
+            conn.query(`UPDATE ejercicio_rutina SET id_profesional = 0 WHERE id_profesional = ${req.body.id}`, (errorActualizaEJ, resultActualizaEJ) => {
               if(errorActualizaEJ){
-                conn.rollback(() => {res.status(500).send({mensaje : errorActualizaEJ.message, codigo : errorActualizaEJ.code, objeto : obj});});
+                  console.log(errorActualizaEJ)
+                  res.status(500).send({mensaje : errorActualizaEJ.message, codigo : errorActualizaEJ.code, objeto : obj});
               }else{
                 obj.ejercicioRutina = {ejercicioRutina : "Actualizado"};
               }
             });
             //usuarios_pacientes : ACTUALIZAMOS, COLOCAMOS EL VALOR DEL PROFESIONAL COMO 0
-            conn.query(`UPDATE usaurios_pacientes SET id_profesional = 0 WHERE id_profesional = ${req.body.id}`, (errorActualizaUpacientes, resultActualizaUpacientes) => {
+            conn.query(`UPDATE usuarios_pacientes SET id_profesional = 0 WHERE id_profesional = ${req.body.id}`, (errorActualizaUpacientes, resultActualizaUpacientes) => {
               if(errorActualizaUpacientes){
-                conn.rollback(() => {res.status(500).send({mensaje : errorActualizaUpacientes.message, codigo : errorActualizaUpacientes.code, objeto : obj});});
+                  console.log(errorActualizaUpacientes)
+                  res.status(500).send({mensaje : errorActualizaUpacientes.message, codigo : errorActualizaUpacientes.code, objeto : obj});
               }else{
                 obj.usuariosPacientes = {usuariosPacientes : "Actualizado"};
               }
@@ -2238,7 +2301,8 @@ app.delete("/borraProfesional", (req, res) => {//obtenemos el id del profesional
             //historial_profesionales : ACTUALIZAMOS, COLOCAMOS EL VALOR DEL PROFESIONAL COMO 0
             conn.query(`UPDATE historial_profesionales SET fechaTer = ${fechaApi} WHERE id_profesional = ${req.body.id}`, (errorActualizaHP, resultActualizaHP) => {
               if(errorActualizaHP){
-                conn.rollback(() => {res.status(500).send({mensaje : errorActualizaHP.message, codigo : errorActualizaHP.code, objeto : obj});})
+                  console.log(errorActualizaHP)
+                  res.status(500).send({mensaje : errorActualizaHP.message, codigo : errorActualizaHP.code, objeto : obj});
               }else{
                 obj.historialProfesionales = {historialProfesionales : "Actualizado"};
               }
@@ -2246,7 +2310,8 @@ app.delete("/borraProfesional", (req, res) => {//obtenemos el id del profesional
             //citas : ELIMINAR 
             conn.query(`DELETE FROM citas WHERE id_profesional = ${req.body.id}`, (errorBorraCitas, resultBorraCitas) => {
               if(errorBorraCitas){
-                conn.rollback(() => {res.status(500).send({mensaje : errorBorraCitas.message, codigo : errorBorraCitas.code, objeto : obj});});
+                  console.log(errorBorraCitas)
+                  res.status(500).send({mensaje : errorBorraCitas.message, codigo : errorBorraCitas.code, objeto : obj});
               }else{
                 obj.citas = {citas : "OK"};
               }
@@ -2254,7 +2319,8 @@ app.delete("/borraProfesional", (req, res) => {//obtenemos el id del profesional
             //imgusuariosprofesionales : ELIMINAR 
             conn.query(`DELETE FROM imgUsuariosProfesionales WHERE id_profesional = ${req.body.id}`, (errorBorraIMG, resultBorraIMG) => {
               if(errorBorraIMG){
-                conn.rollback(() => {res.status(500).send({mensaje : errorBorraIMG.message, codigo : errorBorraIMG.code, objeto : obj});});
+                  console.log(errorBorraIMG)
+                  res.status(500).send({mensaje : errorBorraIMG.message, codigo : errorBorraIMG.code, objeto : obj});
               }else{
                 obj.img = {imgUsuarios : "OK"};
               }
@@ -2262,7 +2328,8 @@ app.delete("/borraProfesional", (req, res) => {//obtenemos el id del profesional
             //videos : ELIMINAR
             conn.query(`DELETE FROM videos WHERE id_profesional = ${req.body.id}`, (errorBorraVideos, resultBorraVideos) => {
               if(errorBorraVideos){
-                conn.rollback(() => {res.status(500).send({mensaje : errorBorraVideos.message, codigo : errorBorraVideos.code, objeto : obj});});
+                  console.log(errorBorraVideos)
+                  res.status(500).send({mensaje : errorBorraVideos.message, codigo : errorBorraVideos.code, objeto : obj});
               }else{
                 obj.videos = {videos : "OK"};
               }
@@ -2270,7 +2337,8 @@ app.delete("/borraProfesional", (req, res) => {//obtenemos el id del profesional
             //archivos : ELIMINAR 
             conn.query(`DELETE FROM archivos WHERE id_profesional = ${req.body.id}`, (errorBorraArchivos, resultBorraArchivos) => {
               if(errorBorraArchivos){
-                conn.rollback(() => {res.status(500).send({mensaje : errorBorraArchivos.message, codigo : errorBorraArchivos.code, objeto : obj});});
+                  console.log(errorBorraArchivos)
+                  res.status(500).send({mensaje : errorBorraArchivos.message, codigo : errorBorraArchivos.code, objeto : obj});
               }else{
                 obj.archivos = {archivos : "OK"};
               }
@@ -2278,12 +2346,16 @@ app.delete("/borraProfesional", (req, res) => {//obtenemos el id del profesional
             //usuarios_profesionales : MODIICAMOS EL VALOR DE VALIDO
             conn.query(`UPDATE usuarios_profesionales SET valido = '2' WHERE id_profesional = ${req.body.id}`, (errorActualizaUP, resultActualizaUP) => {
               if(errorActualizaUP){
-                conn.rollback(() => {res.status(500).send({mensaje : errorActualizaUP.message, codigo : errorActualizaUP.code, objeto : obj});});
+                  console.log(errorActualizaUP)
+                  res.status(500).send({mensaje : errorActualizaUP.message, codigo : errorActualizaUP.code, objeto : obj});
               }else{
                 obj.usuariosProfesionales = {usuariosProfesionales : "Actualizado"};
               }
             });
-            res.status(200).send({mensaje : "Eliminación exitosa", objeto : obj});
+            if(JSON.stringfy(obj) !== "{}"){
+              res.status(200).send({mensaje : "Eliminación exitosa", objeto : obj});
+            }
+            */
           }else{//no existe
             res.status(500).send({mensaje : "Usuario no existente"});
           }
@@ -2292,6 +2364,7 @@ app.delete("/borraProfesional", (req, res) => {//obtenemos el id del profesional
     }
   }
 });
+
 
   //METODO PARA ELIMINAR EL CONTENIDO DE UNA CARPETA, EN ESTE CASO videosProfesionales
 app.delete("/borrarCarpetasVideos", (req, res) => {
@@ -2490,6 +2563,7 @@ app.put("/actualizaMedicion", (req, res) => {
   }
 });
 
+  
   //METODOS DE CONFIGURACIÓN DEL SERVIDOR
 app.listen(3000, "192.168.100.9", function () {
   console.log("Funcionando en el puerto: 3000");
