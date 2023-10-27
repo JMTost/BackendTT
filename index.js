@@ -2597,6 +2597,116 @@ app.put("/actualizaMedicion", (req, res) => {
   }
 });
 
+//MÉTODO DE HABITO ALIMENTICIO Y PERSONAL ALTA BUSQUEDA ACTUALIZACION Y ELIMINACION
+//habito alimenticio
+/*
+  id_paciente
+  masConsumidos
+  alimentos_alergia
+  cantidad_agua
+  cantidad_comidas
+  cantidad_colaciones
+  horaDesayuno
+  horaComida
+  horaCena
+  */
+
+app.post("/habitoAlimenticio/alta", (req, res) => {
+  if(JSON.stringify(req.body) === '{}'){
+    res.status(500).send({mensaje : "Sin información"});
+  }else{
+    if(req.body.id === "" || req.body.masConsumidos === "" || req.body.alimentos_alergia === "" || req.body.cantidad_agua === "" || req.body.cantidad_comidas === "" || req.body.cantidad_colaciones === "" || req.body.horaDesayuno === "" || req.body.horaComida === "" || req.body.horaCena === ""){
+      res.status(500).send({mensaje : "Error. Datos incompletos"});
+    }else{
+      /* console.log(req.body);
+      console.log(req.body.masConsumidos.length)*/
+      const conn = conexion.cone;
+      conn.query(`INSERT INTO habito_alimenticio VALUES (${req.body.id}, '${req.body.masConsumidos}', '${req.body.alimentos_alergia}', ${req.body.cantidad_agua}, ${req.body.cantidad_comidas}, ${req.body.cantidad_colaciones}, '${req.body.horaDesayuno}', '${req.body.horaComida}', '${req.body.horaCena}')`, (errorInsert, resultInsert) => {
+        if(errorInsert){
+          console.log(errorInsert);
+          res.status(500).send({mensaje : errorInsert.message, codigo : errorInsert.code});
+        }else{
+          res.status(200).send({mensaje : "Creación de habito alimenticio existoso"});
+        }
+      });
+    }
+  }
+});
+      
+//MÉTODO DE BUSQUEDA MEDIANTE ID DE PACIENTE
+app.get("/habitoAlimenticio/obten", (req, res) => {
+  if(JSON.stringify(req.body) === '{}'){
+    res.status(500).send({mensaje : "Sin información"});
+  }else{
+    if(req.body.id === ""){
+      res.status(500).send({mensaje : "Error. Datos incompletos"});
+    }else{
+      //realizamos la busqueda
+      const conn = conexion.cone;
+      conn.query(`SELECT * FROM habito_alimenticio WHERE id_paciente = ${req.body.id}`, (errorBusqueda, resultBusqueda) => {
+        if(errorBusqueda){
+          console.log(errorBusqueda);
+          res.status(500).send({mensaje : errorBusqueda.message, codigo : errorBusqueda.code});
+        }else{
+          //comprobamos que obtenemos un valor
+          if(resultBusqueda.length > 0){
+            //mandamos el objeto obtenido como respuesta
+            res.status(200).send({mensaje : "OK", obj : resultBusqueda[0]});
+          }else{
+            res.status(404).send({mensaje : "Sin datos que obtener"});
+          }
+        }
+      });
+    }
+  }
+});
+      
+//MÉTODO DE ACTUALIZACIÓN MEDIANTE ID DE PACIENTE
+app.put("/habitoAlimenticio/actualiza", (req, res) => {
+  if(JSON.stringify(req.body) === '{}'){
+    res.status(500).send({mensaje : "Sin información"});
+  }else{
+    if(req.body.id === "" || req.body.masConsumidos === "" || req.body.alimentos_alergia === "" || req.body.cantidad_agua === "" || req.body.cantidad_comidas === "" || req.body.cantidad_colaciones === "" || req.body.horaDesayuno === "" || req.body.horaComida === "" || req.body.horaCena === ""){
+      res.status(500).send({mensaje : "Error. Datos incompletos"});
+    }else{
+      //realizamos la actualización de datos
+      const conn = conexion.cone;
+      conn.query(`UPDATE habito_alimenticio SET masConsumidos = '${req.body.masConsumidos}', alimentos_alergia = '${req.body.alimentos_alergia}', cantidad_agua =  ${req.body.cantidad_agua}, cantidad_comidas = ${req.body.cantidad_comidas}, cantidad_colaciones = ${req.body.cantidad_colaciones}, horaDesayuno = '${req.body.horaDesayuno}', horaComida = '${req.body.horaComida}', horaCena = '${req.body.horaCena}' WHERE id_paciente = ${req.body.id}`, (errorActualiza, resultActualiza) => {
+        if(errorActualiza){
+          console.log(errorActualiza);
+          res.status(500).send({mensaje : errorActualiza.message, codigo : errorActualiza.code});
+        }else{
+          if(resultActualiza.affectedRows > 0){
+            res.status(200).send({mensaje : "Registro actualizado"}); 
+          }
+        }
+      });
+    }
+  }
+});
+      
+//MÉTODO DE ELIMINACIÓN MEDIANTE ID DEL PACIENTE
+app.delete("/habitoAlimenticio/eliminarRegistro", (req, res) => {
+  if(JSON.stringify(req.body) === '{}'){
+    res.status(500).send({mensaje : "Sin información"});
+  }else{
+    if(req.body.id === ""){
+      res.status(500).send({mensaje : "Error. Datos incompletos"});
+    }else{
+      const conn = conexion.cone;
+      conn.query(`DELETE FROM habito_alimenticio WHERE id_paciente = ${req.body.id}`, (errorElimina, resultadoElimina) => {
+        if(errorElimina){
+          console.log(errorElimina);
+          res.status(500).send({mensaje : errorElimina.message, codigo : errorElimina.code});
+        }else{
+          if(resultadoElimina.affectedRows > 0){
+            res.status(200).send({mensaje : "Eliminación del habito exitoso"});
+          }
+        }
+      });
+    }
+  }
+});
   
   //METODOS DE CONFIGURACIÓN DEL SERVIDOR
 app.listen(3000, "192.168.100.9", function () {
