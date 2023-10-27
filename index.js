@@ -2365,6 +2365,40 @@ app.delete("/borraProfesional", (req, res) => {//obtenemos el id del profesional
   }
 });
 
+//funciones que realizan las operaciones de actualización y eliminación respectivamente
+function actualizaRegistroProfesional(tabla, id, valor, conexion){
+  return new Promise((resolve, reject) => {
+    var query = "";
+    if(tabla == "usuarios_profesionales")
+      query = `UPDATE ${tabla} SET valido = ${valor} WHERE id_profesional = ${id}`;
+    else if(tabla == "historial_profesionales") query = `UPDATE ${tabla} SET id_profesional = ${valor}, fechaTer = '${fechaApi}' WHERE id_profesional = ${id}`;
+    else query = `UPDATE ${tabla} SET id_profesional = ${valor} WHERE id_profesional = ${id}`;
+    //console.log(query);
+    conexion.query(query, (error, result) => {
+      if(error){
+        console.log("Error al actualizar el registro: "+error.message);
+        resolve({operacion : "Actualización", tabla : tabla, exitosa : false});
+      }else{
+        //console.log("Registro actualizado ");
+        resolve({operacion : "Actualización", tabla : tabla, exitosa : true});
+      }
+    });
+  });
+}
+function eliminaRegistroProfesional(tabla, id, conexion){
+  return new Promise ((resolve, reject) => {
+    var query = `DELETE FROM ${tabla} WHERE id_profesional = ${id}`;
+    conexion.query(query, (err, result) =>{
+      if(err){
+        console.log("Error al eliminar el registro: "+err.message);
+        resolve({operacion : "Eliminación", tabla : tabla, exitosa : false});
+      }else{
+        //console.log("Registro eliminado ");
+        resolve({operacion : "Eliminación", tabla : tabla, exitosa : true});
+      }
+    });
+  });
+}
 
   //METODO PARA ELIMINAR EL CONTENIDO DE UNA CARPETA, EN ESTE CASO videosProfesionales
 app.delete("/borrarCarpetasVideos", (req, res) => {
