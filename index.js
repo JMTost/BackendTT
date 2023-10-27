@@ -3030,6 +3030,442 @@ app.delete("/infoMed/eliminar", (req, res) => {
   }
 });
 
+//alimento dieta
+/*
+id_profesional	int, id_paciente	int, id_comida	int, proteinas	char(100),
+cantidades_proteinas	char(150), lacteos	char(100), cantidades_lacteos	char(150),
+frutas	char(100), cantidades_frutas	char(150), verduras	char(100), cantidades_verduras	char(150),
+granos	char(100), cantidades_granos	char(150), duracion	int, vigencia	char(1)
+*/
+//MÉTODO DE ALTA DE ALIMENTO DIETA
+app.post("/alimentodieta/alta", (req, res) => {
+  if(JSON.stringify(req.body) === '{}'){
+    res.status(500).send({mensaje : "Sin información en la solicitud"});
+  }else{
+    if(req.body.idProfesional === "" || req.body.idPaciente === "" || req.body.idComida === "" ||
+    Array.isArray(req.body.proteinas) === false || Array.isArray(req.body.cantidadesProteinas) === false ||
+    Array.isArray(req.body.lacteos) === false || Array.isArray(req.body.cantidadesLacteos) === false ||
+    Array.isArray(req.body.frutas) === false || Array.isArray(req.body.cantidadesFrutas) === false ||
+    Array.isArray(req.body.verduras) === false || Array.isArray(req.body.cantidadesVerduras) === false ||
+    Array.isArray(req.body.granos) === false || Array.isArray(req.body.cantidadesGranos) === false ||
+    req.body.duracion === "" || req.body.vigencia === ""){
+      res.status(500).send({mensaje : "Error. Datos incompletos"});
+    }else{
+      const conn = conexion.cone;
+      let queryAlta = `INSERT INTO alimento_dieta VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`;
+      conn.query(queryAlta, [req.body.idProfesional, req.body.idPaciente, req.body.idComida, req.body.proteinas.toString(), req.body.cantidadesProteinas.toString(), req.body.lacteos.toString(), req.body.cantidadesLacteos.toString(), req.body.frutas.toString(), req.body.cantidadesFrutas.toString(), req.body.verduras.toString(), req.body.cantidadesVerduras.toString(), req.body.granos.toString(), req.body.cantidadesGranos.toString(), req.body.duracion, req.body.vigencia], (errorAlta, resultAlta) => {
+        if(errorAlta){
+          console.log(errorAlta);
+          res.status(500).send({mensaje : errorAlta.message, code : errorAlta.code});
+        }else{
+          res.status(200).send({mensaje : "Creación exitosa"});
+        }
+      });
+    }
+  }
+});
+//MÉTODO DE OBTENCIÓN DE ALIMENTO DIETA
+//busqueda de lista alimentos de dietas vigentes mediante id del paciente (caso para los profesionales y pacientes)
+app.get("/alimentodieta/busqueda/paciente", (req, res) =>{
+  if(JSON.stringify(req.body) === '{}'){
+    res.status(500).send({mensaje : "Sin información en la solicitud"});
+  }else{
+    if(req.body.idPaciente === ""){
+      res.status(500).send({mensaje : "Error. Datos incompletos"});
+    }else{
+      const conn = conexion.cone;
+      let query = `SELECT ad.id_profesional, ad.id_paciente, ad.id_comida, ad.proteinas, ad.cantidades_proteinas, ad.lacteos, ad.cantidades_lacteos, ad.frutas, ad.cantidades_frutas, ad.verduras, ad.cantidades_verduras, ad.granos, ad.cantidades_granos, ad.duracion, ad.vigencia , tc.descripcion, up.nombre, up.apPaterno, up.apMaterno FROM alimento_dieta as ad, tipoComida as tc, usuarios_pacientes as up WHERE ad.id_paciente = ? and ad.vigencia = 1 AND ad.id_comida = tc.id_comida AND ad.id_paciente = up.id_paciente`;
+      conn.query(query, [req.body.idPaciente], (errorBusqueda, resultBusqueda) => {
+        if(errorBusqueda){
+          console.log(errorBusqueda);
+          res.status(500).send({mensaje : errorBusqueda.message, codigo : errorBusqueda.code});
+        }else{
+          if(resultBusqueda.length > 0){
+            var objeto = {}, data = [];
+            objeto = {
+              id_profesional : resultBusqueda[0].id_profesional,
+              id_paciente : resultBusqueda[0].id_paciente,
+              nombreCpaciente : resultBusqueda[0].nombre + " " + resultBusqueda[0].apPaterno + " " + resultBusqueda[0].apMaterno
+            };
+
+            for(let i = 0; i <= resultBusqueda.length; i++){
+              if(i < resultBusqueda.length){
+                let idProteinas =  resultBusqueda[i].proteinas.split(',');
+                let idLacteos = resultBusqueda[i].lacteos.split(',');
+                let idFrutas = resultBusqueda[i].frutas.split(',');
+                let idVerduras = resultBusqueda[i].verduras.split(',');
+                let idGranos = resultBusqueda[i].granos.split(',');
+                const arregloPromesas = [];
+                //realizaremos las promesas para el caso de obtener
+                  //tipo de comida, descripcion de cada elemento de las comidas
+                
+                if(idProteinas.length > 0){
+                  for(let j = 0; j < idProteinas.length; j++)
+                    arregloPromesas.push({id : idProteinas[j], conexion : conn, tipo : "proteinas"});
+                }
+                if(idLacteos.length > 0){
+                  for(let j = 0; j < idLacteos.length; j++)
+                    arregloPromesas.push({id : idLacteos[j], conexion : conn, tipo : "lacteos"});
+                }
+                if(idFrutas.length > 0){
+                  for(let j = 0; j < idFrutas.length; j++)
+                    arregloPromesas.push({id : idFrutas[j], conexion : conn, tipo : "frutas"});
+                }
+                if(idVerduras.length > 0){
+                  for(let j = 0; j < idVerduras.length; j++)
+                    arregloPromesas.push({id : idVerduras[j], conexion : conn, tipo : "verduras"});
+                }
+                if(idGranos.length > 0){
+                  for(let j = 0; j < idGranos.length; j++)
+                    arregloPromesas.push({id : idGranos[j], conexion : conn, tipo : "granos"});
+                }
+                
+                if(arregloPromesas.length > 0){
+                  const promesasDescripcion = arregloPromesas.map(operacion => {
+                    return obtenDescripcionAlimento(operacion.id, operacion.conexion, operacion.tipo);
+                  });
+                  creaJSONDescripcionAlimento(promesasDescripcion, resultBusqueda, i, idProteinas, idLacteos, idFrutas, idVerduras, idGranos).then(
+                    objetod => {
+                      
+                      if(contadorOBJ == resultBusqueda.length){
+                        //console.log(objetod)
+                        for(let j =0 ; j < objetod.length; j++){
+                          data.push({
+                            tipoComida : objetod[j].tipoComida,
+                            idTipo : objetod[j].idTipo,
+                            comida : objetod[j].data
+                          });
+                        }
+                        contadorOBJ = 0;
+                        objetoG = {};
+                        dataG = [];
+                        objeto.comidas = data;
+                        //console.log(objeto);
+                        res.status(200).send({mensaje : "Obtención de información correcta", objeto : objeto});
+                      }
+                  }).catch(error => {
+                    console.log(error);
+                  });
+                }
+              }
+            }
+          }else{
+            res.status(404).send({mensaje : "No se encontro registros"});
+          }
+        }
+      });
+    }
+  }
+});
+
+function obtenDescripcionAlimento(id, conexion, tipo){
+  return new Promise((resolve, reject) => {
+    var query = "";
+    if(tipo == "proteinas")
+      query = "SELECT * FROM proteinas WHERE id_proteinas = ?";
+    else if(tipo == "lacteos")
+      query = "SELECT * FROM lacteos WHERE id_lacteos = ?";
+    else if(tipo == "frutas")
+      query = "SELECT * FROM frutas WHERE id_frutas = ?";
+    else if(tipo == "verduras")
+      query = "SELECT * FROM verduras WHERE id_verduras = ?";
+    else if(tipo == "granos")
+      query = "SELECT * FROM granos WHERE id_granos = ?";
+    conexion.query(query, [id], (error, result) => {
+      if(error){
+        resolve({tabla : tipo, exito : false, operacion : "Busqueda"});
+      }else{
+        resolve({tabla : tipo, exito : true, data : result[0].descripcion, operacion : "Busqueda"});
+      }
+    });
+  });
+}
+
+var contadorOBJ = 0;
+var objetoG = {}, dataG = [];
+function creaJSONDescripcionAlimento(promesasDescripcion, resultBusqueda, i, idProteinas, idLacteos, idFrutas, idVerduras, idGranos){
+  return Promise.all(promesasDescripcion).then(resultados => {
+    var objeto = {}, data = [];
+    var proteinas = [], lacteos = [], frutas = [], verduras = [], granos = [];
+    for(let j = 0; j < resultados.length; j++){
+      //console.log(resultados[j]);
+      if(resultados[j].tabla == "proteinas")
+        proteinas.push(resultados[j].data);
+      else if(resultados[j].tabla == "lacteos")
+        lacteos.push(resultados[j].data);
+      else if(resultados[j].tabla == "frutas")
+        frutas.push(resultados[j].data);
+      else if(resultados[j].tabla == "verduras")
+        verduras.push(resultados[j].data);
+      else if(resultados[j].tabla == "granos")
+        granos.push(resultados[j].data);
+    }
+    objeto.tipoComida = resultBusqueda[i].descripcion;
+    objeto.idTipo = resultBusqueda[i].id_comida;
+    data.push({
+      idProteinas : idProteinas.toString(),
+      proteinas : proteinas.toString(),
+      cantidadesProteinas : resultBusqueda[i].cantidades_proteinas,
+      idLacteos : idLacteos.toString(),
+      lacteos : lacteos.toString(),
+      cantidadesLacteos : resultBusqueda[i].cantidades_lacteos,
+      idFrutas : idFrutas.toString(),
+      frutas : frutas.toString(), 
+      cantidadesFrutas : resultBusqueda[i].cantidades_frutas ,
+      idVerduras : idVerduras.toString(),
+      verduras : verduras.toString(),
+      cantidadesVerduras : resultBusqueda[i].cantidades_verduras,
+      idGranos : idGranos.toString(),
+      granos : granos.toString(),
+      cantidadesGranos : resultBusqueda[i].cantidades_granos,
+      duracion : resultBusqueda[i].duracion
+    });
+    
+    objeto.data = data;
+    dataG.push(objeto);
+    contadorOBJ++;
+    objetoG = {contador : contadorOBJ, data : data};
+    if(contadorOBJ == resultBusqueda.length){
+      //console.log(objetoG)
+      return dataG;
+    }else{
+      return objetoG;
+    }
+    //console.log(data)
+  });
+}
+
+//busqueda de lista de dietas que el profesional haya creado, esto para tener un orden de que aliemento se creo para que paciente
+//solo será informativa   obtenemos el id del profesional
+app.get("/alimentodieta/busqueda/comidas/profesional", (req, res) => {
+  if(JSON.stringify(req.body) == '{}'){
+    res.status(500).send({mensaje : "Sin información en la solicitud"});
+  }else{
+    if(req.body.id === ""){
+      res.status(500).send({mensaje : "Error. Datos incompletos"});
+    }else{
+      const conn = conexion.cone;
+      let queryBusqueda = "SELECT ad.id_profesional, ad.id_paciente, ad.id_comida, ad.duracion, ad.vigencia , tc.descripcion, up.nombre, up.apPaterno, up.apMaterno FROM alimento_dieta as ad, tipoComida as tc, usuarios_pacientes as up WHERE ad.id_profesional = ? AND ad.id_comida = tc.id_comida AND ad.id_paciente = up.id_paciente";
+      conn.query(queryBusqueda, [req.body.id], (errorBusqueda, resultBusqueda) => {
+        if(errorBusqueda){
+          console.log(errorBusqueda);
+          res.status(500).send({mensaje : errorBusqueda.message, codigo : errorBusqueda.code});
+        }else{
+          if(resultBusqueda.length > 0){
+            var objeto = {}, data = [];
+            for(let i = 0; i < resultBusqueda.length; i++){
+              data.push({
+                idProfesional : resultBusqueda[i].id_profesional,
+                idPaciente : resultBusqueda[i].id_paciente,
+                nombreC : resultBusqueda[i].nombre + " " + resultBusqueda[i].apPaterno + " " + resultBusqueda[i].apMaterno,
+                idComida : resultBusqueda[i].id_comida,
+                comida : resultBusqueda[i].descripcion,
+                duracion : resultBusqueda[i].duracion,
+                vigencia : resultBusqueda[i].vigencia
+              });
+            }
+            objeto.data = data;
+            res.status(200).send({mensaje : "Ok", objeto : objeto});
+          }else{
+            res.status(404).send({mensaje : "No se cuentan con registros"});
+          }
+        }
+      });
+    }
+  }
+});
+
+//busqueda de lista de alimentos mediante id del paciente (Solo muestra que paciente tiene aliemntos)
+//solo será informativa
+app.get("/alimentodieta/busqueda/comidas/paciente", (req, res) => {
+  if(JSON.stringify(req.body) == '{}'){
+    res.status(500).send({mensaje : "Sin información en la solicitud"});
+  }else{
+    if(req.body.id === ""){
+      res.status(500).send({mensaje : "Error. Datos incompletos"});
+    }else{
+      const conn = conexion.cone;
+      let queryBusqueda = "SELECT ad.id_profesional, ad.id_paciente, ad.id_comida, ad.duracion, ad.vigencia , tc.descripcion FROM alimento_dieta as ad, tipoComida as tc WHERE ad.id_paciente = ? AND ad.id_comida = tc.id_comida";
+      conn.query(queryBusqueda, [req.body.id], (errorBusqueda, resultBusqueda) => {
+        if(errorBusqueda){
+          console.log(errorBusqueda);
+          res.status(500).send({mensaje : errorBusqueda.message, codigo : errorBusqueda.code});
+        }else{
+          if(resultBusqueda.length > 0){
+            var objeto = {}, data = [];
+            for(let i = 0; i < resultBusqueda.length; i++){
+              data.push({
+                idProfesional : resultBusqueda[i].id_profesional,
+                idPaciente : resultBusqueda[i].id_paciente,
+                idComida : resultBusqueda[i].id_comida,
+                comida : resultBusqueda[i].descripcion,
+                duracion : resultBusqueda[i].duracion,
+                vigencia : resultBusqueda[i].vigencia
+              });
+            }
+            objeto.data = data;
+            res.status(200).send({mensaje : "Ok", objeto : objeto});
+          }else{
+            res.status(404).send({mensaje : "No se cuentan con registros"});
+          }
+        }
+      });
+    }
+  }
+});
+
+//busqueda de aliemtno de comida mediante el id del paciente, vigencia y tipo de comida
+app.get("/alimentodieta/busqueda/comidas/tipo", (req, res) =>{
+  if(JSON.stringify(req.body) === '{}'){
+    res.status(500).send({mensaje : "Sin información en la solicitud"});
+  }else{
+    if(req.body.idPaciente === "" || req.body.idComida === ""){
+      res.status(500).send({mensaje : "Error. Datos incompletos"});
+    }else{
+      const conn = conexion.cone;
+      let query = `SELECT ad.id_profesional, ad.id_paciente, ad.id_comida, ad.proteinas, ad.cantidades_proteinas, ad.lacteos, ad.cantidades_lacteos, ad.frutas, ad.cantidades_frutas, ad.verduras, ad.cantidades_verduras, ad.granos, ad.cantidades_granos, ad.duracion, ad.vigencia , tc.descripcion, up.nombre, up.apPaterno, up.apMaterno FROM alimento_dieta as ad, tipoComida as tc, usuarios_pacientes as up WHERE ad.id_paciente = ? and ad.vigencia = 1 AND ad.id_comida = ? AND ad.id_comida = tc.id_comida AND ad.id_paciente = up.id_paciente`;
+      conn.query(query, [req.body.idPaciente, req.body.idComida], (errorBusqueda, resultBusqueda) => {
+        if(errorBusqueda){
+          console.log(errorBusqueda);
+          res.status(500).send({mensaje : errorBusqueda.message, codigo : errorBusqueda.code});
+        }else{
+          if(resultBusqueda.length > 0){
+            var objeto = {}, data = [];
+            objeto = {
+              id_profesional : resultBusqueda[0].id_profesional,
+              id_paciente : resultBusqueda[0].id_paciente,
+              nombreCpaciente : resultBusqueda[0].nombre + " " + resultBusqueda[0].apPaterno + " " + resultBusqueda[0].apMaterno
+            };
+
+            for(let i = 0; i <= resultBusqueda.length; i++){
+              if(i < resultBusqueda.length){
+                let idProteinas =  resultBusqueda[i].proteinas.split(',');
+                let idLacteos = resultBusqueda[i].lacteos.split(',');
+                let idFrutas = resultBusqueda[i].frutas.split(',');
+                let idVerduras = resultBusqueda[i].verduras.split(',');
+                let idGranos = resultBusqueda[i].granos.split(',');
+                const arregloPromesas = [];
+                //realizaremos las promesas para el caso de obtener
+                  //tipo de comida, descripcion de cada elemento de las comidas
+                
+                if(idProteinas.length > 0){
+                  for(let j = 0; j < idProteinas.length; j++)
+                    arregloPromesas.push({id : idProteinas[j], conexion : conn, tipo : "proteinas"});
+                }
+                if(idLacteos.length > 0){
+                  for(let j = 0; j < idLacteos.length; j++)
+                    arregloPromesas.push({id : idLacteos[j], conexion : conn, tipo : "lacteos"});
+                }
+                if(idFrutas.length > 0){
+                  for(let j = 0; j < idFrutas.length; j++)
+                    arregloPromesas.push({id : idFrutas[j], conexion : conn, tipo : "frutas"});
+                }
+                if(idVerduras.length > 0){
+                  for(let j = 0; j < idVerduras.length; j++)
+                    arregloPromesas.push({id : idVerduras[j], conexion : conn, tipo : "verduras"});
+                }
+                if(idGranos.length > 0){
+                  for(let j = 0; j < idGranos.length; j++)
+                    arregloPromesas.push({id : idGranos[j], conexion : conn, tipo : "granos"});
+                }
+                
+                if(arregloPromesas.length > 0){
+                  const promesasDescripcion = arregloPromesas.map(operacion => {
+                    return obtenDescripcionAlimento(operacion.id, operacion.conexion, operacion.tipo);
+                  });
+                  creaJSONDescripcionAlimento(promesasDescripcion, resultBusqueda, i, idProteinas, idLacteos, idFrutas, idVerduras, idGranos).then(
+                    objetod => {
+                      
+                      if(contadorOBJ == resultBusqueda.length){
+                        //console.log(objetod)
+                        for(let j =0 ; j < objetod.length; j++){
+                          data.push({
+                            tipoComida : objetod[j].tipoComida,
+                            idTipo : objetod[j].idTipo,
+                            comida : objetod[j].data
+                          });
+                        }
+                        contadorOBJ = 0;
+                        objetoG = {};
+                        dataG = [];
+                        objeto.comidas = data;
+                        //console.log(objeto);
+                        res.status(200).send({mensaje : "Obtención de información correcta", objeto : objeto});
+                      }
+                  }).catch(error => {
+                    console.log(error);
+                  });
+                }
+              }
+            }
+          }else{
+            res.status(404).send({mensaje : "No se encontro registros"});
+          }
+        }
+      });
+    }
+  }
+});
+
+//MÉTODO DE ACTUALIZACIÓN DE ALIMENTO DIETA
+  //obtenemos el id del paciente y profesional, junto con el id del tipo de comida, estos datos no se modifican
+  //solo modificamos los elmentos de cantidades e id de los alimentos
+app.put("/alimentodieta/actualiza", (req, res) => {
+  if(JSON.stringify(req.body) === '{}'){
+    res.status(500).send({mensaje : "Sin información"});
+  }else{
+    if(req.body.idProfesional === "" || req.body.idPaciente === "" || req.body.idComida === "" || 
+    Array.isArray(req.body.proteinas) === false || Array.isArray(req.body.cantidadesProteinas) === false ||
+    Array.isArray(req.body.lacteos) === false || Array.isArray(req.body.cantidadesLacteos) === false ||
+    Array.isArray(req.body.frutas) === false || Array.isArray(req.body.cantidadesFrutas) === false ||
+    Array.isArray(req.body.verduras) === false || Array.isArray(req.body.cantidadesVerduras) === false ||
+    Array.isArray(req.body.granos) === false || Array.isArray(req.body.cantidadesGranos) === false ||
+    req.body.duracion === "" || req.body.vigencia === ""){
+      res.status(500).send({mensaje : "Error. Datos incompletos"});
+    }else{
+      const conn = conexion.cone;
+      let query = "UPDATE alimento_dieta SET proteinas = ?, cantidades_proteinas = ?, lacteos = ?, cantidades_lacteos = ?, frutas = ?, cantidades_frutas = ?, verduras = ?, cantidades_frutas = ?, granos = ?, cantidades_granos = ?, duracion = ?, vigencia = ? WHERE id_profesional = ? AND id_paciente = ? AND id_comida = ?";
+      conn.query(query, [
+        req.body.proteinas.toString(),req.body.cantidadesProteinas.toString(),req.body.lacteos.toString(),req.body.cantidadesLacteos.toString(),req.body.frutas.toString(),req.body.cantidadesFrutas.toString(),req.body.verduras.toString(),req.body.cantidadesVerduras.toString(),req.body.granos.toString(),req.body.cantidadesGranos.toString(), req.body.duracion, req.body.vigencia, req.body.idProfesional, req.body.idPaciente, req.body.idComida], 
+        (errorActualizacion, resultActualizacion) => {
+          if(errorActualizacion){
+            console.log(errorActualizacion);
+            res.status(500).send({mensaje : errorActualizacion.message, codigo : errorActualizacion.code});
+          }else{
+            if(resultActualizacion.affectedRows > 0){
+              res.status(200).send({mensaje : "Información actualizada"});
+            }
+          }
+        });
+    }
+  }
+});
+//MÉTODO DE ELIMINACIÓN DE ALIMENTO DIETA
+//obtenemos el id del profesional, paceinte y del tipo de comida a eliminar
+app.delete("/alimentodieta/eliminar", (req, res) => {
+  if(JSON.stringify(req.body) === '{}'){
+    res.status(500).send({mensaje : "Sin información"});
+  }else{
+    if(req.body.idProfesional === "" || req.body.idPaciente === "" || req.body.tipoComida === ""){
+      res.status(500).send({mensaje : "Error. Datos incompletos"});
+    }else{
+      const conn = conexion.cone;
+      let query = `DELETE FROM alimento_dieta WHERE id_profesional = ? AND id_paciente = ? AND id_comida = ?`;
+      conn.query(query, [req.body.idProfesional, req.body.idPaciente, req.body.tipoComida], (errorElimina, resultElimina) => {
+        if(errorElimina){
+          console.log(errorElimina);
+          res.status(500).send({mensaje : errorElimina.message, codigo : errorElimina.code});
+        }else{
+          if(resultElimina.affectedRows > 0){
+            res.status(200).send({mensaje : "Registro eliminado"});
+          }
+        }
+      })
+    }
+  }
+});
+
+
   //METODOS DE CONFIGURACIÓN DEL SERVIDOR
 app.listen(3000, "192.168.100.9", function () {
   console.log("Funcionando en el puerto: 3000");
