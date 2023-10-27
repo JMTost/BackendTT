@@ -2836,6 +2836,200 @@ app.delete("/habitoPersonal/elimina", (req, res)=>{
   }
 });
 
+//informacion médica de pacientes
+//campos a considerar
+/*
+id_paciente	int, estatura	float, ocupacion	char(50), imc	float, objetivo	char(100), 
+alergias	char(150), medicamentosC	char(150), enferm	char(100), enfermFam	char(100)
+DENTRO DE enferm Y enferFam OBTENDREMOS UN ARREGLO CON TODOS LOS ID QUE CORRESPONDEN A CADA ENFERMEDADE
+  */
+//MÉTODO DE ALTA DE INFORMACIÓN MÉDICA
+app.post("/infoMed/alta", (req, res) => {
+  if(JSON.stringify(req.body) === '{}'){
+    res.status(500).send({mensaje : "Sin información en la solicitud"});
+  }else{
+    if(req.body.id_paciente === "" || req.body.estatura === "" || req.body.ocupacion === "" || req.body.imc === "" ||
+    req.body.objetivo === "" || req.body.alergias === "" || req.body.medicamentosC === "" || Array.isArray(req.body.enferm) === false || 
+    Array.isArray(req.body.enfermFam) === false ){
+      res.status(500).send({mensaje : "Error. Datos incompletos"});
+    }else{
+      const conn = conexion.cone;
+      let query = `INSERT INTO infompaciente VALUES (?,?,?,?,?,?,?,?,?)`;
+      //console.log(typeof(req.body.enfermFam.toString()));
+      conn.query(query, [req.body.id_paciente, req.body.estatura, req.body.ocupacion, req.body.imc, req.body.objetivo, req.body.alergias, req.body.medicamentosC, req.body.enferm.toString(), req.body.enfermFam.toString()], (errorInsert, resultInsert) => {
+        if(errorInsert){
+          console.log(errorInsert);
+          res.status(500).send({mensaje : errorInsert.message, codigo : errorInsert.code});
+        }else{
+          res.status(200).send({mensaje : "Creación exitosa"});
+        }
+      });
+    }
+  }
+});
+
+//MÉTODO DE BUSQUEDA DE INFORMACIÓN MÉDICA MEDIANTE ID DEL PACIENTE
+app.get("/infoMed/obten", (req, res) => {
+  if(JSON.stringify(req.body) == '{}'){
+    res.status(500).send({mensaje : "Sin información en la solicitud"});
+  }else{
+    if(req.body.id === "{}"){
+      req.body(500).send({mensaje : "Error. Datos incompletos"});
+    }else{
+      const conn = conexion.cone;
+      const queryBusqueda = "SELECT up.id_paciente, up.nombre, up.apPaterno, up.apMaterno, infoM.estatura, infoM.ocupacion, infoM.imc, infoM.objetivo, infoM.alergias, infoM.medicamentosC, infoM.enferm, infoM.enfermFam FROM infompaciente as infoM, usuarios_pacientes as up WHERE infoM.id_paciente = ? and up.id_paciente = infoM.id_paciente";
+      conn.query(queryBusqueda, req.body.id, (errorBusqueda, resultBusqueda) => {
+        if(errorBusqueda){
+          console.log(errorBusqueda);
+          res.status(500).send({mensaje : errorBusqueda.message, codigo : errorBusqueda.code});
+        }else{
+          if(resultBusqueda.length > 0){
+            var objeto = {};
+            let cantEnferm = resultBusqueda[0].enferm.split(','), cantEnfermFam = resultBusqueda[0].enfermFam.split(',');
+            const catalogoEnfermedades = [];
+            //creamos el objeto de salida
+            objeto = {
+              id_paciente : resultBusqueda[0].id_paciente,
+              nombreC : resultBusqueda[0].nombre + " " + resultBusqueda[0].apPaterno + " " + resultBusqueda[0].apMaterno,
+              ocupacion : resultBusqueda[0].ocupacion,
+              imc : resultBusqueda[0].imc,
+              objetivo : resultBusqueda[0].objetivo,
+              alergias : resultBusqueda[0].alergias,
+              medicamentosC : resultBusqueda[0].medicamentosC
+            };
+            if(cantEnferm.length > 0){
+              for(let i = 0; i < cantEnferm.length; i++)
+                catalogoEnfermedades.push({id : cantEnferm[i], conexion : conn, tipo : "pacientes"});
+            }else{
+              objeto.enferm = "No aplica";
+            }
+            
+            if(cantEnfermFam.length > 0){
+              for(let i = 0; i < cantEnfermFam.length; i++)
+                catalogoEnfermedades.push({id : cantEnfermFam[i], conexion : conn, tipo : "familiar"});
+            }else{
+              objeto.enfermFam = "No aplica";
+            }
+            if(catalogoEnfermedades.length > 0){
+              let enfermedadesPaciente = [], enfermedadesFam = [];
+              const promesasCatalogo = catalogoEnfermedades.map(operacion => {
+                return obtenEnfermedades(operacion.id, operacion.conexion, operacion.tipo);
+              });
+              Promise.all(promesasCatalogo).then(resultados => {
+
+                for(let i = 0; i < resultados.length; i++){
+                  if(resultados[i].tipo == "pacientes")
+                    enfermedadesPaciente.push(resultados[i].data);
+                  else if(resultados[i].tipo == "familiar")
+                    enfermedadesFam.push(resultados[i].data);
+                }
+
+                if(enfermedadesPaciente.length > 0 && enfermedadesPaciente[0] != undefined){
+                  objeto.enferm = enfermedadesPaciente;
+                }else{
+                  objeto.enferm = "No aplica";
+                }
+
+                if(enfermedadesFam.length > 0 && enfermedadesFam[0] != undefined){
+                  objeto.enfermFam = enfermedadesFam;
+                }else{
+                  objeto.enfermFam = "No aplica";
+                }
+
+                //ENVIAMOS EL OBJETO
+                res.status(200).send({mensaje : "OK", objeto : objeto});
+                
+              }).catch(error => {
+                res.status(500).send({mensaje : "Error dentro de las promesas", error : error});
+              });
+            }else{
+              res.status(200).send({mensaje : "OK", objeto : objeto});
+            }
+          }else{
+            res.status(404).send({mensaje : "No hay registro"});
+          }
+        }
+      });
+    }
+  }
+});
+
+function obtenEnfermedades(id, conexion, tipo){
+  return new Promise ((resolve, reject) => {
+    var query = `SELECT * FROM c_enfermedades WHERE id_enfermedad = ${id}`;
+    conexion.query(query, (err, result) =>{
+      if(err){
+        resolve({operacion : "Busqueda", exitosa : false, tipo : tipo});
+      }else{
+        //console.log("Registro eliminado ");
+        resolve({operacion : "Busqueda", exitosa : true, data : result[0].descripcion, tipo : tipo});
+      }
+    });
+  });
+}
+
+//MÉTODO DE ACTUALIZACIÓN DE INFORMACIÓN MÉDICA 
+app.put("/infoMed/actualiza", (req, res) => {
+  if(JSON.stringify(req.body) === '{}'){
+    res.status(500).send({mensaje : "Sin información en la solicitud"});
+  }else{
+    if(req.body.id_paciente === "" || req.body.estatura === "" || req.body.ocupacion === "" || req.body.imc === "" ||
+    req.body.objetivo === "" || req.body.alergias === "" || req.body.medicamentosC === "" || Array.isArray(req.body.enferm) === false || 
+    Array.isArray(req.body.enfermFam) === false ){
+      res.status(500).send({mensaje : "Error. Datos incompletos"});
+    }else{
+      const conn = conexion.cone;
+      let query = "UPDATE infompaciente SET estatura = ?, ocupacion = ?, imc = ?, objetivo=?, alergias=?, medicamentosC=?, enferm=?, enfermFam=? WHERE id_paciente = ?";
+      conn.query(query, [req.body.estatura, req.body.ocupacion, req.body.imc, req.body.objetivo, req.body.alergias, req.body.medicamentosC, req.body.enferm.toString(), req.body.enfermFam.toString(), req.body.id_paciente], (errorActualiza, resultActualiza) => {
+        if(errorActualiza){
+          console.log(errorActualiza);
+          res.status(500).send({mensaje : errorActualiza.message, codigo : errorActualiza.code});
+        }else{
+          if(resultActualiza.affectedRows > 0){
+            res.status(200).send({mensaje : "Actualización exitosa"});
+          }
+        }
+      });
+    }
+  }
+});
+
+//MÉTODO DE ELIMINACIÓN DE INFORMACIÓN MÉDICA
+app.delete("/infoMed/eliminar", (req, res) => {
+  if(JSON.stringify(req.body) === '{}'){
+    res.status(500).send({mensaje : "Sin información en la solicitud"});
+  }else{
+    if(req.body.id === ""){
+      res.status(500).send({mensaje : "Error. Datos incompletos"});
+    }else{
+      const conn = conexion.cone;
+      let busqueda = `SELECT * FROM infompaciente WHERE id_paciente = ?`;
+      conn.query(busqueda, [req.body.id], (errorBusqueda, resultBusqueda) => {
+        if(errorBusqueda){
+          console.log(errorBusqueda);
+          res.status(500).send({mensaje : errorBusqueda.message, codigo : errorBusqueda.code});
+        }else{
+          if(resultBusqueda.length > 0){
+            let eliminaQuery = `DELETE FROM infompaciente WHERE id_paciente = ?`;
+            conn.query(eliminaQuery, [req.body.id], (errorElimina, resultElimina) => {
+              if(errorElimina){
+                console.log(errorElimina);
+                res.status(500).send({mensaje : errorElimina.message, code : errorElimina.code});
+              }else{
+                if(resultElimina.affectedRows > 0){
+                  res.status(200).send({mensaje : "Registro de información médica eliminada"});
+                }
+              }
+            });
+          }else{
+            res.status(404).send({mensaje : "No se encontro un registro"});
+          }
+        }
+      });
+    }
+  }
+});
+
   //METODOS DE CONFIGURACIÓN DEL SERVIDOR
 app.listen(3000, "192.168.100.9", function () {
   console.log("Funcionando en el puerto: 3000");
