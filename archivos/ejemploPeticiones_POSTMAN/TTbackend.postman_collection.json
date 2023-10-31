@@ -1,0 +1,1446 @@
+{
+	"info": {
+		"_postman_id": "be2764fb-948b-4ca4-8e67-fa17c807f055",
+		"name": "TTbackend",
+		"schema": "https://schema.getpostman.com/json/collection/v2.0.0/collection.json",
+		"_exporter_id": "14501213"
+	},
+	"item": [
+		{
+			"name": "192.168.100.9:3000/altaprofesionales",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"nombre\":\"Maria Alejandra\",\r\n    \"apPaterno\":\"Macarena\",\r\n    \"apMaterno\":\"Galicia\",\r\n    \"email\":\"mariaAlejandra_nutri@gmail.com\",\r\n    \"edad\":30,\r\n    \"fechaN\":\"1993/07/14\",\r\n    \"pass\":\"mAle_nutri_30@$5\",\r\n    \"tipo\":\"3\",\r\n    \"archivos\":[],\r\n    \"valido\":0\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": "192.168.100.9:3000/altaprofesionales"
+			},
+			"response": []
+		},
+		{
+			"name": "192.168.100.9:3000/altaPacientes",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"nombre\":\"Evelyn\",\r\n    \"apPaterno\":\"Ramirez\",\r\n    \"apMaterno\":\"Rosales\",\r\n    \"email\":\"\",\r\n    \"edad\":22,\r\n    \"fechaN\":\"2001/05/16\",\r\n    \"numTel\":\"5512121212\",\r\n    \"pass\":\"eVeRR_12_21\",\r\n    \"idProfesional\": 1\r\n}\r\n",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": "192.168.100.9:3000/altaPacientes"
+			},
+			"response": []
+		},
+		{
+			"name": "192.168.100.9:3000/obtenTipos",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": "192.168.100.9:3000/obtenTipos"
+			},
+			"response": []
+		},
+		{
+			"name": "192.168.100.9:3000/obtenProfesionales",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": "192.168.100.9:3000/obtenProfesionales"
+			},
+			"response": []
+		},
+		{
+			"name": "http://worldtimeapi.org/api/timezone/America/Mexico_City",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": "http://worldtimeapi.org/api/timezone/America/Mexico_City"
+			},
+			"response": []
+		},
+		{
+			"name": "192.168.100.9:3000/prueba",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": "192.168.100.9:3000/prueba"
+			},
+			"response": []
+		},
+		{
+			"name": "192.168.100.9:3000/pruebaFecha",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"fecha\":\"1995/03/15\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": "192.168.100.9:3000/pruebaFecha"
+			},
+			"response": []
+		},
+		{
+			"name": "192.168.100.9:3000/obtenTiposCitas",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": "192.168.100.9:3000/obtenTiposCitas"
+			},
+			"response": []
+		},
+		{
+			"name": "192.168.100.9:3000/creacionCitas",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"idTipoCita\":2,\r\n    \"idProfesional\":3,\r\n    \"idPaciente\":2,\r\n    \"fechaHora\": \"2023/10/15 13:50\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": "192.168.100.9:3000/creacionCitas"
+			},
+			"response": []
+		},
+		{
+			"name": "192.168.100.9:3000/obtenCitasFechaHora",
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"method": "GET",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"fecha\":\"-08-\",\r\n    \"hora\":\"\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": "192.168.100.9:3000/obtenCitasFechaHora"
+			},
+			"response": []
+		},
+		{
+			"name": "192.168.100.9:3000/obtenCitasProfesional",
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"method": "GET",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"id\" : 1\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": "192.168.100.9:3000/obtenCitasProfesional"
+			},
+			"response": []
+		},
+		{
+			"name": "192.168.100.9:3000/obtenCitasPaciente",
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"method": "GET",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"id\":2\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": "192.168.100.9:3000/obtenCitasPaciente"
+			},
+			"response": []
+		},
+		{
+			"name": "192.168.100.9:3000/creacionProximaCita",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"idProfesional\":1,\r\n    \"idPaciente\":1,\r\n    \"fechaHora\": \"2023/10/20 16:20\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": "192.168.100.9:3000/creacionProximaCita"
+			},
+			"response": []
+		},
+		{
+			"name": "192.168.100.9:3000/obtenProximasCitas",
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"method": "GET",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"fecha\" : \"\",\r\n    \"hora\" : \":20:\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": "192.168.100.9:3000/obtenProximasCitas"
+			},
+			"response": []
+		},
+		{
+			"name": "192.168.100.9:3000/obtenProximasCitasProfesional",
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"method": "GET",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"id\" : 1\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": "192.168.100.9:3000/obtenProximasCitasProfesional"
+			},
+			"response": []
+		},
+		{
+			"name": "192.168.100.9:3000/obtenProximasCitasPaciente",
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"method": "GET",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"id\" : 1\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": "192.168.100.9:3000/obtenProximasCitasPaciente"
+			},
+			"response": []
+		},
+		{
+			"name": "192.168.100.9:3000/obtenCatalogoEnfermedades",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": "192.168.100.9:3000/obtenCatalogoEnfermedades"
+			},
+			"response": []
+		},
+		{
+			"name": "192.168.100.9:3000/obtenMusculos",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": "192.168.100.9:3000/obtenMusculos"
+			},
+			"response": []
+		},
+		{
+			"name": "192.168.100.9:3000/obtenTipoComida",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": "192.168.100.9:3000/obtenTipoComida"
+			},
+			"response": []
+		},
+		{
+			"name": "192.168.100.9:3000/login",
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"method": "GET",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    //profesional de la salud\r\n    \"correo\" : \"carDL@outlook.com\",\r\n    \"password\" : \"cDiazLOPEZ23\",\r\n    \"tipo\" : 0\r\n    /*\r\n    //paciente\r\n    \"correo\" : \"osw@gmail.com\", //\"eveRR_12@outlook.com.mx\",\r\n    \"password\" : \"pruebaContra\",//\"eVeRR_12_21\",\r\n    \"tipo\" : 1*/\r\n    /* \r\n    */\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": "192.168.100.9:3000/login"
+			},
+			"response": []
+		},
+		{
+			"name": "192.168.100.9:3000/actualizaEstadoProfesional",
+			"request": {
+				"method": "PUT",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"idProfesional\" : 1\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": "192.168.100.9:3000/actualizaEstadoProfesional"
+			},
+			"response": []
+		},
+		{
+			"name": "192.168.100.9:3000/obtenProfesionalesPorValidar",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": "192.168.100.9:3000/obtenProfesionalesPorValidar"
+			},
+			"response": []
+		},
+		{
+			"name": "192.168.100.9:3000/obtenProfesionalesValidados",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": "192.168.100.9:3000/obtenProfesionalesValidados"
+			},
+			"response": []
+		},
+		{
+			"name": "192.168.100.9:3000/cargaArchivos",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "multipart/form-data",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "formdata",
+					"formdata": [
+						{
+							"key": "archivo",
+							"contentType": "",
+							"type": "file",
+							"src": "/C:/Users/thebe/Desktop/archivos/Certificado_EjemploPrueba1.pdf"
+						},
+						{
+							"key": "id",
+							"value": "6",
+							"contentType": "",
+							"type": "text"
+						}
+					]
+				},
+				"url": "192.168.100.9:3000/cargaArchivos"
+			},
+			"response": []
+		},
+		{
+			"name": "192.168.100.9:3000/obtenArchivosProfesional",
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"method": "GET",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"id\" : 2\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": "192.168.100.9:3000/obtenArchivosProfesional"
+			},
+			"response": []
+		},
+		{
+			"name": "192.168.100.9:3000/cargaArchivos",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "formdata",
+					"formdata": [
+						{
+							"key": "archivo",
+							"type": "file",
+							"src": [
+								"/C:/Users/thebe/Downloads/reactjs_certificado.pdf",
+								"/C:/Users/thebe/Downloads/DesarrolloCSS_certificado.pdf",
+								"/C:/Users/thebe/Downloads/FrontEnd_certificado.pdf"
+							]
+						},
+						{
+							"key": "id",
+							"value": "6",
+							"type": "text"
+						}
+					]
+				},
+				"url": "192.168.100.9:3000/cargaArchivos"
+			},
+			"response": []
+		},
+		{
+			"name": "192.168.100.9:3000/altaFotoProfesional",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "formdata",
+					"formdata": [
+						{
+							"key": "img",
+							"type": "file",
+							"src": "/C:/Users/thebe/Downloads/user.png"
+						},
+						{
+							"key": "id",
+							"value": "6",
+							"type": "text"
+						}
+					]
+				},
+				"url": "192.168.100.9:3000/altaFotoProfesional"
+			},
+			"response": []
+		},
+		{
+			"name": "192.168.100.9:3000/data",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": "192.168.100.9:3000/data"
+			},
+			"response": []
+		},
+		{
+			"name": "192.168.100.9:3000/obtenImgProfesional",
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"method": "GET",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"id\" : 6\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": "192.168.100.9:3000/obtenImgProfesional"
+			},
+			"response": []
+		},
+		{
+			"name": "192.168.100.9:3000/altaFotoPaciente",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "formdata",
+					"formdata": [
+						{
+							"key": "img",
+							"type": "file",
+							"src": "/C:/Users/thebe/Desktop/Backend/archivos/imgGeneral/noPhotoUser.png"
+						},
+						{
+							"key": "id",
+							"value": "2",
+							"type": "text"
+						}
+					]
+				},
+				"url": "192.168.100.9:3000/altaFotoPaciente"
+			},
+			"response": []
+		},
+		{
+			"name": "192.168.100.9:3000/obtenImgPaciente",
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"method": "GET",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"id\":  2\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": "192.168.100.9:3000/obtenImgPaciente"
+			},
+			"response": []
+		},
+		{
+			"name": "192.168.100.9:3000/altaVideoProfesional",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "formdata",
+					"formdata": [
+						{
+							"key": "video",
+							"type": "file",
+							"src": "/C:/Users/thebe/Downloads/v.mp4"
+						},
+						{
+							"key": "id",
+							"value": "6",
+							"type": "text"
+						}
+					]
+				},
+				"url": "192.168.100.9:3000/altaVideoProfesional"
+			},
+			"response": []
+		},
+		{
+			"name": "192.168.100.9:3000/borrarVideos",
+			"request": {
+				"method": "DELETE",
+				"header": [],
+				"url": "192.168.100.9:3000/borrarCarpetasVideos"
+			},
+			"response": []
+		},
+		{
+			"name": "192.168.100.9:3000/obtenVideosProfesional",
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"method": "GET",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"id\" : 1\r\n}\r\n\r\n",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": "192.168.100.9:3000/obtenVideosProfesional"
+			},
+			"response": []
+		},
+		{
+			"name": "192.168.100.9:3000/obtenInfoCreaRutina",
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"method": "GET",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"id\" : 1\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": "192.168.100.9:3000/obtenInfoCreaRutina"
+			},
+			"response": []
+		},
+		{
+			"name": "192.168.100.9:3000/altaEjercicioRutina",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"id_profesional\" : 1,\r\n    \"id_paciente\" : 3,\r\n    \"cantidad\" : \"\",\r\n    \"id_video\" : 2,\r\n    \"id_ejercicio\" : 4,\r\n    \"fechaInicio\" : \"2023/09/25\",\r\n    \"fechaFin\" : \"2023/10/10\",\r\n    \"vigencia\" : 1\r\n}\r\n\r\n",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": "192.168.100.9:3000/altaEjercicioRutina"
+			},
+			"response": []
+		},
+		{
+			"name": "192.168.100.9:3000/obtenEjercicioRutinaPaciente",
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"method": "GET",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"id\" : 1\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": "192.168.100.9:3000/obtenEjercicioRutinaPaciente"
+			},
+			"response": []
+		},
+		{
+			"name": "192.168.100.9:3000/obtenVideoPorId",
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"method": "GET",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"id\" : 2\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": "192.168.100.9:3000/obtenVideoPorId"
+			},
+			"response": []
+		},
+		{
+			"name": "192.168.100.9:3000/borraVideoId",
+			"request": {
+				"method": "DELETE",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"id\" : 3\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": "192.168.100.9:3000/borraVideoId"
+			},
+			"response": []
+		},
+		{
+			"name": "192.168.100.9:3000/obtenEjerciciosRutinaProfesional",
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"method": "GET",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"id\" : 1\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": "192.168.100.9:3000/obtenEjerciciosRutinaProfesional"
+			},
+			"response": []
+		},
+		{
+			"name": "192.168.100.9:3000/actualizaRutinaEjercicio",
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"exec": [
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "PUT",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"id_ER\" : \"4\",\r\n    \"id_profesional\" : 1,\r\n    \"id_paciente\" : 1,\r\n    \"cantidad\" : \"10x2\",\r\n    \"id_video\" : 2,\r\n    \"id_ejercicio\" : 1,\r\n    \"fechaInicio\" : \"2023-09-19\",\r\n    \"fechaFin\" : \"2023-09-29\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": "192.168.100.9:3000/actualizaRutinaEjercicio"
+			},
+			"response": []
+		},
+		{
+			"name": "192.168.100.9:3000/obtenListaVideoProfesional",
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"method": "GET",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"id\" : 2\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": "192.168.100.9:3000/obtenListaVideoProfesional"
+			},
+			"response": []
+		},
+		{
+			"name": "192.168.100.9:3000/altaMedicion",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"id_profesional\" : 1,\r\n    \"id_paciente\" : 2,\r\n    \r\n    \"peso\": 131.5,\r\n    \"axiliar_media\": 27.8,\r\n    \"abdominal\": 70.5,\r\n    \"bicipital\": 66.5,\r\n    \"muslo\": 55.4,\r\n    \"suprailiaco\": 53.5,\r\n    \"triceps\": 47.5,\r\n    \"subescapular\": 85.4,\r\n    \"toracica\": 129.5,\r\n    \"pantorrilla_medial\": 76.5,\r\n    \"cintura\": 113.0,\r\n    \"fecha\": \"2023-10-20\"\r\n    /*\r\n    \"peso\": 132.0,\r\n    \"axiliar_media\": 28.5,\r\n    \"abdominal\": 71.3,\r\n    \"bicipital\": 67.3,\r\n    \"muslo\": 56.2,\r\n    \"suprailiaco\": 54.1,\r\n    \"triceps\": 48.0,\r\n    \"subescapular\": 86.3,\r\n    \"toracica\": 130.0,\r\n    \"pantorrilla_medial\": 77.0,\r\n    \"cintura\": 113.5,\r\n    \"fecha\": \"2023-10-19\"*/\r\n    /*\r\n    \"peso\": 132.5,\r\n    \"axiliar_media\": 29.2,\r\n    \"abdominal\": 72.1,\r\n    \"bicipital\": 68.1,\r\n    \"muslo\": 57.0,\r\n    \"suprailiaco\": 54.7,\r\n    \"triceps\": 48.5,\r\n    \"subescapular\": 87.2,\r\n    \"toracica\": 130.5,\r\n    \"pantorrilla_medial\": 77.5,\r\n    \"cintura\": 114.0,\r\n    \"fecha\": \"2023-10-18\"*/\r\n    /*\r\n    \"peso\": 133.0,\r\n    \"axiliar_media\": 30.0,\r\n    \"abdominal\": 73.2,\r\n    \"bicipital\": 68.9,\r\n    \"muslo\": 57.8,\r\n    \"suprailiaco\": 55.3,\r\n    \"triceps\": 49.0,\r\n    \"subescapular\": 88.0,\r\n    \"toracica\": 131.0,\r\n    \"pantorrilla_medial\": 78.0,\r\n    \"cintura\": 114.5,\r\n    \"fecha\": \"2023-10-17\"*/\r\n    /*\r\n    \"peso\": 133.7,\r\n    \"axiliar_media\": 30.8,\r\n    \"abdominal\": 74.7,\r\n    \"bicipital\": 69.7,\r\n    \"muslo\": 58.6,\r\n    \"suprailiaco\": 55.9,\r\n    \"triceps\": 49.5,\r\n    \"subescapular\": 88.8,\r\n    \"toracica\": 131.6,\r\n    \"pantorrilla_medial\": 78.3,\r\n    \"cintura\": 115.0,\r\n    \"fecha\": \"2023-10-16\"*/\r\n    /*\r\n    \"peso\": 134.1,\r\n    \"axiliar_media\": 31.5,\r\n    \"abdominal\": 75.9,\r\n    \"bicipital\": 70.8,\r\n    \"muslo\": 59.2,\r\n    \"suprailiaco\": 56.2,\r\n    \"triceps\": 50.2,\r\n    \"subescapular\": 89.5,\r\n    \"toracica\": 132.1,\r\n    \"pantorrilla_medial\": 78.8,\r\n    \"cintura\": 115.7,\r\n    \"fecha\": \"2023-10-15\"*/\r\n    /*\r\n    \"peso\": 137.8,\r\n    \"axiliar_media\": 33.0,\r\n    \"abdominal\": 78.2,\r\n    \"bicipital\": 72.9,\r\n    \"muslo\": 60.4,\r\n    \"suprailiaco\": 57.4,\r\n    \"triceps\": 51.2,\r\n    \"subescapular\": 91.5,\r\n    \"toracica\": 134.3,\r\n    \"pantorrilla_medial\": 80.1,\r\n    \"cintura\": 117.3,\r\n    \"fecha\": \"2023-10-14\"*/\r\n    /*\r\n    \"peso\": 135.2,\r\n    \"axiliar_media\": 32.1,\r\n    \"abdominal\": 76.5,\r\n    \"bicipital\": 71.3,\r\n    \"muslo\": 59.8,\r\n    \"suprailiaco\": 56.7,\r\n    \"triceps\": 49.7,\r\n    \"subescapular\": 90.2,\r\n    \"toracica\": 132.8,\r\n    \"pantorrilla_medial\": 79.4,\r\n    \"cintura\": 116.0,\r\n    \"fecha\": \"2023-10-13\"*/\r\n    /*\r\n    \"peso\" : 130,\r\n    \"axiliar_media\" : 30,\r\n    \"abdominal\" : 75,\r\n    \"bicipital\" : 70,\r\n    \"muslo\" : 60,\r\n    \"suprailiaco\" : 55,\r\n    \"triceps\" : 50,\r\n    \"subescapular\" : 88,\r\n    \"toracica\" : 130,\r\n    \"pantorrilla_medial\" : 80,\r\n    \"cintura\" : 115.2,\r\n    \"fecha\" : \"2023-10-12\"*/\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": "192.168.100.9:3000/altaMedicion"
+			},
+			"response": []
+		},
+		{
+			"name": "192.168.100.9:3000/busquedaMediciones",
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"method": "GET",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"id\" : 2\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": "192.168.100.9:3000/busquedaMediciones"
+			},
+			"response": []
+		},
+		{
+			"name": "192.168.100.9:3000/eliminarMedicion",
+			"request": {
+				"method": "DELETE",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"id\" : 2,\r\n    \"fecha\" : \"2023-10-20\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": "192.168.100.9:3000/eliminarMedicion"
+			},
+			"response": []
+		},
+		{
+			"name": "192.168.100.9:3000/eliminarMediciones",
+			"request": {
+				"method": "DELETE",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"id\" : 2\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": "192.168.100.9:3000/eliminarMediciones"
+			},
+			"response": []
+		},
+		{
+			"name": "192.168.100.9:3000/actualizaMedicion",
+			"request": {
+				"method": "PUT",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"id_profesional\" : 1,\r\n    \"id_paciente\" : 2,\r\n    \"peso\": 131.5,\r\n    \"axiliar_media\": 27.8,\r\n    \"abdominal\": 70.5,\r\n    \"bicipital\": 66.5,\r\n    \"muslo\": 55.4,\r\n    \"suprailiaco\": 53.5,\r\n    \"triceps\": 47.5,\r\n    \"subescapular\": 85.4,\r\n    \"toracica\": 129.5,\r\n    \"pantorrilla_medial\": 80.5,\r\n    \"cintura\": 113.0,\r\n    \"fecha\": \"2023-10-20\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": "192.168.100.9:3000/actualizaMedicion"
+			},
+			"response": []
+		},
+		{
+			"name": "192.168.100.9:3000/habitoAlimenticio/alta",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"id\" : 2,\r\n    \"masConsumidos\" : \"carne encebollada, mariscos\",\r\n    \"alimentos_alergia\" : \"peras, manzanas\",\r\n    \"cantidad_agua\" : 3,\r\n    \"cantidad_comidas\" : 3,\r\n    \"cantidad_colaciones\" : 0,\r\n    \"horaDesayuno\" : \"6:45\",\r\n    \"horaComida\" : \"14:30\",\r\n    \"horaCena\" : \"22:00\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": "192.168.100.9:3000/habitoAlimenticio/alta"
+			},
+			"response": []
+		},
+		{
+			"name": "192.168.100.9:3000/habitoAlimenticio/obten",
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"method": "GET",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"id\" : 2\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": "192.168.100.9:3000/habitoAlimenticio/obten"
+			},
+			"response": []
+		},
+		{
+			"name": "192.168.100.9:3000/habitoAlimenticio/obten",
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"method": "GET",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": "192.168.100.9:3000/habitoAlimenticio/obten"
+			},
+			"response": []
+		},
+		{
+			"name": "192.168.100.9:3000/habitoAlimenticio/actualiza",
+			"request": {
+				"method": "PUT",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"id\" : 2,\r\n    \"masConsumidos\" : \"carne, pollo, arroz\", \r\n    //\"carne encebollada, mariscos\",\r\n    \"alimentos_alergia\" : \"almendras, frutos secos\", \r\n    //\"peras, manzanas\",\r\n    \"cantidad_agua\" : 2,\r\n    //3,\r\n    \"cantidad_comidas\" : 3,\r\n    \"cantidad_colaciones\" : 1,\r\n    //0,\r\n    \"horaDesayuno\" : \"05:00\",\r\n    //\"6:45\",\r\n    \"horaComida\" : \"15:00\",\r\n    //\"14:30\",\r\n    \"horaCena\" : \"21:30\"\r\n    //\"22:00\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": "192.168.100.9:3000/habitoAlimenticio/actualiza"
+			},
+			"response": []
+		},
+		{
+			"name": "192.168.100.9:3000/obtenPacientes",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": "192.168.100.9:3000/obtenPacientes"
+			},
+			"response": []
+		},
+		{
+			"name": "192.168.100.9:3000/borrarCarpetasVideos",
+			"request": {
+				"method": "DELETE",
+				"header": [],
+				"url": "192.168.100.9:3000/borrarCarpetasVideos"
+			},
+			"response": []
+		},
+		{
+			"name": "192.168.100.9:3000/borraProfesional",
+			"request": {
+				"method": "DELETE",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"id\" : 6\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": "192.168.100.9:3000/borraProfesional"
+			},
+			"response": []
+		},
+		{
+			"name": "192.168.100.9:3000/habitoPersonal/alta",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"id\" : 2,\r\n    \"horaD\":\"6:30\",\r\n    \"horaS\":\"22:30\",\r\n    \"descFisica\":\"Natacion, football\",\r\n    \"rutinaDia\": \"Estudiante, ejercicio\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": "192.168.100.9:3000/habitoPersonal/alta"
+			},
+			"response": []
+		},
+		{
+			"name": "192.168.100.9:3000/habitoAlimenticio/eliminarRegistro",
+			"request": {
+				"method": "DELETE",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"id\" : 2\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": "192.168.100.9:3000/habitoAlimenticio/eliminarRegistro"
+			},
+			"response": []
+		},
+		{
+			"name": "192.168.100.9:3000/habitoPersonal/busqueda",
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"method": "GET",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"id\" : 2//\"{{$randomColor}}\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": "192.168.100.9:3000/habitoPersonal/busqueda"
+			},
+			"response": []
+		},
+		{
+			"name": "192.168.100.9:3000/habitoPersonal/actualiza",
+			"request": {
+				"method": "PUT",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"id\" : 2,\r\n    \"horaD\":\"6:00\",\r\n    \"horaS\":\"22:30\",\r\n    \"descFisica\":\"Natacion, judo, gym\",\r\n    \"rutinaDia\": \"Estudiante, ejercicio, dormir\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": "192.168.100.9:3000/habitoPersonal/actualiza"
+			},
+			"response": []
+		},
+		{
+			"name": "192.168.100.9:3000/habitoPersonal/elimina",
+			"request": {
+				"method": "DELETE",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"id\" : 2\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": "192.168.100.9:3000/habitoPersonal/elimina"
+			},
+			"response": []
+		},
+		{
+			"name": "192.168.100.9:3000/infoMed/alta",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"id_paciente\" : 2,\r\n    \"estatura\" : 175.0,\r\n    \"ocupacion\" : \"Estudiante\",\r\n    \"imc\" : 70.5,\r\n    \"objetivo\" : \"Bajar 30 kilos\",\r\n    \"alergias\" : \"Penicilina\",\r\n    \"medicamentosC\" : \"No aplica\",\r\n    \"enferm\" : [1,2,3,4,5,6],\r\n    \"enfermFam\" : [5,6,9]\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": "192.168.100.9:3000/infoMed/alta"
+			},
+			"response": []
+		},
+		{
+			"name": "192.168.100.9:3000/infoMed/obten",
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"method": "GET",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"id\" : 2\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": "192.168.100.9:3000/infoMed/obten"
+			},
+			"response": []
+		},
+		{
+			"name": "192.168.100.9:3000/infoMed/actualiza",
+			"request": {
+				"method": "PUT",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"id_paciente\" : 2,\r\n    \"estatura\" : 175.0,\r\n    \"ocupacion\" : \"Estudiante\",\r\n    \"imc\" : 70.5,\r\n    \"objetivo\" : \"Bajar 30 kilos\",\r\n    \"alergias\" : \"Penicilina\",\r\n    \"medicamentosC\" : \"No aplica\",\r\n    \"enferm\" : [1,2,3,4,5,6],\r\n    \"enfermFam\" : [5,6,9]\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": "192.168.100.9:3000/infoMed/actualiza"
+			},
+			"response": []
+		},
+		{
+			"name": "192.168.100.9:3000/infoMed/eliminar",
+			"request": {
+				"method": "DELETE",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"id\" : 2\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": "192.168.100.9:3000/infoMed/eliminar"
+			},
+			"response": []
+		},
+		{
+			"name": "192.168.100.9:3000/alimentodieta/alta",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"idProfesional\" : 1,\r\n    \"idPaciente\" : 1,\r\n    \"idComida\" : 1,\r\n    \"proteinas\" : [8],\r\n    \"cantidadesProteinas\" : [0.5],\r\n    \"lacteos\" : [5],\r\n    \"cantidadesLacteos\" : [0.4],\r\n    \"frutas\" : [11, 12],\r\n    \"cantidadesFrutas\" : [5, 2],\r\n    \"verduras\" : [7, 1],\r\n    \"cantidadesVerduras\" : [0.2, 0.350],\r\n    \"granos\" : [42],\r\n    \"cantidadesGranos\" : [0.1],\r\n    \"duracion\" : 2,\r\n    \"vigencia\" : \"1\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": "192.168.100.9:3000/alimentodieta/alta"
+			},
+			"response": []
+		},
+		{
+			"name": "192.168.100.9:3000/alimentodieta/busqueda/paciente",
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"method": "GET",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"idPaciente\" : 1\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": "192.168.100.9:3000/alimentodieta/busqueda/paciente"
+			},
+			"response": []
+		},
+		{
+			"name": "192.168.100.9:3000/alimentodieta/busqueda/comidas/profesional",
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"method": "GET",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"id\" : 1\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": "192.168.100.9:3000/alimentodieta/busqueda/comidas/profesional"
+			},
+			"response": []
+		},
+		{
+			"name": "192.168.100.9:3000/alimentodieta/busqueda/comidas/paciente",
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"method": "GET",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"id\" : 1\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": "192.168.100.9:3000/alimentodieta/busqueda/comidas/paciente"
+			},
+			"response": []
+		},
+		{
+			"name": "192.168.100.9:3000/alimentodieta/busqueda/comidas/tipo",
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"method": "GET",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"idPaciente\" : 1,\r\n    \"idComida\" : 4\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": "192.168.100.9:3000/alimentodieta/busqueda/comidas/tipo"
+			},
+			"response": []
+		},
+		{
+			"name": "192.168.100.9:3000/alimentodieta/actualiza",
+			"request": {
+				"method": "PUT",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"idProfesional\" : 1,\r\n    \"idPaciente\" : 1,\r\n    \"idComida\" : 2,\r\n    \"proteinas\" : [5],\r\n    \"cantidadesProteinas\" : [0.4],\r\n    \"lacteos\" : [6],\r\n    \"cantidadesLacteos\" : [0.1],\r\n    \"frutas\" : [1],\r\n    \"cantidadesFrutas\" : [3],\r\n    \"verduras\" : [8],\r\n    \"cantidadesVerduras\" : [0.2],\r\n    \"granos\" : [1],\r\n    \"cantidadesGranos\" : [0.1],\r\n    \"duracion\" : 3,\r\n    \"vigencia\" : \"0\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": "192.168.100.9:3000/alimentodieta/actualiza"
+			},
+			"response": []
+		},
+		{
+			"name": "192.168.100.9:3000/alimentodieta/eliminar",
+			"request": {
+				"method": "DELETE",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"idProfesional\" : 1,\r\n    \"idPaciente\" : 1,\r\n    \"tipoComida\" : 2\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": "192.168.100.9:3000/alimentodieta/eliminar"
+			},
+			"response": []
+		},
+		{
+			"name": "192.168.100.9:3000/proteinas/obten",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": "192.168.100.9:3000/proteinas/obten"
+			},
+			"response": [
+				{
+					"name": "192.168.100.9:3000/proteinas/obten",
+					"originalRequest": {
+						"method": "GET",
+						"header": [],
+						"url": "192.168.100.9:3000/proteinas/obten"
+					},
+					"status": "OK",
+					"code": 200,
+					"_postman_previewlanguage": "json",
+					"header": [
+						{
+							"key": "X-Powered-By",
+							"value": "Express"
+						},
+						{
+							"key": "Access-Control-Allow-Origin",
+							"value": "*"
+						},
+						{
+							"key": "Content-Type",
+							"value": "application/json; charset=utf-8"
+						},
+						{
+							"key": "Content-Length",
+							"value": "5909"
+						},
+						{
+							"key": "ETag",
+							"value": "W/\"1715-ei9zdaZTaokWADJF4TitkQLEXVM\""
+						},
+						{
+							"key": "Date",
+							"value": "Sun, 29 Oct 2023 05:58:18 GMT"
+						},
+						{
+							"key": "Connection",
+							"value": "keep-alive"
+						},
+						{
+							"key": "Keep-Alive",
+							"value": "timeout=5"
+						}
+					],
+					"cookie": [],
+					"body": "{\n    \"mensaje\": \"Obtención exitosa\",\n    \"objeto\": {\n        \"proteinas\": [\n            {\n                \"id\": 1,\n                \"descripcion\": \"Abulón fresco\"\n            },\n            {\n                \"id\": 2,\n                \"descripcion\": \"Acociles\"\n            },\n            {\n                \"id\": 3,\n                \"descripcion\": \"Aguayón\"\n            },\n            {\n                \"id\": 4,\n                \"descripcion\": \"Almeja fresca\"\n            },\n            {\n                \"id\": 5,\n                \"descripcion\": \"Atún en agua\"\n            },\n            {\n                \"id\": 6,\n                \"descripcion\": \"Bacalao seco\"\n            },\n            {\n                \"id\": 7,\n                \"descripcion\": \"Bagre\"\n            },\n            {\n                \"id\": 8,\n                \"descripcion\": \"Bistec de res\"\n            },\n            {\n                \"id\": 9,\n                \"descripcion\": \"Blanco de nilo\"\n            },\n            {\n                \"id\": 10,\n                \"descripcion\": \"Cabeza de pescado\"\n            },\n            {\n                \"id\": 11,\n                \"descripcion\": \"Cabrito\"\n            },\n            {\n                \"id\": 12,\n                \"descripcion\": \"Calamar\"\n            },\n            {\n                \"id\": 13,\n                \"descripcion\": \"Camarón cocido\"\n            },\n            {\n                \"id\": 14,\n                \"descripcion\": \"Camarón gigante\"\n            },\n            {\n                \"id\": 15,\n                \"descripcion\": \"Camarón pacotilla\"\n            },\n            {\n                \"id\": 16,\n                \"descripcion\": \"Camarón seco\"\n            },\n            {\n                \"id\": 17,\n                \"descripcion\": \"Cangrejo\"\n            },\n            {\n                \"id\": 18,\n                \"descripcion\": \"Carne de avestruz\"\n            },\n            {\n                \"id\": 19,\n                \"descripcion\": \"Carne de jaiba\"\n            },\n            {\n                \"id\": 20,\n                \"descripcion\": \"Carne de res seca\"\n            },\n            {\n                \"id\": 21,\n                \"descripcion\": \"Carne molida de pollo y pavo\"\n            },\n            {\n                \"id\": 22,\n                \"descripcion\": \"Cazón\"\n            },\n            {\n                \"id\": 23,\n                \"descripcion\": \"Chambarete\"\n            },\n            {\n                \"id\": 24,\n                \"descripcion\": \"Charales frescos\"\n            },\n            {\n                \"id\": 25,\n                \"descripcion\": \"Charales secos\"\n            },\n            {\n                \"id\": 26,\n                \"descripcion\": \"Clara de huevo\"\n            },\n            {\n                \"id\": 27,\n                \"descripcion\": \"Cuete de res\"\n            },\n            {\n                \"id\": 28,\n                \"descripcion\": \"Escalopa de res\"\n            },\n            {\n                \"id\": 29,\n                \"descripcion\": \"Escamoles\"\n            },\n            {\n                \"id\": 30,\n                \"descripcion\": \"Fajitas de pollo sin piel\"\n            },\n            {\n                \"id\": 31,\n                \"descripcion\": \"Falda de res\"\n            },\n            {\n                \"id\": 32,\n                \"descripcion\": \"Filete de guachinango\"\n            },\n            {\n                \"id\": 33,\n                \"descripcion\": \"Filete de pescado, mero, mojarra, merluza\"\n            },\n            {\n                \"id\": 34,\n                \"descripcion\": \"Filete de res y tampiqueña\"\n            },\n            {\n                \"id\": 35,\n                \"descripcion\": \"Guachinango\"\n            },\n            {\n                \"id\": 36,\n                \"descripcion\": \"Jaiba cocida entera\"\n            },\n            {\n                \"id\": 37,\n                \"descripcion\": \"Jugo de almeja\"\n            },\n            {\n                \"id\": 38,\n                \"descripcion\": \"Liebre\"\n            },\n            {\n                \"id\": 39,\n                \"descripcion\": \"Machaca\"\n            },\n            {\n                \"id\": 40,\n                \"descripcion\": \"Maciza de res\"\n            },\n            {\n                \"id\": 41,\n                \"descripcion\": \"Medallón de filete de res\"\n            },\n            {\n                \"id\": 42,\n                \"descripcion\": \"Mejillones\"\n            },\n            {\n                \"id\": 43,\n                \"descripcion\": \"Milanesa de pollo y res\"\n            },\n            {\n                \"id\": 44,\n                \"descripcion\": \"Molida de pollo\"\n            },\n            {\n                \"id\": 45,\n                \"descripcion\": \"Molleja de pollo\"\n            },\n            {\n                \"id\": 46,\n                \"descripcion\": \"Muslo de pollo sin piel\"\n            },\n            {\n                \"id\": 47,\n                \"descripcion\": \"Pancita de res\"\n            },\n            {\n                \"id\": 48,\n                \"descripcion\": \"Pargo\"\n            },\n            {\n                \"id\": 49,\n                \"descripcion\": \"Pata de res\"\n            },\n            {\n                \"id\": 50,\n                \"descripcion\": \"Pechuga a la plancha, asada, cocida\"\n            },\n            {\n                \"id\": 51,\n                \"descripcion\": \"Pechuga de pavo\"\n            },\n            {\n                \"id\": 52,\n                \"descripcion\": \"Pechuga de pollo deshuesada\"\n            },\n            {\n                \"id\": 53,\n                \"descripcion\": \"Pescado en trozo\"\n            },\n            {\n                \"id\": 54,\n                \"descripcion\": \"Pierna de pollo sin piel\"\n            },\n            {\n                \"id\": 55,\n                \"descripcion\": \"Puntas de res\"\n            },\n            {\n                \"id\": 56,\n                \"descripcion\": \"Queso cottage\"\n            },\n            {\n                \"id\": 57,\n                \"descripcion\": \"Requesón\"\n            },\n            {\n                \"id\": 58,\n                \"descripcion\": \"Riñones de res\"\n            },\n            {\n                \"id\": 59,\n                \"descripcion\": \"Róbalo\"\n            },\n            {\n                \"id\": 60,\n                \"descripcion\": \"Surimi\"\n            },\n            {\n                \"id\": 61,\n                \"descripcion\": \"Tampiqueña\"\n            },\n            {\n                \"id\": 62,\n                \"descripcion\": \"Venado cocido\"\n            },\n            {\n                \"id\": 63,\n                \"descripcion\": \"Agujas de res\"\n            },\n            {\n                \"id\": 64,\n                \"descripcion\": \"Anchoa con aceite\"\n            },\n            {\n                \"id\": 65,\n                \"descripcion\": \"Arrachera\"\n            },\n            {\n                \"id\": 66,\n                \"descripcion\": \"Atún en aceite\"\n            },\n            {\n                \"id\": 67,\n                \"descripcion\": \"Barbacoa Maciza\"\n            },\n            {\n                \"id\": 68,\n                \"descripcion\": \"Bistec de ternera\"\n            },\n            {\n                \"id\": 69,\n                \"descripcion\": \"Bonito\"\n            },\n            {\n                \"id\": 70,\n                \"descripcion\": \"Carne de cerdo\"\n            },\n            {\n                \"id\": 71,\n                \"descripcion\": \"Carpa cocida\"\n            },\n            {\n                \"id\": 72,\n                \"descripcion\": \"Cecina\"\n            },\n            {\n                \"id\": 73,\n                \"descripcion\": \"Conejo\"\n            },\n            {\n                \"id\": 74,\n                \"descripcion\": \"Falda de cerdo\"\n            },\n            {\n                \"id\": 75,\n                \"descripcion\": \"Filete de cerdo\"\n            },\n            {\n                \"id\": 76,\n                \"descripcion\": \"Filete de salmón\"\n            },\n            {\n                \"id\": 77,\n                \"descripcion\": \"Guajolote de Pavo\"\n            },\n            {\n                \"id\": 78,\n                \"descripcion\": \"Hígado de pollo\"\n            },\n            {\n                \"id\": 79,\n                \"descripcion\": \"Hígado de res\"\n            },\n            {\n                \"id\": 80,\n                \"descripcion\": \"Jamón de pavo y/o pierna\"\n            },\n            {\n                \"id\": 81,\n                \"descripcion\": \"Lomo de cerdo\"\n            },\n            {\n                \"id\": 82,\n                \"descripcion\": \"Maciza de res\"\n            },\n            {\n                \"id\": 83,\n                \"descripcion\": \"Molida de cerdo\"\n            },\n            {\n                \"id\": 84,\n                \"descripcion\": \"Molida de res (sirloin)\"\n            },\n            {\n                \"id\": 85,\n                \"descripcion\": \"Ostión\"\n            },\n            {\n                \"id\": 86,\n                \"descripcion\": \"Ostión en lata\"\n            },\n            {\n                \"id\": 87,\n                \"descripcion\": \"Pescuezo de pollo s/piel\"\n            },\n            {\n                \"id\": 88,\n                \"descripcion\": \"Pierna de cerdo\"\n            },\n            {\n                \"id\": 89,\n                \"descripcion\": \"Queso de cabra\"\n            },\n            {\n                \"id\": 90,\n                \"descripcion\": \"Queso fresco\"\n            },\n            {\n                \"id\": 91,\n                \"descripcion\": \"Queso panela\"\n            },\n            {\n                \"id\": 92,\n                \"descripcion\": \"Salmón\"\n            },\n            {\n                \"id\": 93,\n                \"descripcion\": \"Trucha cocida\"\n            },\n            {\n                \"id\": 94,\n                \"descripcion\": \"Bistec de bola\"\n            },\n            {\n                \"id\": 95,\n                \"descripcion\": \"Carne de suadero\"\n            },\n            {\n                \"id\": 96,\n                \"descripcion\": \"Chicharrón\"\n            },\n            {\n                \"id\": 97,\n                \"descripcion\": \"Costillas de cerdo\"\n            },\n            {\n                \"id\": 98,\n                \"descripcion\": \"Gusanos de maguey\"\n            },\n            {\n                \"id\": 99,\n                \"descripcion\": \"Huevo\"\n            },\n            {\n                \"id\": 100,\n                \"descripcion\": \"Longaniza\"\n            },\n            {\n                \"id\": 101,\n                \"descripcion\": \"Pecho de res\"\n            },\n            {\n                \"id\": 102,\n                \"descripcion\": \"Queso mozarella\"\n            },\n            {\n                \"id\": 103,\n                \"descripcion\": \"Queso parmesano\"\n            },\n            {\n                \"id\": 104,\n                \"descripcion\": \"Salami de pavo\"\n            },\n            {\n                \"id\": 105,\n                \"descripcion\": \"Salchicha de cerdo\"\n            },\n            {\n                \"id\": 106,\n                \"descripcion\": \"Salchicha de pavo\"\n            },\n            {\n                \"id\": 107,\n                \"descripcion\": \"Sardina en aceite\"\n            },\n            {\n                \"id\": 108,\n                \"descripcion\": \"Sardinas en Tomate\"\n            },\n            {\n                \"id\": 109,\n                \"descripcion\": \"Sierra\"\n            },\n            {\n                \"id\": 110,\n                \"descripcion\": \"Suadero\"\n            },\n            {\n                \"id\": 111,\n                \"descripcion\": \"Alón de pollo con piel cocido\"\n            },\n            {\n                \"id\": 112,\n                \"descripcion\": \"Cerdo en canal\"\n            },\n            {\n                \"id\": 113,\n                \"descripcion\": \"Costilla de res\"\n            },\n            {\n                \"id\": 114,\n                \"descripcion\": \"Espaldilla\"\n            },\n            {\n                \"id\": 115,\n                \"descripcion\": \"Lengua de cerdo\"\n            },\n            {\n                \"id\": 116,\n                \"descripcion\": \"Maciza de cerdo\"\n            },\n            {\n                \"id\": 117,\n                \"descripcion\": \"Moronga\"\n            },\n            {\n                \"id\": 118,\n                \"descripcion\": \"Mortadela\"\n            },\n            {\n                \"id\": 119,\n                \"descripcion\": \"Nuggets de pollo\"\n            },\n            {\n                \"id\": 120,\n                \"descripcion\": \"Ostión ahumado\"\n            },\n            {\n                \"id\": 121,\n                \"descripcion\": \"Palitos de pescado congelados\"\n            },\n            {\n                \"id\": 122,\n                \"descripcion\": \"Paloma\"\n            },\n            {\n                \"id\": 123,\n                \"descripcion\": \"Pastel de pavo y puerco\"\n            },\n            {\n                \"id\": 124,\n                \"descripcion\": \"Pepperoni\"\n            },\n            {\n                \"id\": 125,\n                \"descripcion\": \"Pollo rostizado\"\n            },\n            {\n                \"id\": 126,\n                \"descripcion\": \"Queso amarillo\"\n            },\n            {\n                \"id\": 127,\n                \"descripcion\": \"Queso americano\"\n            },\n            {\n                \"id\": 128,\n                \"descripcion\": \"Queso asadero\"\n            },\n            {\n                \"id\": 129,\n                \"descripcion\": \"Queso blanco\"\n            },\n            {\n                \"id\": 130,\n                \"descripcion\": \"Queso canasto\"\n            },\n            {\n                \"id\": 131,\n                \"descripcion\": \"Queso chihuahua\"\n            },\n            {\n                \"id\": 132,\n                \"descripcion\": \"Queso fundido\"\n            },\n            {\n                \"id\": 133,\n                \"descripcion\": \"Queso gouda\"\n            },\n            {\n                \"id\": 134,\n                \"descripcion\": \"Queso manchego\"\n            },\n            {\n                \"id\": 135,\n                \"descripcion\": \"Queso Oaxaca\"\n            },\n            {\n                \"id\": 136,\n                \"descripcion\": \"Retazo de pollo\"\n            },\n            {\n                \"id\": 137,\n                \"descripcion\": \"Salchicha\"\n            },\n            {\n                \"id\": 138,\n                \"descripcion\": \"Sesos de cerdo\"\n            },\n            {\n                \"id\": 139,\n                \"descripcion\": \"Sesos de res\"\n            },\n            {\n                \"id\": 140,\n                \"descripcion\": \"Tripas de res\"\n            },\n            {\n                \"id\": 141,\n                \"descripcion\": \"Yema de huevo\"\n            }\n        ]\n    }\n}"
+				}
+			]
+		},
+		{
+			"name": "192.168.100.9:3000/lacteos/obten",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": "192.168.100.9:3000/lacteos/obten"
+			},
+			"response": []
+		},
+		{
+			"name": "192.168.100.9:3000/frutas/obten",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": "192.168.100.9:3000/frutas/obten"
+			},
+			"response": []
+		},
+		{
+			"name": "192.168.100.9:3000/verduras/obten",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": "192.168.100.9:3000/verduras/obten"
+			},
+			"response": []
+		},
+		{
+			"name": "192.168.100.9:3000/granos/obten",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": "192.168.100.9:3000/granos/obten"
+			},
+			"response": []
+		},
+		{
+			"name": "192.168.100.9:3000/obtenAlimentos",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": "192.168.100.9:3000/obtenAlimentos"
+			},
+			"response": []
+		},
+		{
+			"name": "192.168.100.9:3000/borraPaciente",
+			"request": {
+				"method": "DELETE",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"idPaciente\" : 1\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": "192.168.100.9:3000/borraPaciente"
+			},
+			"response": []
+		},
+		{
+			"name": "192.168.100.9:3000/borraVideosProfesional",
+			"request": {
+				"method": "DELETE",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"id\" : 6\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": "192.168.100.9:3000/borraVideosProfesional"
+			},
+			"response": []
+		},
+		{
+			"name": "192.168.100.9:3000/borraIMG/profesional",
+			"request": {
+				"method": "DELETE",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"id\" : 6\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": "192.168.100.9:3000/borraIMG/profesional"
+			},
+			"response": []
+		},
+		{
+			"name": "192.168.100.9:3000/borraIMG/paciente",
+			"request": {
+				"method": "DELETE",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"id\" : 7\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": "192.168.100.9:3000/borraIMG/paciente"
+			},
+			"response": []
+		}
+	]
+}

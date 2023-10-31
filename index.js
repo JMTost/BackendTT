@@ -2416,42 +2416,6 @@ app.delete("/borrarCarpetasVideos", (req, res) => {
   //console.log("result: ", result)
 });
 
-  //METODO PARA ELMINAR UN VIDEO DE LA BASE DE DATOS, UTILIZANDO EL ID COMO PARAMETRO PARA REALIZARLO
-    //primero actualizamos los ejercicios que se tengan creados y sean el id del video, despues se realiza la eliminacion del video
-app.delete("/borraVideoId", (req, res) => {
-  if(JSON.stringify(req.body) === '{}'){
-    res.status(500).send({mensaje : "Sin informacion"});
-  }else{
-    if(req.body.id === ""){
-      res.status(500).send({mensaje : "Error, datos incompletos"});
-    }else{
-      const conn = conexion.cone; //primero realizamos la busqueda de id de eliminacion para comprobar que no exista dentro de alguna rutina de ejercicio
-      conn.query(`SELECT * FROM ejercicio_rutina WHERE id_video = ${req.body.id}`, (errorBusquedaER, resultadoBusquedaER) => {
-        if(errorBusquedaER){
-          res.status(500).send({mensaje : errorBusquedaER.message, codigo : errorBusquedaER.code});
-        }else{
-          for(let i = 0; i < resultadoBusquedaER.length; i++){
-            //realizamos la actualizacion de todos los registros que se encuentren con un valor 0
-            conn.query(`UPDATE ejercicio_rutina SET id_video = 0 WHERE id_ER = ${resultadoBusquedaER[i].id_ER}`, (errorActualizacion, resultadoActualizacion) =>{
-              if(errorActualizacion){
-                res.status(500).send({mensaje : errorActualizacion.message, codigo : errorActualizacion.code});
-              }
-            });
-          }
-          //ahora realizamos la eliminacion del video
-          conn.query(`DELETE FROM videos WHERE id_video = ${req.body.id}`, (errorEliminacionVideo, resultadoEliminacionVideo) => {
-            if(errorEliminacionVideo){
-              res.status(500).send({mensaje : errorEliminacionVideo.message, codigo : errorEliminacionVideo.code});
-            }else{
-              res.status(200).send({mensaje : "Eliminacion exitosa del video con id: "+req.body.id});
-            }
-          });
-        }
-      });
-    }
-  }
-});
-
   //MÉTODO PARA ELIMINACIÓN DE MEDICION POR FECHA E IDENTIFICADOR DE PACIENTE
   //fecha AÑO MES DIA
 app.delete("/eliminarMedicion", (req, res) => {
@@ -3466,6 +3430,486 @@ app.delete("/alimentodieta/eliminar", (req, res) => {
 });
 
 
+//METODOS DE OBTENCIÓN DE PROTEINAS, LACTEOS, FRUTAS, VERDURAS Y GRANOS
+//de forma general
+//proteinas
+app.get("/proteinas/obten", (req, res) => {
+  const conn = conexion.cone;
+  var objeto = {}, data = [];
+  let query = "SELECT * FROM proteinas";
+  conn.query(query, (errorBusqueda, resultBusqueda) => {
+    if(errorBusqueda){
+      console.log(errorBusqueda);
+      res.status(500).send({mensaje : errorBusqueda.message, codigo : errorBusqueda.code});
+    }else if(resultBusqueda.length > 0){
+      for(let i = 0; i < resultBusqueda.length; i++){
+        data.push({
+          id : resultBusqueda[i].id_proteinas,
+          descripcion : resultBusqueda[i].descripcion
+        });
+      }
+      objeto.proteinas = data;
+      res.status(200).send({mensaje : "Obtención exitosa", objeto : objeto});
+    }else if(resultBusqueda.length <= 0){
+      res.status(404).send({mensaje : "No hay registros que obtener"});
+    }
+  });
+});
+//lacteos
+app.get("/lacteos/obten", (req, res) => {
+  const conn = conexion.cone;
+  var objeto = {}, data = [];
+  let query = "SELECT * FROM lacteos";
+  conn.query(query, (errorBusqueda, resultBusqueda) => {
+    if(errorBusqueda){
+      console.log(errorBusqueda);
+      res.status(500).send({mensaje : errorBusqueda.message, codigo : errorBusqueda.code});
+    }else if(resultBusqueda.length > 0){
+      for(let i = 0; i < resultBusqueda.length; i++){
+        data.push({
+          id : resultBusqueda[i].id_lacteos,
+          descripcion : resultBusqueda[i].descripcion
+        });
+      }
+      objeto.lacteos = data;
+      res.status(200).send({mensaje : "Obtención exitosa", objeto : objeto});
+    }else if(resultBusqueda.length <= 0){
+      res.status(404).send({mensaje : "No hay registros que obtener"});
+    }
+  });
+});
+//frutas
+app.get("/frutas/obten", (req, res) => {
+  const conn = conexion.cone;
+  var objeto = {}, data = [];
+  let query = "SELECT * FROM frutas";
+  conn.query(query, (errorBusqueda, resultBusqueda) => {
+    if(errorBusqueda){
+      console.log(errorBusqueda);
+      res.status(500).send({mensaje : errorBusqueda.message, codigo : errorBusqueda.code});
+    }else if(resultBusqueda.length > 0){
+      for(let i = 0; i < resultBusqueda.length; i++){
+        data.push({
+          id : resultBusqueda[i].id_frutas,
+          descripcion : resultBusqueda[i].descripcion
+        });
+      }
+      objeto.frutas = data;
+      res.status(200).send({mensaje : "Obtención exitosa", objeto : objeto});
+    }else if(resultBusqueda.length <= 0){
+      res.status(404).send({mensaje : "No hay registros que obtener"});
+    }
+  });
+});
+//verduras
+app.get("/verduras/obten", (req, res) => {
+  const conn = conexion.cone;
+  var objeto = {}, data = [];
+  let query = "SELECT * FROM verduras";
+  conn.query(query, (errorBusqueda, resultBusqueda) => {
+    if(errorBusqueda){
+      console.log(errorBusqueda);
+      res.status(500).send({mensaje : errorBusqueda.message, codigo : errorBusqueda.code});
+    }else if(resultBusqueda.length > 0){
+      for(let i = 0; i < resultBusqueda.length; i++){
+        data.push({
+          id : resultBusqueda[i].id_verduras,
+          descripcion : resultBusqueda[i].descripcion
+        });
+      }
+      objeto.verduras = data;
+      res.status(200).send({mensaje : "Obtención exitosa", objeto : objeto});
+    }else if(resultBusqueda.length <= 0){
+      res.status(404).send({mensaje : "No hay registros que obtener"});
+    }
+  });
+});
+//granos
+app.get("/granos/obten", (req, res) => {
+  const conn = conexion.cone;
+  var objeto = {}, data = [];
+  let query = "SELECT * FROM granos";
+  conn.query(query, (errorBusqueda, resultBusqueda) => {
+    if(errorBusqueda){
+      console.log(errorBusqueda);
+      res.status(500).send({mensaje : errorBusqueda.message, codigo : errorBusqueda.code});
+    }else if(resultBusqueda.length > 0){
+      for(let i = 0; i < resultBusqueda.length; i++){
+        data.push({
+          id : resultBusqueda[i].id_granos,
+          descripcion : resultBusqueda[i].descripcion
+        });
+      }
+      objeto.granos = data;
+      res.status(200).send({mensaje : "Obtención exitosa", objeto : objeto});
+    }else if(resultBusqueda.length <= 0){
+      res.status(404).send({mensaje : "No hay registros que obtener"});
+    }
+  });
+});
+
+//forma conjunta
+app.get("/obtenAlimentos", (req, res) => {
+  const conn = conexion.cone;
+  var objeto = {}, proteinas = [], lacteos = [], frutas = [], verduras = [], granos = [], tipoComida = [];
+  const operaciones = [
+    {tabla : "proteinas", conexion : conn},
+    {tabla : "lacteos", conexion : conn},
+    {tabla : "frutas", conexion : conn},
+    {tabla : "verduras", conexion : conn},
+    {tabla : "granos", conexion : conn},
+    {tabla : "tipoComida", conexion : conn}
+  ];
+  const promesasAlimentos = operaciones.map(operacion => {
+    return busquedaTabla(operacion.tabla, operacion.conexion);
+  });
+  Promise.all(promesasAlimentos).then(resultados => {
+    for(let i = 0; i < resultados.length; i++){
+      if(resultados[i].tabla == "proteinas"){
+        for(let j = 0; j < resultados[i].data.length; j++){
+          proteinas.push({"id" : resultados[i].data[j].id_proteinas, "descripcion" : resultados[i].data[j].descripcion});
+        }
+      }else if(resultados[i].tabla == "lacteos"){
+        for(let j = 0; j < resultados[i].data.length; j++){
+          lacteos.push({"id" : resultados[i].data[j].id_lacteos, "descripcion" : resultados[i].data[j].descripcion});
+        }
+      }else if(resultados[i].tabla == "frutas"){
+        for(let j = 0; j < resultados[i].data.length; j++){
+          frutas.push({"id" : resultados[i].data[j].id_frutas, "descripcion" : resultados[i].data[j].descripcion});
+        }
+      }else if(resultados[i].tabla == "verduras"){
+        for(let j = 0; j < resultados[i].data.length; j++){
+          verduras.push({"id" : resultados[i].data[j].id_verduras, "descripcion" : resultados[i].data[j].descripcion});
+        }
+      }else if(resultados[i].tabla == "granos"){
+        for(let j = 0; j < resultados[i].data.length; j++){
+          granos.push({"id" : resultados[i].data[j].id_granos, "descripcion" : resultados[i].data[j].descripcion});
+        }
+      }else if(resultados[i].tabla == "tipoComida"){
+        for(let j = 0; j < resultados[i].data.length; j++){
+          tipoComida.push({"id" : resultados[i].data[j].id_comida, "descripcion" : resultados[i].data[j].descripcion});
+        }
+      }
+    }
+    objeto.tiposComida = tipoComida;
+    objeto.proteinas = proteinas;
+    objeto.lacteos = lacteos;
+    objeto.frutas = frutas;
+    objeto.verduras = verduras;
+    objeto.granos = granos;
+    res.status(200).send({mensaje :"Obtención de forma exitosa la información", objeto : objeto});
+  }).catch(error => {
+    res.status(500).send({mensaje: "Error dentro de las promesas de los alimentos", error : error});
+  });
+});
+
+function busquedaTabla(tabla, conexion){
+  return new Promise((resolve, reject) => {
+    var query = `SELECT * FROM ${tabla}`;
+    conexion.query(query, (errorBusqueda, resultadoBusqueda) => {
+      if(errorBusqueda){
+        resolve({operacion : "Busqueda", exitosa : false});
+      }else{
+        resolve({operacion : "Busqueda", exitosa : true, data : resultadoBusqueda, tabla : tabla});
+      }
+    });
+  });
+}
+
+//MÉTODO DE ELIMINACIÓN DE PACIENTE
+      //!PROBAR
+//tablas a eliminar 
+/*
+alimento_dieta
+mediciones
+proximas_citas
+usuarios_pacientes
+historial_profesionales
+citas
+habito_personal
+habito_alimenticio
+imgUsuariosPacientes
+infoMpaciente
+ejercicio_rutina
+ */
+app.delete("/borraPaciente", (req, res) => {
+  if(JSON.stringify(req.body) === '{}'){
+    res.status(500).send({mensaje : "Sin información"});
+  }else{
+    if(req.body.idPaciente === "" || !req.body.hasOwnProperty("idPaciente")){
+      res.status(500).send({mensaje : "Error. Datos incompletos"});
+    }else{
+      const conn = conexion.cone;
+      let busqueda = "SELECT * FROM usuarios_pacientes WHERE id_paciente = ?";
+      conn.query(busqueda, [req.body.idPaciente], (errorBusqueda, resultadoBusqueda) => {
+        if(errorBusqueda){
+          console.log(errorBusqueda);
+          res.status(500).send({mensaje : errorBusqueda.message, codigo : errorBusqueda.code});
+        }else{
+          if(resultadoBusqueda.length > 0){
+            const operaciones = [
+              {tabla : "alimento_dieta", id : req.body.id, conexion : conn},
+              {tabla : "mediciones", id : req.body.id, conexion : conn},
+              {tabla : "proximas_citas", id : req.body.id, conexion : conn},
+              {tabla : "historial_profesionales", id : req.body.id, conexion : conn},
+              {tabla : "citas", id : req.body.id, conexion : conn},
+              {tabla : "habito_personal", id : req.body.id, conexion : conn},
+              {tabla : "habito_alimenticio", id : req.body.id, conexion : conn},
+              {tabla : "imgUsuariosPacientes", id : req.body.id, conexion : conn},
+              {tabla : "infoMpaciente", id : req.body.id, conexion : conn},
+              {tabla : "ejercicio_rutina", id : req.body.id, conexion : conn},
+              {tabla : "usuarios_pacientes", id : req.body.id, conexion : conn}
+            ];
+
+            const promesasOP = operaciones.map(operacion => {
+              return eliminaRegistroPaciente(operacion.tabla, operacion.id, operacion.conexion);
+            });
+
+            Promise.all(promesasOP).then(resultados => {
+              const errores = resultados.filter(resultado => !resultado.exitosa).length;
+              if(errores > 0){
+                res.status(500).send({mensaje : "Error en las operaciones", error : errores});
+              }else{
+                res.status(200).send({mensaje : "Eliminación exitosa"});  
+              }
+            }).catch(error => {
+              res.status(500).send({mensaje : "Error en las promesas", error : error});
+            });
+          }
+        }
+      });
+    }
+  }
+});
+
+function eliminaRegistroPaciente(tabla, id, conexion){
+  return new Promise((resolve, reject) => {
+    var query = `DELETE FROM ? WHERE id_paciente = ?`;
+    conexion.query(query, [tabla, id], (err, result) => {
+      if(err){
+        console.log("Error al eliminar el registro : " + err.message);
+        resolve({operacion : "ELIMINACION", tabla : tabla, exitosa : false});
+      }else{
+        resolve({operacion : "ELIMINACION", tabla : tabla, exitosa : true});
+      }
+    });
+  });
+}
+
+//MÉTODO DE ELIMINACIÓN DE VIDEOS USUARIOS PROFESIONALES
+    //MÉTODO PARA ELMINAR UN VIDEO DE LA BASE DE DATOS, UTILIZANDO EL ID COMO PARAMETRO PARA REALIZARLO
+      //primero actualizamos los ejercicios que se tengan creados y sean el id del video, despues se realiza la eliminacion del video
+app.delete("/borraVideoId", (req, res) => {
+  if(JSON.stringify(req.body) === '{}'){
+    res.status(500).send({mensaje : "Sin informacion"});
+  }else{
+    if(req.body.id === ""){
+      res.status(500).send({mensaje : "Error, datos incompletos"});
+    }else{
+      const conn = conexion.cone; //primero realizamos la busqueda de id de eliminacion para comprobar que no exista dentro de alguna rutina de ejercicio
+      conn.query(`SELECT * FROM ejercicio_rutina WHERE id_video = ${req.body.id}`, (errorBusquedaER, resultadoBusquedaER) => {
+        if(errorBusquedaER){
+          res.status(500).send({mensaje : errorBusquedaER.message, codigo : errorBusquedaER.code});
+        }else{
+          for(let i = 0; i < resultadoBusquedaER.length; i++){
+            //realizamos la actualizacion de todos los registros que se encuentren con un valor 0
+            conn.query(`UPDATE ejercicio_rutina SET id_video = 0 WHERE id_ER = ${resultadoBusquedaER[i].id_ER}`, (errorActualizacion, resultadoActualizacion) =>{
+              if(errorActualizacion){
+                res.status(500).send({mensaje : errorActualizacion.message, codigo : errorActualizacion.code});
+              }
+            });
+          }
+          //ahora realizamos la eliminacion del video
+          conn.query(`DELETE FROM videos WHERE id_video = ${req.body.id}`, (errorEliminacionVideo, resultadoEliminacionVideo) => {
+            if(errorEliminacionVideo){
+              res.status(500).send({mensaje : errorEliminacionVideo.message, codigo : errorEliminacionVideo.code});
+            }else{
+              res.status(200).send({mensaje : "Eliminacion exitosa del video con id: "+req.body.id});
+            }
+          });
+        }
+      });
+    }
+  }
+});
+    
+    //MÉTODO DE ELIMINACIÓN DE VIDEOS DE PROFESIONALES DE LA SALUD
+app.delete("/borraVideosProfesional", (req, res) => {
+  if(JSON.stringify(req.body) === '{}'){
+    res.status(500).send({mensaje : "Sin información"});
+  }else{
+    if(req.body.id === ""){
+      res.status(500).send({mensaje : "Error, datos incompletos"});
+    }else{
+      const conn = conexion.cone;
+      let query = "SELECT * FROM videos WHERE id_profesional = ?";
+      conn.query(query, [req.body.id], (errorbusqueda, resultbusqueda) => {
+        if(errorbusqueda){
+          console.log(errorbusqueda);
+          res.status(500).send({mensaje : errorbusqueda.message, codigo : errorbusqueda.code});
+        }else{
+          if(resultbusqueda.length > 0){
+            const operaciones = [];
+            for(let i = 0; i < resultbusqueda.length; i++){
+              operaciones.push(
+                {tipo : 1, valor : resultbusqueda[i].id_video, conexion : conn},
+                {tipo : 2, valor : resultbusqueda[i].id_video, conexion : conn}
+              );
+            }
+            //console.log(operaciones);
+            
+            const promesasVideos = operaciones.map(operacion => {
+              //el valor de operacion es 1 para actualizar en caso de que este asignado a una rutina colocar el valor de 0 en ese registro
+              //y si el valor de la operación es 2 para eliminar el registro de la tabla de videos
+              if(operacion.tipo == 1)
+                return actualizaRegistroVideosER(operacion.valor, operacion.conexion);
+              else if(operacion.tipo == 2)
+                return eliminaRegistroVideos(operacion.valor, operacion.conexion);
+            });
+            
+           
+            Promise.all(promesasVideos).then(resultados => {
+              //console.log(resultados);
+              const errores = resultados.filter(resultado => !resultado.exito).length;
+              if(errores > 0){
+                res.status(500).send({mensaje : "Error en las promesas", error : errores});
+              }else{
+                res.status(200).send({mensaje : "Eliminación exitosa"});
+              }
+              
+            }).catch(error => {
+              res.status(500).send({mensaje : "Error en las promesas, dentro del catch", error : error});
+            });
+            
+          }else{
+            res.status(404).send({mensaje : "No se encontraron registros con este id"});
+          }
+        }
+      });
+    }
+  }
+});
+
+function actualizaRegistroVideosER(valor, conexion){
+  return new Promise((resolve, reject) => {
+    let query = "SELECT id_ER FROM ejercicio_rutina WHERE id_video = ?";
+    conexion.query(query, [valor], (error, result)=>{
+      if(error){
+        console.log(error);
+        resolve({operacion : "Actualización", exito : false});
+      }else{
+        for(let i = 0; i < result.length; i++){
+          //hacemos la actualización
+          let queryActVideo = "UPDATE ejercicio_rutina SET id_video = 0 WHERE id_ER = ?";
+          conexion.query(queryActVideo, [result[i].id_ER], (errorActualiza, resultActualiza) => {
+            if(errorActualiza){
+              console.log(errorActualiza);
+              resolve({operacion : "Actualizacion", exito : false});
+            }
+          });
+        }
+        resolve({operacion : "Actualizacion", exito : true});
+      }
+    }); 
+  });
+}
+
+function eliminaRegistroVideos(valor, conexion){
+  return new Promise((resolve, reject) => {
+    resolve({operacion : "Eliminacion", exito : true});
+    let query = "DELETE FROM videos WHERE id_video = ?";
+    conexion.query(query, [valor], (error, result) => {
+      if(error){
+        console.log(error);
+        resolve({operacion : "Eliminacion", exito : false});
+      }else{
+        resolve({operacion : "Eliminacion", exito : true});
+      }
+    });
+  });
+}
+
+//MÉTODO DE ELIMINACIÓN DE FOTOS USUARIOS PROFESIONALES
+  //obtenemos como valor dentro de la solicitud el identificador del profesional
+app.delete("/borraIMG/profesional", (req, res) =>{
+  if(JSON.stringify(req.body) === '{}'){
+    res.status(500).send({mensaje : "Sin información"});
+  }else{
+    if(req.body.id === ""){
+      res.status(500).send({mensaje : "Error. Datos incompletos"});
+    }else{
+      const conn = conexion.cone;
+      let busqueda = "SELECT id_profesional FROM imgUsuariosProfesionales WHERE id_profesional = ?";
+      conn.query(busqueda, [req.body.id], (errorBusqueda, resulBusqueda) => {
+        if(errorBusqueda){
+          console.log(errorBusqueda);
+          res.status(500).send({mensaje : errorBusqueda.message, codigo : errorBusqueda.code});
+        }else{
+          if(resulBusqueda.length > 0){
+            //realizamos la eliminación
+            let queryElimina = "DELETE FROM imgUsuariosProfesionales WHERE id_profesional = ?";
+            conn.query(queryElimina, [req.body.id], (errorElimina, resultElimina) => {
+              if(errorElimina){
+                console.log(errorElimina);
+                res.status(500).send({mensaje : errorElimina.message, codigo : errorElimina.code});
+              }else{
+                if(resultElimina.affectedRows > 0){
+                  res.status(200).send({mensaje : "Eliminación exitosa de imagen"});
+                }
+              }
+            });
+          }else{
+            res.status(404).send({mensaje : "No se cuenta con imagen"});
+          }
+        }
+      });
+    }
+  }
+});
+
+//MÉTODO DE ELIMINACIÓN DE FOTOS USUARIOS PACIENTES
+  //obtenemos como valor dentro de la solicitud el identificador del paciente
+app.delete("/borraIMG/paciente", (req, res) =>{
+  if(JSON.stringify(req.body) === '{}'){
+    res.status(500).send({mensaje : "Sin información"});
+  }else{
+    if(req.body.id === ""){
+      res.status(500).send({mensaje : "Error. Datos incompletos"});
+    }else{
+      const conn = conexion.cone;
+      let busqueda = "SELECT id_paciente FROM imgUsuariosPacientes WHERE id_paciente = ?";
+      conn.query(busqueda, [req.body.id], (errorBusqueda, resulBusqueda) => {
+        if(errorBusqueda){
+          console.log(errorBusqueda);
+          res.status(500).send({mensaje : errorBusqueda.message, codigo : errorBusqueda.code});
+        }else{
+          if(resulBusqueda.length > 0){
+            //realizamos la eliminación
+            let queryElimina = "DELETE FROM imgUsuariosPacientes WHERE id_paciente = ?";
+            conn.query(queryElimina, [req.body.id], (errorElimina, resultElimina) => {
+              if(errorElimina){
+                console.log(errorElimina);
+                res.status(500).send({mensaje : errorElimina.message, codigo : errorElimina.code});
+              }else{
+                if(resultElimina.affectedRows > 0){
+                  res.status(200).send({mensaje : "Eliminación exitosa de imagen"});
+                }
+              }
+            });
+          }else{
+            res.status(404).send({mensaje : "No se cuenta con imagen"});
+          }
+        }
+      });
+    }
+  }
+});
+
+//MÉTODO DE ELIMINACIÓN DE CITAS Y PRÓXIMAS CITAS
+  //citas
+app.delete("", () => {});
+  //proximas citas
+  app.delete("", () => {});
   //METODOS DE CONFIGURACIÓN DEL SERVIDOR
 app.listen(3000, "192.168.100.9", function () {
   console.log("Funcionando en el puerto: 3000");
