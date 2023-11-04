@@ -12,6 +12,10 @@ const videos = require("./videos_redimensionar");
 const apis = require("./peticiones");
 var fechaApi; //variable que tendra la fecha de México CDMX
 
+//archivo de correo electronico
+const correoEnvio = require("./correo");
+const ejemplosCorreo = require("./ejemplosCorreo");
+
 const app = express();
 app.use(bodyparser.json());
 app.use(bodyparser.urlencoded({ extended: true }));
@@ -150,40 +154,23 @@ app.post("/altaprofesionales", (req, res) => {
           res.status(500).send({error:"Profesional ya existente"});
         }else{
            //hacemos la inserción en la base de datos
-            //let info = `INSERT INTO usuarios_profesionales VALUES (0, '${req.body.nombre}', '${req.body.apPaterno}', '${req.body.apMaterno}', '${req.body.email}', ${req.body.edad}, '${req.body.fechaN}', '${req.body.pass}', ${req.body.tipo}, '0')` //en este caso el valor de valido se pone en 0, debido a que debe entrar en proceso de validar los documentos que proporcione
-            conn.query(`INSERT INTO usuarios_profesionales VALUES (0, '${req.body.nombre}', '${req.body.apPaterno}', '${req.body.apMaterno}', '${req.body.email}', ${req.body.edad}, '${req.body.fechaN}', '${req.body.pass}', ${req.body.tipo}, '0')`, function (errInsert, resultInsert) {
-              if (errInsert) if (errInsert) res.status(500).send({mensaje : errInsert.message, codigo : errInsert.code});
-                else {
-                  console.log(resultInsert.affectedRows);
-                  res.status(200).send({mensaje : "Creacion exitosa de usuario"});
-                }
-              }
-            );
-            /*  EN ESTE CASO YA NO SERÁ NECESARIO OBTENER LOS ARCHIVOS AL MOMENTO DE CREAR AL USUARIO, SERÍA MEJOR HACER UNA INTERFAZ PARA EL ENVIO DE LOS ARCHIVOS
-            //inserción de los archivos del profesional, para este caso haremos un recorrido de la cantidad de los archivos
-            //let obten_id = `SELECT id_profesional FROM usuarios_profesionales WHERE email = ${correo}`;
-            conn.query(`SELECT id_profesional FROM usuarios_profesionales WHERE email = '${correo}'`, function (err, rows) {
-                if (err) throw err;
-                else {
-                  var id = rows[0].id_profesional;
-                  //dentro de esta query realizamos la inserción de los archivos
-                  //hacemos la inserción de los archivos, en este caso debemos de considerar la longitud de los archivos
-                  //let insertaArchivos = `INSERT INTO archivos VALUES (${obten_id}, '${req.body.archivos[0]}')`;
-                  for (let i = 0; i < req.body.archivos.length; i++) {
-                    conn.query(
-                      `INSERT INTO archivos VALUES (${id}, '${req.body.archivos[i]}')`,
-                      function (error, result) {
-                        if (error) throw error;
-                        else {
-                          console.log(result.affectedRows);
-                        }
-                      }
-                    );
+          //let info = `INSERT INTO usuarios_profesionales VALUES (0, '${req.body.nombre}', '${req.body.apPaterno}', '${req.body.apMaterno}', '${req.body.email}', ${req.body.edad}, '${req.body.fechaN}', '${req.body.pass}', ${req.body.tipo}, '0')` //en este caso el valor de valido se pone en 0, debido a que debe entrar en proceso de validar los documentos que proporcione
+          conn.query(`INSERT INTO usuarios_profesionales VALUES (0, '${req.body.nombre}', '${req.body.apPaterno}', '${req.body.apMaterno}', '${req.body.email}', ${req.body.edad}, '${req.body.fechaN}', '${req.body.pass}', ${req.body.tipo}, '0')`, function (errInsert, resultInsert) {
+            if (errInsert){
+              res.status(500).send({mensaje : errInsert.message, codigo : errInsert.code});
+            }else {
+              ejemplosCorreo.creacionUsuarioProfesional(req.body.nombre, req.body.apPaterno, req.body.apMaterno, (html) => {
+                correoEnvio.crearOpcionesCorreo(""+correo, "¡Bienvenido/a a 2BFit! Acceso como Profesional de la Salud", html);
+                correoEnvio.enviaCorreo((objeto) => {
+                  if(objeto.OK == 1){
+                    res.status(200).send({mensaje : "Creacion exitosa de usuario"});
+                  }else if(objeto.OK == 0){
+                    res.status(500).send({mensaje : "Error en el envio del correo, compruebe el correo"});
                   }
-                }
-              }
-            );
-            */
+                });
+              });
+            }
+          });
         }
       });
     }
@@ -232,8 +219,17 @@ app.post("/altaPacientes", (req, res) => {
                     conn.query(`INSERT INTO historial_profesionales VALUES (${id}, ${req.body.idProfesional}, '${fecha.getFullYear()+'/'+(fecha.getMonth()+1)+'/'+fecha.getDate()}', ${null})`, (errorIhistorial, resultIhistorial) => {
                       if(errorIhistorial) throw errorIhistorial;
                       else{
-                        console.log("Creación de usuario e historial exitoso");
-                        res.send({mensaje:"Creación exitosa"}).status(200);
+                        //console.log("Creación de usuario e historial exitoso");
+                        ejemplosCorreo.creacionUsuarioPaciente(req.body.nombre, req.body.apPaterno, req.body.apMaterno, (html) => {
+                          correoEnvio.crearOpcionesCorreo(""+correo, "¡Bienvenido/a a 2BFit! Detalles Importantes a Considerar", html);
+                          correoEnvio.enviaCorreo((objeto) => {
+                            if(objeto.OK == 1){
+                              res.send({mensaje:"Creación exitosa"}).status(200);
+                            }else if(objeto.OK == 0){
+                              res.status(500).send({mensaje : "Error en el envio del correo, compruebe el correo"});
+                            }
+                          });
+                        });
                       }
                     });
                   }
@@ -2244,118 +2240,21 @@ app.delete("/borraProfesional", (req, res) => {//obtenemos el id del profesional
               if(errores > 0){
                 res.status(500).send({mensaje : "Error en las operaciones", error : errores});
               }else{
-                res.status(200).send({mensaje : "Eliminación exitosa"});
+                ejemplosCorreo.eliminaUsuario(resultadoBusqueda[0].nombre, resultadoBusqueda[0].apPaterno, resultadoBusqueda[0].apMaterno, (html) =>{
+                  correoEnvio.crearOpcionesCorreo(""+resultadoBusqueda[0].email, "Confirmación de Eliminación de Registro de Usuario en la Aplicación 2BFit.", html);
+                  correoEnvio.enviaCorreo((objeto) => {
+                    if(objeto.OK == 1){
+                      res.status(200).send({mensaje : "Eliminación exitosa"});
+                    }else if(objeto.OK == 0){
+                      res.status(500).send({mensaje : "Error en el envio del correo, compruebe el correo"});
+                    }
+                  })
+                });
               }
             }).catch(error => {
+              console.log(error);
               res.status(500).send({mensaje : "Error en las promesas", error : error});
             });
-            /*
-            //usuarios_profesionales; usuarios_pacientes; archivos; historial_profesionales; citas; videos; imgUsuariosProfesionales; ejercicio_rutina; alimento_dieta; mediciones; proximas_citas
-            //proximas_citas : ELIMINAR
-            conn.query(`DELETE FROM proximas_citas WHERE id_profesional = ${req.body.id}`, (errorBorraProximasCitas, resultBorraProximasCitas) => {
-              if(errorBorraProximasCitas){
-                console.log("Error");
-                obj = {error : "Error"}
-                console.log(errorBorraProximasCitas)
-                res.status(500).send({mensaje : errorBorraProximasCitas.message, codigo : errorBorraProximasCitas.code, objeto : obj});
-              }else{
-                obj.proximasCitas = {proximasCitas : "OK"};
-              }
-            });
-            //mediciones : ACTUALIZAMOS, COLOCAMOS EL VALOR DEL PROFESIONAL COMO 0
-            conn.query(`UPDATE mediciones SET id_profesional = 0 WHERE id_profesional = ${req.body.id}`, (errorActualizaMedicion, resultActualizaMedicion) => {
-              if(errorActualizaMedicion){
-                  console.log(errorActualizaMedicion)
-                  res.status(500).code({mensaje : errorActualizaMedicion.message, codigo : errorActualizaMedicion.code, objeto : obj});
-              }else{
-                obj.mediciones = {mediciones : "Actualizado"};
-              }
-            });
-            //alimento_dieta : ACTUALIZAMOS, COLOCAMOS EL VALOR DEL PROFESIONAL COMO 0
-            conn.query(`UPDATE alimento_dieta SET id_profesional = 0 WHERE id_profesional = ${req.body.id}`, (errorActualizaAlimento, resultActualizaAlimento) => {
-              if(errorActualizaAlimento){
-                  console.log(errorActualizaAlimento)
-                  res.status(500).send({mensaje : errorActualizaAlimento.message, codigo : errorActualizaAlimento.code, objeto : obj});
-              }else{
-                obj.alimentoDieta = {alimentoDieta : "Actualizado"};
-              }
-            });
-            //ejercicio_rutina : ACTUALIZAMOS, COLOCAMOS EL VALOR DEL PROFESIONAL COMO 0
-            conn.query(`UPDATE ejercicio_rutina SET id_profesional = 0 WHERE id_profesional = ${req.body.id}`, (errorActualizaEJ, resultActualizaEJ) => {
-              if(errorActualizaEJ){
-                  console.log(errorActualizaEJ)
-                  res.status(500).send({mensaje : errorActualizaEJ.message, codigo : errorActualizaEJ.code, objeto : obj});
-              }else{
-                obj.ejercicioRutina = {ejercicioRutina : "Actualizado"};
-              }
-            });
-            //usuarios_pacientes : ACTUALIZAMOS, COLOCAMOS EL VALOR DEL PROFESIONAL COMO 0
-            conn.query(`UPDATE usuarios_pacientes SET id_profesional = 0 WHERE id_profesional = ${req.body.id}`, (errorActualizaUpacientes, resultActualizaUpacientes) => {
-              if(errorActualizaUpacientes){
-                  console.log(errorActualizaUpacientes)
-                  res.status(500).send({mensaje : errorActualizaUpacientes.message, codigo : errorActualizaUpacientes.code, objeto : obj});
-              }else{
-                obj.usuariosPacientes = {usuariosPacientes : "Actualizado"};
-              }
-            });
-            //historial_profesionales : ACTUALIZAMOS, COLOCAMOS EL VALOR DEL PROFESIONAL COMO 0
-            conn.query(`UPDATE historial_profesionales SET fechaTer = ${fechaApi} WHERE id_profesional = ${req.body.id}`, (errorActualizaHP, resultActualizaHP) => {
-              if(errorActualizaHP){
-                  console.log(errorActualizaHP)
-                  res.status(500).send({mensaje : errorActualizaHP.message, codigo : errorActualizaHP.code, objeto : obj});
-              }else{
-                obj.historialProfesionales = {historialProfesionales : "Actualizado"};
-              }
-            });
-            //citas : ELIMINAR 
-            conn.query(`DELETE FROM citas WHERE id_profesional = ${req.body.id}`, (errorBorraCitas, resultBorraCitas) => {
-              if(errorBorraCitas){
-                  console.log(errorBorraCitas)
-                  res.status(500).send({mensaje : errorBorraCitas.message, codigo : errorBorraCitas.code, objeto : obj});
-              }else{
-                obj.citas = {citas : "OK"};
-              }
-            });
-            //imgusuariosprofesionales : ELIMINAR 
-            conn.query(`DELETE FROM imgUsuariosProfesionales WHERE id_profesional = ${req.body.id}`, (errorBorraIMG, resultBorraIMG) => {
-              if(errorBorraIMG){
-                  console.log(errorBorraIMG)
-                  res.status(500).send({mensaje : errorBorraIMG.message, codigo : errorBorraIMG.code, objeto : obj});
-              }else{
-                obj.img = {imgUsuarios : "OK"};
-              }
-            });
-            //videos : ELIMINAR
-            conn.query(`DELETE FROM videos WHERE id_profesional = ${req.body.id}`, (errorBorraVideos, resultBorraVideos) => {
-              if(errorBorraVideos){
-                  console.log(errorBorraVideos)
-                  res.status(500).send({mensaje : errorBorraVideos.message, codigo : errorBorraVideos.code, objeto : obj});
-              }else{
-                obj.videos = {videos : "OK"};
-              }
-            });
-            //archivos : ELIMINAR 
-            conn.query(`DELETE FROM archivos WHERE id_profesional = ${req.body.id}`, (errorBorraArchivos, resultBorraArchivos) => {
-              if(errorBorraArchivos){
-                  console.log(errorBorraArchivos)
-                  res.status(500).send({mensaje : errorBorraArchivos.message, codigo : errorBorraArchivos.code, objeto : obj});
-              }else{
-                obj.archivos = {archivos : "OK"};
-              }
-            });
-            //usuarios_profesionales : MODIICAMOS EL VALOR DE VALIDO
-            conn.query(`UPDATE usuarios_profesionales SET valido = '2' WHERE id_profesional = ${req.body.id}`, (errorActualizaUP, resultActualizaUP) => {
-              if(errorActualizaUP){
-                  console.log(errorActualizaUP)
-                  res.status(500).send({mensaje : errorActualizaUP.message, codigo : errorActualizaUP.code, objeto : obj});
-              }else{
-                obj.usuariosProfesionales = {usuariosProfesionales : "Actualizado"};
-              }
-            });
-            if(JSON.stringfy(obj) !== "{}"){
-              res.status(200).send({mensaje : "Eliminación exitosa", objeto : obj});
-            }
-            */
           }else{//no existe
             res.status(500).send({mensaje : "Usuario no existente"});
           }
@@ -2371,7 +2270,7 @@ function actualizaRegistroProfesional(tabla, id, valor, conexion){
     var query = "";
     if(tabla == "usuarios_profesionales")
       query = `UPDATE ${tabla} SET valido = ${valor} WHERE id_profesional = ${id}`;
-    else if(tabla == "historial_profesionales") query = `UPDATE ${tabla} SET id_profesional = ${valor}, fechaTer = '${fechaApi}' WHERE id_profesional = ${id}`;
+    else if(tabla == "historial_profesionales") query = `UPDATE ${tabla} SET fechaTer = '${fechaApi}' WHERE id_profesional = ${id}`;
     else query = `UPDATE ${tabla} SET id_profesional = ${valor} WHERE id_profesional = ${id}`;
     //console.log(query);
     conexion.query(query, (error, result) => {
@@ -3617,7 +3516,6 @@ function busquedaTabla(tabla, conexion){
 }
 
 //MÉTODO DE ELIMINACIÓN DE PACIENTE
-      //!PROBAR
 //tablas a eliminar 
 /*
 alimento_dieta
@@ -3648,17 +3546,17 @@ app.delete("/borraPaciente", (req, res) => {
         }else{
           if(resultadoBusqueda.length > 0){
             const operaciones = [
-              {tabla : "alimento_dieta", id : req.body.id, conexion : conn},
-              {tabla : "mediciones", id : req.body.id, conexion : conn},
-              {tabla : "proximas_citas", id : req.body.id, conexion : conn},
-              {tabla : "historial_profesionales", id : req.body.id, conexion : conn},
-              {tabla : "citas", id : req.body.id, conexion : conn},
-              {tabla : "habito_personal", id : req.body.id, conexion : conn},
-              {tabla : "habito_alimenticio", id : req.body.id, conexion : conn},
-              {tabla : "imgUsuariosPacientes", id : req.body.id, conexion : conn},
-              {tabla : "infoMpaciente", id : req.body.id, conexion : conn},
-              {tabla : "ejercicio_rutina", id : req.body.id, conexion : conn},
-              {tabla : "usuarios_pacientes", id : req.body.id, conexion : conn}
+              {tabla : "alimento_dieta", id : req.body.idPaciente, conexion : conn},
+              {tabla : "mediciones", id : req.body.idPaciente, conexion : conn},
+              {tabla : "proximas_citas", id : req.body.idPaciente, conexion : conn},
+              {tabla : "historial_profesionales", id : req.body.idPaciente, conexion : conn},
+              {tabla : "citas", id : req.body.idPaciente, conexion : conn},
+              {tabla : "habito_personal", id : req.body.idPaciente, conexion : conn},
+              {tabla : "habito_alimenticio", id : req.body.idPaciente, conexion : conn},
+              {tabla : "imgUsuariosPacientes", id : req.body.idPaciente, conexion : conn},
+              {tabla : "infoMpaciente", id : req.body.idPaciente, conexion : conn},
+              {tabla : "ejercicio_rutina", id : req.body.idPaciente, conexion : conn},
+              {tabla : "usuarios_pacientes", id : req.body.idPaciente, conexion : conn}
             ];
 
             const promesasOP = operaciones.map(operacion => {
@@ -3670,7 +3568,16 @@ app.delete("/borraPaciente", (req, res) => {
               if(errores > 0){
                 res.status(500).send({mensaje : "Error en las operaciones", error : errores});
               }else{
-                res.status(200).send({mensaje : "Eliminación exitosa"});  
+                ejemplosCorreo.eliminaUsuario(resultadoBusqueda[0].nombre, resultadoBusqueda[0].apPaterno, resultadoBusqueda[0].apMaterno, (html) => {
+                  correoEnvio.crearOpcionesCorreo(""+resultadoBusqueda[0].email, "Confirmación de Eliminación de Registro de Usuario en la Aplicación 2BFit", html);
+                  correoEnvio.enviaCorreo((objeto) => {
+                    if(objeto.OK == 1){
+                      res.status(200).send({mensaje : "Eliminación exitosa"});
+                    }else if(objeto.OK == 0){
+                      res.status(500).send({mensaje : "Error en el envio del correo, compruebe el correo"});
+                    }
+                  });
+                });
               }
             }).catch(error => {
               res.status(500).send({mensaje : "Error en las promesas", error : error});
@@ -3684,8 +3591,8 @@ app.delete("/borraPaciente", (req, res) => {
 
 function eliminaRegistroPaciente(tabla, id, conexion){
   return new Promise((resolve, reject) => {
-    var query = `DELETE FROM ? WHERE id_paciente = ?`;
-    conexion.query(query, [tabla, id], (err, result) => {
+    var query = `DELETE FROM ${tabla} WHERE id_paciente = ?`;
+    conexion.query(query, [id], (err, result) => {
       if(err){
         console.log("Error al eliminar el registro : " + err.message);
         resolve({operacion : "ELIMINACION", tabla : tabla, exitosa : false});
@@ -3907,9 +3814,399 @@ app.delete("/borraIMG/paciente", (req, res) =>{
 
 //MÉTODO DE ELIMINACIÓN DE CITAS Y PRÓXIMAS CITAS
   //citas
-app.delete("", () => {});
+app.delete("/borraCitas", (req, res) => {
+  if(JSON.stringify(req.body) === '{}'){
+    res.status(500).send({mensaje : "Sin información"});
+  }else{
+    if(req.body.idProfesional === "" || req.body.idPaciente === "" || req.body.idTipoCita === "" || req.body.fecha=== "" || req.body.hora === ""){
+      res.status(500).send({mensaje : "Error, datos incompletos"});
+    }else{
+      const conn = conexion.cone;
+      let queryBusqueda = `SELECT * FROM citas WHERE id_tipoCita = ? AND id_profesional = ? AND id_paciente = ? AND fecha_hora LIKE ('%${req.body.fecha}% %${req.body.hora}%')`;
+      conn.query(queryBusqueda, [req.body.idTipoCita, req.body.idProfesional, req.body.idPaciente], (errorbusqueda, resultbusqueda) => {
+        if(errorbusqueda){
+          console.log(errorbusqueda);
+          res.status(500).send({mensaje : errorbusqueda.message, codigo : errorbusqueda.code});
+        }else{
+          if(resultbusqueda.length > 0){
+            let queryElimina = `DELETE FROM citas WHERE id_tipoCita = ? AND id_profesional = ? AND id_paciente = ? AND fecha_hora LIKE ('%${req.body.fecha}% %${req.body.hora}%')`;
+            conn.query(queryElimina, [req.body.idTipoCita, req.body.idProfesional, req.body.idPaciente], (errorElimina, resultElimina) => {
+              if(errorElimina){
+                console.log(errorElimina);
+                res.status(500).send({mensaje : errorElimina.message, codigo : errorElimina.code});
+              }else{
+                if(resultElimina.affectedRows > 0){
+                  res.status(200).send({mensaje : "Eliminación exitosa de registro"});
+                }
+              }
+            });
+          }else{
+            res.status(404).send({mensaje : "Registro no encontrado"});
+          }
+        }
+      });
+    }
+  }
+});
   //proximas citas
-  app.delete("", () => {});
+app.delete("/borraProximasCitas", (req, res) => {
+  if(JSON.stringify(req.body) === '{}'){
+    res.status(500).send({mensaje : "Sin información"});
+  }else{
+    if(req.body.idProfesional === "" || req.body.idPaciente === "" || req.body.fecha=== "" || req.body.hora === ""){
+      res.status(500).send({mensaje : "Error, datos incompletos"});
+    }else{
+      const conn = conexion.cone;
+      let queryBusqueda = `SELECT * FROM proximas_citas WHERE id_profesional = ? AND id_paciente = ? AND fecha_hora LIKE ('%${req.body.fecha}% %${req.body.hora}%')`;
+      conn.query(queryBusqueda, [req.body.idProfesional, req.body.idPaciente], (errorbusqueda, resultbusqueda) => {
+        if(errorbusqueda){
+          console.log(errorbusqueda);
+          res.status(500).send({mensaje : errorbusqueda.message, codigo : errorbusqueda.code});
+        }else{
+          if(resultbusqueda.length > 0){
+            let queryElimina = `DELETE FROM proximas_citas WHERE id_profesional = ? AND id_paciente = ? AND fecha_hora LIKE ('%${req.body.fecha}% %${req.body.hora}%')`;
+            conn.query(queryElimina, [req.body.idProfesional, req.body.idPaciente], (errorElimina, resultElimina) => {
+              if(errorElimina){
+                console.log(errorElimina);
+                res.status(500).send({mensaje : errorElimina.message, codigo : errorElimina.code});
+              }else{
+                if(resultElimina.affectedRows > 0){
+                  res.status(200).send({mensaje : "Eliminación exitosa de registro"});
+                }
+              }
+            });
+          }else{
+            res.status(404).send({mensaje : "Registro no encontrado"});
+          }
+        }
+      });
+    }
+  }
+});
+
+  //* Creación de reporte médico
+//normalmente se cuenta con los siguientes datos:
+  /*
+  Datos personales, motivo y fecha de consulta
+  Información clinica, enfermedades, medicación, alergias, intolerancias
+  antecedentes familiares
+  habitos alimenticios
+  nivel de actividad
+  exploración fisica: peso, altura, contorno de cintura, imc
+   */
+  //obtenemos como valor dentro del body el id del paciente a buscar
+app.get("/obtenReporteMedico", (req, res) => {
+  if(JSON.stringify(req.body) === "{}"){
+    res.status(500).send({mensaje : "Sin información"});
+  }else{
+    if(req.body.id === ""){
+      res.status(500).send({mensaje : "Error. Datos incompletos"});
+    }else{
+      const conn = conexion.cone;
+      let queryBusquedaUsuario = "SELECT * FROM usuarios_pacientes WHERE id_paciente = ?";
+      conn.query(queryBusquedaUsuario, [req.body.id], (errorBusqueda, resultBusqueda) => {
+        if(errorBusqueda){
+          console.log(errorBusqueda);
+          res.status(500).send({mensaje : errorBusqueda.message, codigo : errorBusqueda.code});
+        }else{
+          if(resultBusqueda.length > 0){
+            let queryobtenInfo = "SELECT up.id_paciente, up.nombre, up.apPaterno, up.apMaterno, up.fecha_N, infoM.estatura, infoM.ocupacion, infoM.imc, infoM.objetivo, infoM.alergias, infoM.medicamentosC, infoM.enferm, infoM.enfermFam, up.email, up.edad, up.fecha_n, up.numTel FROM infompaciente as infoM, usuarios_pacientes as up WHERE infoM.id_paciente = ? and up.id_paciente = infoM.id_paciente";
+            //obtenemos la información basica del usaurio            
+            conn.query(queryobtenInfo, [req.body.id], (errorBusquedaInfo, resultBusquedaInfo) => {
+              if(errorBusquedaInfo){
+                console.log(errorBusquedaInfo);
+                res.status(500).send({mensaje : errorBusquedaInfo.message, codigo : errorBusquedaInfo.code});
+              }else{
+                if(resultBusquedaInfo.length > 0){
+                  //contamos con la información
+                  let objeto = {}, data = [];
+                  let fecha = new Date(resultBusquedaInfo[0].fecha_N);
+                  //primero almacenamos los datos datos personales
+                  objeto = {
+                    id_paciente : resultBusquedaInfo[0].id_paciente,
+                    nombreCompleto : resultBusquedaInfo[0].nombre + " " + resultBusquedaInfo[0].apPaterno + " " + resultBusquedaInfo[0].apMaterno,
+                    edad : resultBusquedaInfo[0].edad,
+                    fechaNacimiento : ""+fecha.getUTCDate()+"-"+(fecha.getUTCMonth()+1)+"-"+fecha.getUTCFullYear(),
+                    email : resultBusquedaInfo[0].email,
+                    numeroTel : resultBusquedaInfo[0].numTel, 
+                    ocupacion : resultBusquedaInfo[0].ocupacion, 
+                    imc : resultBusquedaInfo[0].imc, 
+                    objetivo : resultBusquedaInfo[0].objetivo, 
+                    alergias : resultBusquedaInfo[0].alergias, 
+                    medicamentosC : resultBusquedaInfo[0].medicamentosC 
+                  };
+                  const promesasInfo = [
+                    {tabla : "habito_personal", id : req.body.id, conexion : conn, tipo : 0},
+                    {tabla : "habito_alimenticio", id : req.body.id, conexion : conn, tipo : 0},
+                    {tabla : "mediciones", id : req.body.id, conexion : conn, tipo : 0}
+                    //c_enfermedades
+                  ];
+                  let cantEnfermedadesPaciente = resultBusquedaInfo[0].enferm.split(','), cantEnfermedadesFamiliares = resultBusquedaInfo[0].enfermFam.split(',');
+                  for(let i = 0; i < cantEnfermedadesPaciente.length; i++){
+                    promesasInfo.push({tabla : "c_enfermedades", id : cantEnfermedadesPaciente[i], conexion : conn, tipo : "paciente"});
+                  }
+                  for(let i = 0; i < cantEnfermedadesFamiliares.length; i++){
+                    promesasInfo.push({tabla : "c_enfermedades", id : cantEnfermedadesFamiliares[i], conexion : conn, tipo : "profesional"});
+                  }
+                  const promesasTabla = promesasInfo.map(operacion => {
+                    return obtenInfo(operacion.tabla, operacion.id, operacion.conexion, operacion.tipo);
+                  });
+                  generaObjetoJSONReporteMedico(promesasTabla).then(objetoCompleto => {
+                    objeto.habitoPersonal = objetoCompleto.habitoPersonal;
+                    objeto.habitoAlimenticio = objetoCompleto.habitoAlimenticio;
+                    objeto.mediciones = objetoCompleto.mediciones;
+                    objeto.enfermedadesPaciente = objetoCompleto.enfermedadesPaciente;
+                    objeto.enfermedadesPaciente = objetoCompleto.enfermedadesFam;
+                    res.status(200).send({mensaje : "Obtención exitosa de información", objeto : objeto});
+                  }).catch(error =>{
+                    console.log(error);
+                  });
+                }else{
+                  //no contamos con la información necesaria
+                  res.status(404).send({mensaje : "No se cuenta con toda la información para realizar el reporte de este usuario, llene los elementos que falten o si es un error pongase en contacto con el administrado."});
+                }
+              }
+            });
+          }
+        }
+      });
+    }
+  }
+});
+
+function obtenInfo(tabla, id, conexion, tipo){
+  return new Promise((resolve, reject) => {
+    var query;
+    if(tabla == "mediciones")
+      query = `SELECT * FROM mediciones WHERE id_paciente = ${id} ORDER BY fecha asc`;//de esta manera podemos obtener el primera y ultima medicion
+    else if(tabla == "c_enfermedades")
+      query = `SELECT * FROM c_enfermedades WHERE id_enfermedad = ${id}`
+    else query = `SELECT * FROM ${tabla} WHERE id_paciente = ${id}`;
+
+    conexion.query(query, (error, result) => {
+      if(error){
+        resolve({operacion : "Busqueda", exitosa : false, tabla : tabla, error : error});
+      }else{
+        if(tabla == "mediciones"){
+          //hago el envio del primer y ultimo valor
+          var objeto = {
+            primeraFecha : result[0].fecha, 
+            primeraMedicion: {
+              peso: result[0].peso,
+              axiliar_media: result[0].axiliar_media,
+              abdominal: result[0].abdominal,
+              bicipital: result[0].bicipital,
+              muslo: result[0].muslo,
+              suprailiaco: result[0].suprailiaco,
+              triceps: result[0].triceps,
+              subescapular: result[0].subescapular,
+              toracica: result[0].toracica,
+              pantorrilla_medial: result[0].pantorrilla_medial,
+              cintura: result[0].cintura
+            },
+            ultimaFecha : result[result.length-1].fecha,
+            ultimaMedicion : {
+              peso: result[result.length-1].peso,
+              axiliar_media: result[result.length-1].axiliar_media,
+              abdominal: result[result.length-1].abdominal,
+              bicipital: result[result.length-1].bicipital,
+              muslo: result[result.length-1].muslo,
+              suprailiaco: result[result.length-1].suprailiaco,
+              triceps: result[result.length-1].triceps,
+              subescapular: result[result.length-1].subescapular,
+              toracica: result[result.length-1].toracica,
+              pantorrilla_medial: result[result.length-1].pantorrilla_medial,
+              cintura: result[result.length-1].cintura
+            }
+          };
+          resolve({operacion : "Busqueda", exitosa : true, data : objeto, tabla : tabla, tipo : tipo});
+        }else if(tabla == "c_enfermedades"){
+          resolve({operacion : "Busqueda", exitosa : true, data : {id: id, descripcion : result[0].descripcion}, tabla : tabla, tipo : tipo});
+        }else{
+          resolve({operacion : "Busqueda", exitosa : true, data : result[0], tabla : tabla, tipo : tipo});
+        }
+      }
+    });
+  });
+}
+
+function generaObjetoJSONReporteMedico(promesasTabla){
+  return Promise.all(promesasTabla).then(resultados => {
+    var enfermedadesPaciente = [], enfermedadesFam = [];
+    var habitoPersonal = {}, habitoAlimenticio = {}, mediciones = {};
+    for(let i = 0; i < resultados.length; i++){
+        if(resultados[i].tabla === "habito_personal"){
+          habitoPersonal.horaDespierto = resultados[i].data.horaD;
+          habitoPersonal.horaSueno = resultados[i].data.horaS;
+          habitoPersonal.descFisica = resultados[i].data.desc_fisica;
+          habitoPersonal.rutinaDiaria = resultados[i].data.rutinaDia;
+          //console.log(objetoRM);
+        }else if(resultados[i].tabla === "habito_alimenticio"){
+          //console.log(resultados[i])
+          habitoAlimenticio.alimentosMasConsumidos = resultados[i].data.masConsumidos;
+          habitoAlimenticio.alimentosAlergia = resultados[i].data.alimentos_alergia;
+          habitoAlimenticio.cantidadConsumoAgua = resultados[i].data.cantidad_agua;
+          habitoAlimenticio.cantidadComidas = resultados[i].data.cantidad_comidas;
+          habitoAlimenticio.cantidad_colaciones = resultados[i].data.cantidad_colaciones;
+          habitoAlimenticio.horaDesayuno = resultados[i].data.horaDesayuno;
+          habitoAlimenticio.horaComida = resultados[i].data.horaComida;
+          habitoAlimenticio.horaCena = resultados[i].data.horaCena;
+        }else if(resultados[i].tabla === "mediciones"){
+          let fechaInicial = new Date(resultados[i].data.primeraFecha);
+          let fechaFinal = new Date(resultados[i].data.ultimaFecha);
+          mediciones.primeraFecha = ""+fechaInicial.getUTCDate()+"-"+(fechaInicial.getUTCMonth()+1)+"-"+fechaInicial.getUTCFullYear();
+          mediciones.primeraMedicion = resultados[i].data.primeraMedicion;
+          mediciones.ultimaFecha = ""+fechaFinal.getUTCDate()+"-"+(fechaFinal.getUTCMonth()+1)+"-"+fechaFinal.getUTCFullYear();
+          mediciones.ultimaMedicion = resultados[i].data.ultimaMedicion;
+          //console.log(objetoRM);
+        }else if(resultados[i].tabla === "c_enfermedades"){
+          if(resultados[i].tipo == "paciente"){
+            enfermedadesPaciente.push({id : resultados[i].data.id, descripcion : resultados[i].data.descripcion});
+          }else if(resultados[i].tipo == "profesional"){
+            enfermedadesFam.push({id : resultados[i].data.id, descripcion : resultados[i].data.descripcion})
+          }
+          /*
+          objetoRM.enfermedadesPaciente = enfermedadesPaciente;
+          objetoRM.enfermedadesFamilia = enfermedadesFam;
+          */
+          //console.log(objetoRM);
+        }
+    }
+    const objetoReporte = {
+      habitoPersonal,
+      habitoAlimenticio,
+      mediciones,
+      enfermedadesPaciente,
+      enfermedadesFam
+    };
+    return objetoReporte;
+  });
+}
+
+
+  //Recuperación de contraseña
+  //obtenemos el correo del usuario y el tipo de usuario al que se refiere
+app.post("/recuperaContra", (req, res) => {
+  if(JSON.stringify(req.body) === '{}'){
+    res.status(500).send({mensaje : "Sin información"});
+  }else{
+    if(req.body.correo === "" || req.body.tipoUsuario === ""){
+      res.status(500).send({mensaje : "Error, datos incompletos"});
+    }else{
+      const conn = conexion.cone;
+      let queryBusquedaUsuario = "";
+      //valor de tipos de usuario 1 si es profesional y 2 si es paciente
+      if(req.body.tipoUsuario == 1)
+        queryBusquedaUsuario = "SELECT * FROM usuarios_profesionales WHERE email = ?";
+      else if(req.body.tipoUsuario == 2)
+        queryBusquedaUsuario = "SELECT * FROM usuarios_pacientes WHERE email = ?";
+      conn.query(queryBusquedaUsuario, [req.body.correo], (errorBusqueda, resultBusqueda) => {
+        if(errorBusqueda){
+          console.log(errorBusqueda);
+          res.status(500).send({mensaje : errorBusqueda.message, codigo : errorBusqueda.code});
+        }else{
+          if(resultBusqueda.length <= 0){
+            res.status(404).send({mensaje : "Usuario no encontrado, verifique los datos ingresados"});
+          }else{
+            //console.log(resultBusqueda);
+            let nuevaContra = generaContrasRecuperacion();
+            let queryActualizaContra = "", id;
+            if(req.body.tipoUsuario == 1){
+              queryActualizaContra = "UPDATE usuarios_profesionales SET password = ? WHERE id_profesional = ?";
+              id = resultBusqueda[0].id_profesional;
+            } else if(req.body.tipoUsuario == 2){
+              queryActualizaContra = "UPDATE usuarios_pacientes SET password = ? WHERE  id_paciente = ?";
+              id = resultBusqueda[0].id_paciente;
+            }
+            conn.query(queryActualizaContra, [nuevaContra, id], (errorActualiza, resultActualiza) => {
+              if(errorActualiza){
+                console.log(errorActualiza);
+                res.status(500).send({mensaje : errorActualiza.message, codigo : errorActualiza.code});
+              }else 
+              if(resultActualiza.affectedRows > 0){
+                ejemplosCorreo.recuperaContra(resultBusqueda[0].nombre, resultBusqueda[0].apPaterno, resultBusqueda[0].apMaterno, nuevaContra, (html)=>{  
+                  correoEnvio.crearOpcionesCorreo(""+resultBusqueda[0].email, "Recuperación de contraseña.", html);
+                  correoEnvio.enviaCorreo((objeto) => {
+                    //console.log(objeto);
+                    if(objeto.OK == 1){
+                      res.status(200).send({mensaje : "Obtención exitosa", contra : nuevaContra});
+                    }else if(objeto.OK == 0){
+                      res.status(500).send({mensaje : "Error en el envio del correo, compruebe el correo"});
+                    }
+                  });
+                });
+              }
+            });
+          }
+        }
+      });
+    }
+  }
+});  
+
+function generaContrasRecuperacion(){
+  const caracteres = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_+{}[]|;:,.<>?';
+  let contrasena = '';
+  for (let i = 0; i < 16; i++) {
+    const caracterAleatorio = caracteres.charAt(Math.floor(Math.random() * caracteres.length));
+    contrasena += caracterAleatorio;
+  }
+  return contrasena;
+}
+
+  //MÉTODO DE CAMBIO DE CONTRASEÑA
+    //obtenemos el id del usuario, contraseña nueva y pasada, tambien el tipo de usuario
+app.put("/cambioContra", (req, res) => {
+  if(JSON.stringify(req.body) === '{}'){
+    res.status(500).send({mensaje : "Sin información"});
+  }else{
+    if(req.body.id === "" || req.body.contraPasada === "" || req.body.contraNueva === "" || req.body.tipoUsuario === ""){
+      res.status(500).send({mensaje : "Error. Datos incompletos"});
+    }else{
+      let queryBusqueda, queryActualizaContra;
+      const conn = conexion.cone;
+      if(req.body.tipoUsuario === "profesional"){
+        queryBusqueda = "SELECT * FROM usuarios_profesionales WHERE id_profesional = ?";
+        queryActualizaContra = "UPDATE usuarios_profesionales SET password = ? WHERE id_profesional = ? AND password = ?";
+      }else if(req.body.tipoUsuario === "paciente"){
+        queryBusqueda = "SELECT * FROM usuarios_pacientes WHERE id_paciente = ?";
+        queryActualizaContra = "UPDATE usuarios_pacientes SET password = ? WHERE id_paciente = ? AND password = ?";
+      }
+      conn.query(queryBusqueda, [req.body.id], (errorBusqueda, resultBusqueda) => {
+        if(errorBusqueda){
+          console.log(errorBusqueda);
+          res.status(500).send({mensaje : errorBusqueda.message, codigo : errorBusqueda.code});
+        }else{
+          if(resultBusqueda.length > 0){
+            conn.query(queryActualizaContra, [req.body.contraNueva, req.body.id, req.body.contraPasada], (errorActualiza, resultActualiza) => {
+              if(errorActualiza){
+                console.log(errorActualiza);
+                res.status(500).send({mensaje : errorActualiza.message, codigo : errorActualiza.code});
+              }else{
+                if(resultActualiza.affectedRows > 0){
+                  ejemplosCorreo.cambiaContra(resultBusqueda[0].nombre, resultBusqueda[0].apPaterno, resultBusqueda[0].apMaterno, (html) => {
+                    correoEnvio.crearOpcionesCorreo(""+resultBusqueda[0].email, "Cambio de contraseña.", html);
+                    correoEnvio.enviaCorreo((objeto) => {
+                      if(objeto.OK == 1){
+                        res.status(200).send({mensaje : "Contraseña actualizada."});
+                      }else if(objeto.OK == 0){
+                        res.status(500).send({mensaje : "Error en el envio del correo, comprueba la información"});
+                      }
+                    });
+                  });
+                }else{
+                  res.status(200).send({mensaje : "Información no actualizada, verifique su entrada"});
+                }
+              }
+            });
+          }else{
+            res.status(404).send({mensaje : "Usuario no encontrado"});
+          }
+        }
+      });
+    }
+  }
+});
   //METODOS DE CONFIGURACIÓN DEL SERVIDOR
 app.listen(3000, "192.168.100.9", function () {
   console.log("Funcionando en el puerto: 3000");
