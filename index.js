@@ -567,7 +567,7 @@ app.get("/obtenTipos", (req, res) => {
         });
       }
       objeto.data = data;
-      res.send(objeto).status(200);
+      res.status(200).send({objeto : objeto});
     }
   });
 });
@@ -2256,7 +2256,7 @@ app.delete("/borraProfesional", (req, res) => {//obtenemos el id del profesional
               res.status(500).send({mensaje : "Error en las promesas", error : error});
             });
           }else{//no existe
-            res.status(500).send({mensaje : "Usuario no existente"});
+            res.status(404).send({mensaje : "Usuario no existente"});
           }
         }
       });
@@ -2754,6 +2754,7 @@ app.get("/infoMed/obten", (req, res) => {
             objeto = {
               id_paciente : resultBusqueda[0].id_paciente,
               nombreC : resultBusqueda[0].nombre + " " + resultBusqueda[0].apPaterno + " " + resultBusqueda[0].apMaterno,
+              estatura : resultBusqueda[0].estatura,
               ocupacion : resultBusqueda[0].ocupacion,
               imc : resultBusqueda[0].imc,
               objetivo : resultBusqueda[0].objetivo,
@@ -3582,6 +3583,8 @@ app.delete("/borraPaciente", (req, res) => {
             }).catch(error => {
               res.status(500).send({mensaje : "Error en las promesas", error : error});
             });
+          }else{//no existe
+            res.status(404).send({mensaje : "Usuario no existente"});
           }
         }
       });
@@ -4208,6 +4211,7 @@ app.put("/cambioContra", (req, res) => {
   }
 });
   //METODOS DE CONFIGURACIÓN DEL SERVIDOR
+  //192.168.100.9 192.168.56.1
 app.listen(3000, "192.168.100.9", function () {
   console.log("Funcionando en el puerto: 3000");
   //obtenemos la fecha actual de CDMX
