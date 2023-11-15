@@ -2485,16 +2485,14 @@ app.post("/habitoAlimenticio/alta", (req, res) => {
 });
       
 //MÉTODO DE BUSQUEDA MEDIANTE ID DE PACIENTE
-app.get("/habitoAlimenticio/obten", (req, res) => {
-  if(JSON.stringify(req.body) === '{}'){
-    res.status(500).send({mensaje : "Sin información"});
-  }else{
-    if(req.body.id === ""){
+app.get("/habitoAlimenticio/obten/:id", (req, res) => {
+  const idPaciente = req.params.id;
+    if(!idPaciente){
       res.status(500).send({mensaje : "Error. Datos incompletos"});
     }else{
       //realizamos la busqueda
       const conn = conexion.cone;
-      conn.query(`SELECT * FROM habito_alimenticio WHERE id_paciente = ${req.body.id}`, (errorBusqueda, resultBusqueda) => {
+      conn.query(`SELECT * FROM habito_alimenticio WHERE id_paciente = ${idPaciente}`, (errorBusqueda, resultBusqueda) => {
         if(errorBusqueda){
           console.log(errorBusqueda);
           res.status(500).send({mensaje : errorBusqueda.message, codigo : errorBusqueda.code});
@@ -2508,7 +2506,6 @@ app.get("/habitoAlimenticio/obten", (req, res) => {
           }
         }
       });
-    }
   }
 });
       
@@ -2590,16 +2587,14 @@ app.post("/habitoPersonal/alta", (req, res) => {
   }
 });
 //MÉTODO DE BUSQUEDA DE HABITO PERSONAL MEDIANTE ID DEL PACIENTE
-app.get("/habitoPersonal/busqueda", (req, res)=>{
-  if(JSON.stringify(req.body) === "{}"){
-    res.status(500).send({mensaje : "Sin información en la solicitud"});
-  }else{
-    if(req.body.id === ""){
+app.get("/habitoPersonal/busqueda/:id", (req, res)=>{
+  const idPaciente = req.params.id;
+    if(!idPaciente){
       res.status(500).send({mensaje : "Error. Datos incompletos"});
     }else{ 
       const conn = conexion.cone;
       const query = `SELECT up.id_paciente, up.nombre, up.apPaterno, up.apMaterno, hp.horaD, hp.horaS, hp.desc_fisica, hp.rutinaDia FROM usuarios_pacientes as up, habito_personal as hp WHERE hp.id_paciente = ? and hp.id_paciente = up.id_paciente`;
-      conn.query(query, (req.body.id), (errorBusqueda, resultBusqueda) => {
+      conn.query(query, (idPaciente), (errorBusqueda, resultBusqueda) => {
         if(errorBusqueda){
           console.log(errorBusqueda);
           res.status(500).send({mensaje : errorBusqueda.message, codigo : errorBusqueda.code});
@@ -2620,7 +2615,6 @@ app.get("/habitoPersonal/busqueda", (req, res)=>{
           }
         }
       });
-    }
   }
 });
 //MÉTODO DE ACTUALIZACIÓN DE HABITO PERSONAL MEDIANTE ID DEL PACIENTE
@@ -2720,16 +2714,14 @@ app.post("/infoMed/alta", (req, res) => {
 });
 
 //MÉTODO DE BUSQUEDA DE INFORMACIÓN MÉDICA MEDIANTE ID DEL PACIENTE
-app.get("/infoMed/obten", (req, res) => {
-  if(JSON.stringify(req.body) == '{}'){
-    res.status(500).send({mensaje : "Sin información en la solicitud"});
-  }else{
-    if(req.body.id === "{}"){
+app.get("/infoMed/obten/:id", (req, res) => {
+  const idPaciente = req.params.id;
+    if(!idPaciente){
       req.body(500).send({mensaje : "Error. Datos incompletos"});
     }else{
       const conn = conexion.cone;
       const queryBusqueda = "SELECT up.id_paciente, up.nombre, up.apPaterno, up.apMaterno, infoM.estatura, infoM.ocupacion, infoM.imc, infoM.objetivo, infoM.alergias, infoM.medicamentosC, infoM.enferm, infoM.enfermFam FROM infompaciente as infoM, usuarios_pacientes as up WHERE infoM.id_paciente = ? and up.id_paciente = infoM.id_paciente";
-      conn.query(queryBusqueda, req.body.id, (errorBusqueda, resultBusqueda) => {
+      conn.query(queryBusqueda, idPaciente, (errorBusqueda, resultBusqueda) => {
         if(errorBusqueda){
           console.log(errorBusqueda);
           res.status(500).send({mensaje : errorBusqueda.message, codigo : errorBusqueda.code});
@@ -2803,7 +2795,6 @@ app.get("/infoMed/obten", (req, res) => {
         }
       });
     }
-  }
 });
 
 function obtenEnfermedades(id, conexion, tipo){
@@ -2918,16 +2909,14 @@ app.post("/alimentodieta/alta", (req, res) => {
 });
 //MÉTODO DE OBTENCIÓN DE ALIMENTO DIETA
 //busqueda de lista alimentos de dietas vigentes mediante id del paciente (caso para los profesionales y pacientes)
-app.get("/alimentodieta/busqueda/paciente", (req, res) =>{
-  if(JSON.stringify(req.body) === '{}'){
-    res.status(500).send({mensaje : "Sin información en la solicitud"});
-  }else{
-    if(req.body.idPaciente === ""){
+app.get("/alimentodieta/busqueda/paciente/:id", (req, res) =>{
+  const idPaciente = req.params.id;
+    if(!idPaciente){
       res.status(500).send({mensaje : "Error. Datos incompletos"});
     }else{
       const conn = conexion.cone;
       let query = `SELECT ad.id_profesional, ad.id_paciente, ad.id_comida, ad.proteinas, ad.cantidades_proteinas, ad.lacteos, ad.cantidades_lacteos, ad.frutas, ad.cantidades_frutas, ad.verduras, ad.cantidades_verduras, ad.granos, ad.cantidades_granos, ad.duracion, ad.vigencia , tc.descripcion, up.nombre, up.apPaterno, up.apMaterno FROM alimento_dieta as ad, tipoComida as tc, usuarios_pacientes as up WHERE ad.id_paciente = ? and ad.vigencia = 1 AND ad.id_comida = tc.id_comida AND ad.id_paciente = up.id_paciente`;
-      conn.query(query, [req.body.idPaciente], (errorBusqueda, resultBusqueda) => {
+      conn.query(query, [idPaciente], (errorBusqueda, resultBusqueda) => {
         if(errorBusqueda){
           console.log(errorBusqueda);
           res.status(500).send({mensaje : errorBusqueda.message, codigo : errorBusqueda.code});
@@ -3007,7 +2996,6 @@ app.get("/alimentodieta/busqueda/paciente", (req, res) =>{
         }
       });
     }
-  }
 });
 
 function obtenDescripcionAlimento(id, conexion, tipo){
@@ -3089,16 +3077,14 @@ function creaJSONDescripcionAlimento(promesasDescripcion, resultBusqueda, i, idP
 
 //busqueda de lista de dietas que el profesional haya creado, esto para tener un orden de que aliemento se creo para que paciente
 //solo será informativa   obtenemos el id del profesional
-app.get("/alimentodieta/busqueda/comidas/profesional", (req, res) => {
-  if(JSON.stringify(req.body) == '{}'){
-    res.status(500).send({mensaje : "Sin información en la solicitud"});
-  }else{
-    if(req.body.id === ""){
+app.get("/alimentodieta/busqueda/comidas/profesional/:id", (req, res) => {
+  const idProfesional = req.params.id;
+    if(!idProfesional){
       res.status(500).send({mensaje : "Error. Datos incompletos"});
     }else{
       const conn = conexion.cone;
       let queryBusqueda = "SELECT ad.id_profesional, ad.id_paciente, ad.id_comida, ad.duracion, ad.vigencia , tc.descripcion, up.nombre, up.apPaterno, up.apMaterno FROM alimento_dieta as ad, tipoComida as tc, usuarios_pacientes as up WHERE ad.id_profesional = ? AND ad.id_comida = tc.id_comida AND ad.id_paciente = up.id_paciente";
-      conn.query(queryBusqueda, [req.body.id], (errorBusqueda, resultBusqueda) => {
+      conn.query(queryBusqueda, [idProfesional], (errorBusqueda, resultBusqueda) => {
         if(errorBusqueda){
           console.log(errorBusqueda);
           res.status(500).send({mensaje : errorBusqueda.message, codigo : errorBusqueda.code});
@@ -3124,21 +3110,18 @@ app.get("/alimentodieta/busqueda/comidas/profesional", (req, res) => {
         }
       });
     }
-  }
 });
 
 //busqueda de lista de alimentos mediante id del paciente (Solo muestra que paciente tiene aliemntos)
 //solo será informativa
-app.get("/alimentodieta/busqueda/comidas/paciente", (req, res) => {
-  if(JSON.stringify(req.body) == '{}'){
-    res.status(500).send({mensaje : "Sin información en la solicitud"});
-  }else{
-    if(req.body.id === ""){
+app.get("/alimentodieta/busqueda/comidas/paciente/:id", (req, res) => {
+  const idPaciente = req.params.id;
+    if(!idPaciente){
       res.status(500).send({mensaje : "Error. Datos incompletos"});
     }else{
       const conn = conexion.cone;
       let queryBusqueda = "SELECT ad.id_profesional, ad.id_paciente, ad.id_comida, ad.duracion, ad.vigencia , tc.descripcion FROM alimento_dieta as ad, tipoComida as tc WHERE ad.id_paciente = ? AND ad.id_comida = tc.id_comida";
-      conn.query(queryBusqueda, [req.body.id], (errorBusqueda, resultBusqueda) => {
+      conn.query(queryBusqueda, [idPaciente], (errorBusqueda, resultBusqueda) => {
         if(errorBusqueda){
           console.log(errorBusqueda);
           res.status(500).send({mensaje : errorBusqueda.message, codigo : errorBusqueda.code});
@@ -3163,20 +3146,18 @@ app.get("/alimentodieta/busqueda/comidas/paciente", (req, res) => {
         }
       });
     }
-  }
 });
 
 //busqueda de aliemtno de comida mediante el id del paciente, vigencia y tipo de comida
-app.get("/alimentodieta/busqueda/comidas/tipo", (req, res) =>{
-  if(JSON.stringify(req.body) === '{}'){
-    res.status(500).send({mensaje : "Sin información en la solicitud"});
-  }else{
-    if(req.body.idPaciente === "" || req.body.idComida === ""){
+app.get("/alimentodieta/busqueda/comidas/tipo/:idPaciente/:idComida", (req, res) =>{
+  const idPaciente = req.params.idPaciente;
+  const idComida = req.params.idComida;
+    if(!idPaciente || !idComida){
       res.status(500).send({mensaje : "Error. Datos incompletos"});
     }else{
       const conn = conexion.cone;
       let query = `SELECT ad.id_profesional, ad.id_paciente, ad.id_comida, ad.proteinas, ad.cantidades_proteinas, ad.lacteos, ad.cantidades_lacteos, ad.frutas, ad.cantidades_frutas, ad.verduras, ad.cantidades_verduras, ad.granos, ad.cantidades_granos, ad.duracion, ad.vigencia , tc.descripcion, up.nombre, up.apPaterno, up.apMaterno FROM alimento_dieta as ad, tipoComida as tc, usuarios_pacientes as up WHERE ad.id_paciente = ? and ad.vigencia = 1 AND ad.id_comida = ? AND ad.id_comida = tc.id_comida AND ad.id_paciente = up.id_paciente`;
-      conn.query(query, [req.body.idPaciente, req.body.idComida], (errorBusqueda, resultBusqueda) => {
+      conn.query(query, [idPaciente, idComida], (errorBusqueda, resultBusqueda) => {
         if(errorBusqueda){
           console.log(errorBusqueda);
           res.status(500).send({mensaje : errorBusqueda.message, codigo : errorBusqueda.code});
@@ -3255,7 +3236,6 @@ app.get("/alimentodieta/busqueda/comidas/tipo", (req, res) =>{
           }
         }
       });
-    }
   }
 });
 
@@ -3886,16 +3866,14 @@ app.delete("/borraProximasCitas", (req, res) => {
   exploración fisica: peso, altura, contorno de cintura, imc
    */
   //obtenemos como valor dentro del body el id del paciente a buscar
-app.get("/obtenReporteMedico", (req, res) => {
-  if(JSON.stringify(req.body) === "{}"){
-    res.status(500).send({mensaje : "Sin información"});
-  }else{
-    if(req.body.id === ""){
+app.get("/obtenReporteMedico/:id", (req, res) => {
+  const idPaciente = req.params.id;
+    if(!idPaciente){
       res.status(500).send({mensaje : "Error. Datos incompletos"});
     }else{
       const conn = conexion.cone;
       let queryBusquedaUsuario = "SELECT * FROM usuarios_pacientes WHERE id_paciente = ?";
-      conn.query(queryBusquedaUsuario, [req.body.id], (errorBusqueda, resultBusqueda) => {
+      conn.query(queryBusquedaUsuario, [idPaciente], (errorBusqueda, resultBusqueda) => {
         if(errorBusqueda){
           console.log(errorBusqueda);
           res.status(500).send({mensaje : errorBusqueda.message, codigo : errorBusqueda.code});
@@ -3903,7 +3881,7 @@ app.get("/obtenReporteMedico", (req, res) => {
           if(resultBusqueda.length > 0){
             let queryobtenInfo = "SELECT up.id_paciente, up.nombre, up.apPaterno, up.apMaterno, up.fecha_N, infoM.estatura, infoM.ocupacion, infoM.imc, infoM.objetivo, infoM.alergias, infoM.medicamentosC, infoM.enferm, infoM.enfermFam, up.email, up.edad, up.fecha_n, up.numTel FROM infompaciente as infoM, usuarios_pacientes as up WHERE infoM.id_paciente = ? and up.id_paciente = infoM.id_paciente";
             //obtenemos la información basica del usuario            
-            conn.query(queryobtenInfo, [req.body.id], (errorBusquedaInfo, resultBusquedaInfo) => {
+            conn.query(queryobtenInfo, [idPaciente], (errorBusquedaInfo, resultBusquedaInfo) => {
               if(errorBusquedaInfo){
                 console.log(errorBusquedaInfo);
                 res.status(500).send({mensaje : errorBusquedaInfo.message, codigo : errorBusquedaInfo.code});
@@ -3927,9 +3905,9 @@ app.get("/obtenReporteMedico", (req, res) => {
                     medicamentosC : resultBusquedaInfo[0].medicamentosC 
                   };
                   const promesasInfo = [
-                    {tabla : "habito_personal", id : req.body.id, conexion : conn, tipo : 0},
-                    {tabla : "habito_alimenticio", id : req.body.id, conexion : conn, tipo : 0},
-                    {tabla : "mediciones", id : req.body.id, conexion : conn, tipo : 0}
+                    {tabla : "habito_personal", id : idPaciente, conexion : conn, tipo : 0},
+                    {tabla : "habito_alimenticio", id : idPaciente, conexion : conn, tipo : 0},
+                    {tabla : "mediciones", id : idPaciente, conexion : conn, tipo : 0}
                     //c_enfermedades
                   ];
                   let cantEnfermedadesPaciente = resultBusquedaInfo[0].enferm.split(','), cantEnfermedadesFamiliares = resultBusquedaInfo[0].enfermFam.split(',');
@@ -3962,7 +3940,6 @@ app.get("/obtenReporteMedico", (req, res) => {
         }
       });
     }
-  }
 });
 
 function obtenInfo(tabla, id, conexion, tipo){
