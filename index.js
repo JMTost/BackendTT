@@ -318,7 +318,8 @@ app.post("/altaFotoProfesional", (req, res) => {//validamos desde el cliente que
             throw errorBorrado;
           }else{
             const query = "INSERT INTO imgUsuariosProfesionales VALUES (?, ?, ?)";
-            conn.query(query, [id, extension[1], archivoObtenido.data], (error, resultInsert) => {
+            //extension[1]
+            conn.query(query, [id, 'png', archivoObtenido.data], (error, resultInsert) => {
               if(error){
                 res.status(500).send({error : error});
                 throw error;
@@ -330,7 +331,8 @@ app.post("/altaFotoProfesional", (req, res) => {//validamos desde el cliente que
         });
       }else{//creamos la imagen
         const query = "INSERT INTO imgUsuariosProfesionales VALUES (?, ?, ?)";
-        conn.query(query, [id, extension[1], archivoObtenido.data], (error, resultInsert) => {
+        //extension[1]
+        conn.query(query, [id, 'png', archivoObtenido.data], (error, resultInsert) => {
           if(error){
             res.status(500).send({error : error});
             throw error;
@@ -366,7 +368,8 @@ app.post("/altaFotoPaciente", (req, res) => {
             throw errorBorrado;
           }else{
             const query = "INSERT INTO imgUsuariosPacientes VALUES (?, ?, ?)";
-            conn.query(query, [id, extension[extension.length - 1], archivoObtenido.data], (errorInsert, resultInsert) => {
+            //extension[1]
+            conn.query(query, [id, 'png', archivoObtenido.data], (errorInsert, resultInsert) => {
               if(errorInsert){
                 res.status(500).send({mensaje : errorInsert});
                 throw errorInsert;
@@ -378,7 +381,8 @@ app.post("/altaFotoPaciente", (req, res) => {
         });
       }else{//creamos el registro de la imagen
         const query = "INSERT INTO imgUsuariosPacientes VALUES (?, ?, ?)";
-        conn.query(query, [id, extension[extension.length - 1], archivoObtenido.data], (errorInsert, resultInsert) => {
+        //extension[1]
+        conn.query(query, [id, 'png', archivoObtenido.data], (errorInsert, resultInsert) => {
           if(errorInsert){
             res.status(500).send({mensaje : errorInsert});
             throw errorInsert;
@@ -639,7 +643,7 @@ app.get("/obtenTiposCitas", (req, res) => {
   });
 });
 
-app.get("/obtenCitasFechaHora", (req, res) => { //metodo que obtendra del body la fecha o hora a buscar
+app.get("/obtenCitasFechaHora/:fecha/:hora", (req, res) => { //metodo que obtendra del body la fecha o hora a buscar
   /*
   PARA HACER USO DE ESTA PETICIÓN SE DEBE DE CONSIDERAR QUE EN EL BODY DE LA PETICIÓN SE TENDRÁN DOS CAMPOS:
     hora y fecha
@@ -652,12 +656,10 @@ app.get("/obtenCitasFechaHora", (req, res) => { //metodo que obtendra del body l
   Y PARA LA HORA ES SIMILIAR  
         "hora" : "HORA:"      "hora" : ":MINUTOS:"      "hora" : ":SEGUNDOS"
   */
-  if(JSON.stringify(req.body) === "{}"){
-    console.log("Error, no hay datos para la busqueda");
-    res.status(500).send({error: "sin información"});
-  }else{
+ const fecha = req.params.fecha || '';
+ const hora = req.params.hora || '';
     //comprobamos que existan alguno de los elementos
-    if(req.body.fecha === "" && req.body.hora === ""){//caso donde se tienen los elementos pero no contienen datos
+    if(fecha === "" && hora === ""){//caso donde se tienen los elementos pero no contienen datos
       console.log("Error no hay datos completos");
       res.status(500).send("Error, no hay datos en ambos campos");
     }else{//al menos uno de los elementos se encuentra con información
@@ -665,11 +667,11 @@ app.get("/obtenCitasFechaHora", (req, res) => { //metodo que obtendra del body l
       //`SELECT * FROM citas WHERE fecha_hora LIKE ('%${req.body.fecha}% %${req.body.hora}%')`
       const conn = conexion.cone;
       //obtenemos datos de la cita, el nombre del tipo de cita, del profesional y del paciente
-      conn.query(`SELECT c.id_tipoCita, c.id_profesional, c.id_paciente, c.fecha_hora, t.descripcion, p.nombre AS profesionalN, p.apPaterno AS profesionalAPp, p.apMaterno AS profesionalAPm, pa.nombre AS pacienteN, pa.apPaterno AS pacienteAPp, pa.apMaterno AS pacienteAPm FROM citas AS c, tipocitas AS t, usuarios_profesionales AS p, usuarios_pacientes AS pa WHERE fecha_hora LIKE  ('%${req.body.fecha}% %${req.body.hora}%') and t.id_tipoCita = c.id_tipoCita and p.id_profesional = c.id_profesional and pa.id_paciente = c.id_paciente`, (error, result) => {
+      conn.query(`SELECT c.id_tipoCita, c.id_profesional, c.id_paciente, c.fecha_hora, t.descripcion, p.nombre AS profesionalN, p.apPaterno AS profesionalAPp, p.apMaterno AS profesionalAPm, pa.nombre AS pacienteN, pa.apPaterno AS pacienteAPp, pa.apMaterno AS pacienteAPm FROM citas AS c, tipocitas AS t, usuarios_profesionales AS p, usuarios_pacientes AS pa WHERE fecha_hora LIKE  ('%${fecha}% %${hora}%') and t.id_tipoCita = c.id_tipoCita and p.id_profesional = c.id_profesional and pa.id_paciente = c.id_paciente`, (error, result) => {
         if(error){
           res.send(error).status(500);
           throw error;
-        }else{
+        }else if(result.length > 0){
           var objeto = {};
           var data = [];
           
@@ -706,9 +708,10 @@ app.get("/obtenCitasFechaHora", (req, res) => { //metodo que obtendra del body l
           }
           objeto.data = data;
           res.send(objeto).status(200);
+        }else{
+          res.status(404).send({mensaje : "Sin información"});
         }
       });
-    }
   }
 });
 
@@ -756,130 +759,129 @@ app.get("/obtenProfesionalesValidados", (req, res) => { //metodo para obtener a 
 
     //AGREGAR PARAMETROS PARA OBTENER EL STATUS DE LA CITA MEDIANTE LA FECHA
 
-app.get("/obtenCitasProfesional", (req, res) => {
-  if(JSON.stringify(req.body) === '{}'){
-    console.log("Error, no hay datos para la busqueda");
-    res.status(500).send({error: "sin información"});
-  }else{
+app.get("/obtenCitasProfesional/:id", (req, res) => {
+  const idProfesional = req.params.id;
     //comprobamos que exista el elemento del ID a buscar
-    if(req.body.id === ""){
+    if(!idProfesional){
       console.log("Error no hay datos completos");
       res.status(500).send("Error, no hay datos");
     }else{
       const conn = conexion.cone;
       var objeto = {};
       var data = [];
-      console.log(req.body);
       //obtenemos datos de la cita, el nombre del tipo de cita, del paciente
       //`SELECT c.id_tipoCita, c.id_profesional, c.id_paciente, c.fecha_hora, t.descripcion, p.nombre AS profesionalN, p.apPaterno AS profesionalAPp, p.apMaterno AS profesionalAPm, pa.nombre AS pacienteN, pa.apPaterno AS pacienteAPp, pa.apMaterno AS pacienteAPm FROM citas AS c, tipocitas AS t, usuarios_profesionales AS p, usuarios_pacientes AS pa WHERE id_profesional = ${req.body.id_profesional} and t.id_tipoCita = c.id_tipoCita and p.id_profesional = c.id_profesional and pa.id_paciente = c.id_paciente` 
-      conn.query(`SELECT c.id_tipoCita, c.id_profesional, c.id_paciente, c.fecha_hora, t.descripcion, p.nombre AS profesionalN, p.apPaterno AS profesionalAPp, p.apMaterno AS profesionalAPm, pa.nombre AS pacienteN, pa.apPaterno AS pacienteAPp, pa.apMaterno AS pacienteAPm FROM citas AS c, tipocitas AS t, usuarios_profesionales AS p, usuarios_pacientes AS pa WHERE c.id_profesional = ${req.body.id} and t.id_tipoCita = c.id_tipoCita and p.id_profesional = ${req.body.id} and pa.id_paciente = c.id_paciente`, (error, result) => {
-        for(let i = 0; i < result.length; i++){
-           //hacemos la modificación de la hora
-           let fecha = new Date(result[i].fecha_hora);
-           //hacemos el formateo de la fecha y hora respectivamente
-           let fechaANO = fecha.getUTCFullYear();
-           let fechaMES = fecha.getUTCMonth() + 1;
-           let fechaDIA = fecha.getUTCDate();
-           //HORA
-           let hora = fecha.getUTCHours()-6;//diferencia de lo que obtenemos respecto a lo que buscamos
-           let minutos = fecha.getUTCMinutes();
-           let segundos = fecha.getUTCSeconds();
-           
-           let fechaCompleta = ""+fechaDIA+"-"+fechaMES+"-"+fechaANO;
-           let horaCompleta = ""+hora+":"+minutos+":"+segundos;
-
-           //GENERAMOS LOS NOMBRES COMPLETOS DE LOS PACIENTES Y PROFESIONALES
-           let nCpacientes = result[i].pacienteN + " " + result[i].pacienteAPp + " " + result[i].pacienteAPm;
-           let nCprofesionales = result[i].profesionalN + " " + result[i].profesionalAPp + " " + result[i].profesionalAPm;
-           //creamos el objeto de respuesta
-           data.push({
-             idTipoCita : result[i].id_tipoCita,
-             tipoCita : result[i].descripcion,
-             id_profesional : result[i].id_profesional,
-             nombreProfesional : nCprofesionales,
-             id_paciente : result[i].id_paciente,
-             nombrePaciente : nCpacientes,
-             fecha : fechaCompleta,
-             hora : horaCompleta
-           });
+      conn.query(`SELECT c.id_tipoCita, c.id_profesional, c.id_paciente, c.fecha_hora, t.descripcion, p.nombre AS profesionalN, p.apPaterno AS profesionalAPp, p.apMaterno AS profesionalAPm, pa.nombre AS pacienteN, pa.apPaterno AS pacienteAPp, pa.apMaterno AS pacienteAPm FROM citas AS c, tipocitas AS t, usuarios_profesionales AS p, usuarios_pacientes AS pa WHERE c.id_profesional = ${idProfesional} and t.id_tipoCita = c.id_tipoCita and p.id_profesional = ${idProfesional} and pa.id_paciente = c.id_paciente`, (error, result) => {
+        if(error){
+          res.status(500).send({mensaje : "Error al obtener los datos"});
+        }else if(result.length > 0){
+          for(let i = 0; i < result.length; i++){
+            //hacemos la modificación de la hora
+            let fecha = new Date(result[i].fecha_hora);
+            //hacemos el formateo de la fecha y hora respectivamente
+            let fechaANO = fecha.getUTCFullYear();
+            let fechaMES = fecha.getUTCMonth() + 1;
+            let fechaDIA = fecha.getUTCDate();
+            //HORA
+            let hora = fecha.getUTCHours()-6;//diferencia de lo que obtenemos respecto a lo que buscamos
+            let minutos = fecha.getUTCMinutes();
+            let segundos = fecha.getUTCSeconds();
+            
+            let fechaCompleta = ""+fechaDIA+"-"+fechaMES+"-"+fechaANO;
+            let horaCompleta = ""+hora+":"+minutos+":"+segundos;
+ 
+            //GENERAMOS LOS NOMBRES COMPLETOS DE LOS PACIENTES Y PROFESIONALES
+            let nCpacientes = result[i].pacienteN + " " + result[i].pacienteAPp + " " + result[i].pacienteAPm;
+            let nCprofesionales = result[i].profesionalN + " " + result[i].profesionalAPp + " " + result[i].profesionalAPm;
+            //creamos el objeto de respuesta
+            data.push({
+              idTipoCita : result[i].id_tipoCita,
+              tipoCita : result[i].descripcion,
+              id_profesional : result[i].id_profesional,
+              nombreProfesional : nCprofesionales,
+              id_paciente : result[i].id_paciente,
+              nombrePaciente : nCpacientes,
+              fecha : fechaCompleta,
+              hora : horaCompleta
+            });
+         }
+         objeto.data = data;
+         res.send(objeto).status(200);
+        }else{
+          res.status(404).send({mensaje : "Informacíón no encontrada"});
         }
-        objeto.data = data;
-        res.send(objeto).status(200);
       });
     }
-  }
 });
 
-app.get("/obtenCitasPaciente", (req, res) => {
-  if(JSON.stringify(req.body) === "{}"){
-    console.log("Error, no hay datos para la busqueda");
-    res.status(500).send({error: "sin información"});
-  }else{
-    if(req.body.id === ""){
+app.get("/obtenCitasPaciente/:id", (req, res) => {
+  const idPaciente = req.params.id;
+    if(!idPaciente){
       console.log("Error no hay datos completos");
       res.status(500).send("Error, no hay datos");
     }else{
       const conn = conexion.cone;
       var objeto = {};
       var data = [];
-      console.log(req.body);
-      conn.query(`SELECT c.id_tipoCita, c.id_profesional, c.id_paciente, c.fecha_hora, t.descripcion, p.nombre AS profesionalN, p.apPaterno AS profesionalAPp, p.apMaterno AS profesionalAPm, pa.nombre AS pacienteN, pa.apPaterno AS pacienteAPp, pa.apMaterno AS pacienteAPm FROM citas AS c, tipocitas AS t, usuarios_profesionales AS p, usuarios_pacientes AS pa WHERE c.id_paciente = ${req.body.id} and t.id_tipoCita = c.id_tipoCita and p.id_profesional = c.id_profesional and pa.id_paciente = ${req.body.id}`, (error, result) => {
-        for(let i = 0; i < result.length; i++){
-           //hacemos la modificación de la hora
-           let fecha = new Date(result[i].fecha_hora);
-           //hacemos el formateo de la fecha y hora respectivamente
-           let fechaANO = fecha.getUTCFullYear();
-           let fechaMES = fecha.getUTCMonth() + 1;
-           let fechaDIA = fecha.getUTCDate();
-           //HORA
-           let hora = fecha.getUTCHours()-6;//diferencia de lo que obtenemos respecto a lo que buscamos
-           let minutos = fecha.getUTCMinutes();
-           let segundos = fecha.getUTCSeconds();
-           
-           let fechaCompleta = ""+fechaDIA+"-"+fechaMES+"-"+fechaANO;
-           let horaCompleta = ""+hora+":"+minutos+":"+segundos;
-
-           //GENERAMOS LOS NOMBRES COMPLETOS DE LOS PACIENTES Y PROFESIONALES
-           let nCpacientes = result[i].pacienteN + " " + result[i].pacienteAPp + " " + result[i].pacienteAPm;
-           let nCprofesionales = result[i].profesionalN + " " + result[i].profesionalAPp + " " + result[i].profesionalAPm;
-           //creamos el objeto de respuesta
-           data.push({
-             idTipoCita : result[i].id_tipoCita,
-             tipoCita : result[i].descripcion,
-             id_profesional : result[i].id_profesional,
-             nombreProfesional : nCprofesionales,
-             id_paciente : result[i].id_paciente,
-             nombrePaciente : nCpacientes,
-             fecha : fechaCompleta,
-             hora : horaCompleta
-           });
+      conn.query(`SELECT c.id_tipoCita, c.id_profesional, c.id_paciente, c.fecha_hora, t.descripcion, p.nombre AS profesionalN, p.apPaterno AS profesionalAPp, p.apMaterno AS profesionalAPm, pa.nombre AS pacienteN, pa.apPaterno AS pacienteAPp, pa.apMaterno AS pacienteAPm FROM citas AS c, tipocitas AS t, usuarios_profesionales AS p, usuarios_pacientes AS pa WHERE c.id_paciente = ${idPaciente} and t.id_tipoCita = c.id_tipoCita and p.id_profesional = c.id_profesional and pa.id_paciente = ${idPaciente}`, (error, result) => {
+        if(error){
+          res.status(500).send({mensaje : "Error en la obtención de datos"});
+        }else if(result.length > 0){
+          for(let i = 0; i < result.length; i++){
+            //hacemos la modificación de la hora
+            let fecha = new Date(result[i].fecha_hora);
+            //hacemos el formateo de la fecha y hora respectivamente
+            let fechaANO = fecha.getUTCFullYear();
+            let fechaMES = fecha.getUTCMonth() + 1;
+            let fechaDIA = fecha.getUTCDate();
+            //HORA
+            let hora = fecha.getUTCHours()-6;//diferencia de lo que obtenemos respecto a lo que buscamos
+            let minutos = fecha.getUTCMinutes();
+            let segundos = fecha.getUTCSeconds();
+            
+            let fechaCompleta = ""+fechaDIA+"-"+fechaMES+"-"+fechaANO;
+            let horaCompleta = ""+hora+":"+minutos+":"+segundos;
+ 
+            //GENERAMOS LOS NOMBRES COMPLETOS DE LOS PACIENTES Y PROFESIONALES
+            let nCpacientes = result[i].pacienteN + " " + result[i].pacienteAPp + " " + result[i].pacienteAPm;
+            let nCprofesionales = result[i].profesionalN + " " + result[i].profesionalAPp + " " + result[i].profesionalAPm;
+            //creamos el objeto de respuesta
+            data.push({
+              idTipoCita : result[i].id_tipoCita,
+              tipoCita : result[i].descripcion,
+              id_profesional : result[i].id_profesional,
+              nombreProfesional : nCprofesionales,
+              id_paciente : result[i].id_paciente,
+              nombrePaciente : nCpacientes,
+              fecha : fechaCompleta,
+              hora : horaCompleta
+            });
+         }
+         objeto.data = data;
+         res.send(objeto).status(200);
+        }else{
+          res.status(404).send({mensaje : "Sin información"});
         }
-        objeto.data = data;
-        res.send(objeto).status(200);
       });
     }
-  }
 });
 
   //OBTENCIÓN DE PROXIMAS CITAS SIMILAR A LOS MÉTODOS PASADOS
 
-app.get("/obtenProximasCitas", (req, res) => { //método que obtendrá del body la fecha o hora a buscar
-    //misma forma que en obtenCitasFechaHora
-    if(JSON.stringify(req.body) === "{}"){
-      console.log("Error, no hay datos para la busqueda");
-      res.status(500).send({error: "sin información"});
-    }else{
+app.get("/obtenProximasCitas/:fecha/:hora", (req, res) => { //método que obtendrá del body la fecha o hora a buscar
+  const fecha = req.params.fecha || '';
+  const hora  = req.params.hora || '';
       //comprobamos que existan alguno de los elementos
-      if(req.body.fecha === "" && req.body.hora === ""){
+      if(fecha === "" && hora === ""){
         console.log("Error no hay datos completos");
         res.status(500).send("Error, no hay datos en ambos campos");
       }else{
         const conn = conexion.cone;
-        conn.query(`SELECT c.id_profesional, c.id_paciente, c.fecha_hora, p.nombre AS profesionalN, p.apPaterno AS profesionalAPp, p.apMaterno AS profesionalAPm, pa.nombre AS pacienteN, pa.apPaterno AS pacienteAPp, pa.apMaterno AS pacienteAPm FROM proximas_citas AS c, usuarios_profesionales AS p, usuarios_pacientes AS pa WHERE fecha_hora LIKE  ('%${req.body.fecha}% %${req.body.hora}%') and p.id_profesional = c.id_profesional and pa.id_paciente = c.id_paciente`, (error, result) => {
+        conn.query(`SELECT c.id_profesional, c.id_paciente, c.fecha_hora, p.nombre AS profesionalN, p.apPaterno AS profesionalAPp, p.apMaterno AS profesionalAPm, pa.nombre AS pacienteN, pa.apPaterno AS pacienteAPp, pa.apMaterno AS pacienteAPm FROM proximas_citas AS c, usuarios_profesionales AS p, usuarios_pacientes AS pa WHERE fecha_hora LIKE  ('%${fecha}% %${hora}%') and p.id_profesional = c.id_profesional and pa.id_paciente = c.id_paciente`, (error, result) => {
           if(error){
             res.send(error).status(500);
             throw error;
-          }else{
+          }else if(result.length > 0){
             var objeto = {};
             var data = [];
             
@@ -914,113 +916,116 @@ app.get("/obtenProximasCitas", (req, res) => { //método que obtendrá del body 
             }
             objeto.data = data;
             res.send(objeto).status(200);
+          }else{
+            res.status(404).send({mensaje : "sin información"});
           }
         });
-      }
     }
   });
 
   //AGREGAR PARAMETROS PARA OBTENER EL STATUS DE LA CITA MEDIANTE LA FECHA
 
-app.get("/obtenProximasCitasProfesional", (req, res) => {
-    if(JSON.stringify(req.body) === '{}'){
-      console.log("Error, no hay datos para la busqueda");
-      res.status(500).send({error: "sin información"});
-    }else{
+app.get("/obtenProximasCitasProfesional/:id", (req, res) => {
+  const idProfesional = req.params.id;
       //comprobamos que exista el elemento del ID a buscar
-      if(req.body.id === ""){
+      if(!idProfesional){
         console.log("Error no hay datos completos");
         res.status(500).send("Error, no hay datos");
       }else{
         const conn = conexion.cone;
         var objeto = {};
         var data = [];
-        console.log(req.body);
         //obtenemos datos de la cita, el nombre del tipo de cita, del paciente
         //`SELECT c.id_tipoCita, c.id_profesional, c.id_paciente, c.fecha_hora, t.descripcion, p.nombre AS profesionalN, p.apPaterno AS profesionalAPp, p.apMaterno AS profesionalAPm, pa.nombre AS pacienteN, pa.apPaterno AS pacienteAPp, pa.apMaterno AS pacienteAPm FROM citas AS c, tipocitas AS t, usuarios_profesionales AS p, usuarios_pacientes AS pa WHERE id_profesional = ${req.body.id_profesional} and t.id_tipoCita = c.id_tipoCita and p.id_profesional = c.id_profesional and pa.id_paciente = c.id_paciente` 
-        conn.query(`SELECT c.id_profesional, c.id_paciente, c.fecha_hora, p.nombre AS profesionalN, p.apPaterno AS profesionalAPp, p.apMaterno AS profesionalAPm, pa.nombre AS pacienteN, pa.apPaterno AS pacienteAPp, pa.apMaterno AS pacienteAPm FROM proximas_citas AS c, usuarios_profesionales AS p, usuarios_pacientes AS pa WHERE c.id_profesional = ${req.body.id} and p.id_profesional = ${req.body.id} and pa.id_paciente = c.id_paciente`, (error, result) => {
-          for(let i = 0; i < result.length; i++){
-             //hacemos la modificación de la hora
-             let fecha = new Date(result[i].fecha_hora);
-             //hacemos el formateo de la fecha y hora respectivamente
-             let fechaANO = fecha.getUTCFullYear();
-             let fechaMES = fecha.getUTCMonth() + 1;
-             let fechaDIA = fecha.getUTCDate();
-             //HORA
-             let hora = fecha.getUTCHours()-6;//diferencia de lo que obtenemos respecto a lo que buscamos
-             let minutos = fecha.getUTCMinutes();
-             let segundos = fecha.getUTCSeconds();
-             
-             let fechaCompleta = ""+fechaDIA+"-"+fechaMES+"-"+fechaANO;
-             let horaCompleta = ""+hora+":"+minutos+":"+segundos;
-  
-             //GENERAMOS LOS NOMBRES COMPLETOS DE LOS PACIENTES Y PROFESIONALES
-             let nCpacientes = result[i].pacienteN + " " + result[i].pacienteAPp + " " + result[i].pacienteAPm;
-             let nCprofesionales = result[i].profesionalN + " " + result[i].profesionalAPp + " " + result[i].profesionalAPm;
-             //creamos el objeto de respuesta
-             data.push({
-               id_profesional : result[i].id_profesional,
-               nombreProfesional : nCprofesionales,
-               id_paciente : result[i].id_paciente,
-               nombrePaciente : nCpacientes,
-               fecha : fechaCompleta,
-               hora : horaCompleta
-             });
+        conn.query(`SELECT c.id_profesional, c.id_paciente, c.fecha_hora, p.nombre AS profesionalN, p.apPaterno AS profesionalAPp, p.apMaterno AS profesionalAPm, pa.nombre AS pacienteN, pa.apPaterno AS pacienteAPp, pa.apMaterno AS pacienteAPm FROM proximas_citas AS c, usuarios_profesionales AS p, usuarios_pacientes AS pa WHERE c.id_profesional = ${idProfesional} and p.id_profesional = ${idProfesional} and pa.id_paciente = c.id_paciente`, (error, result) => {
+          if(error){
+            res.status(500).send({mensaje : "Error al obtener los datos"});
+          }else if(result.length > 0){
+            for(let i = 0; i < result.length; i++){
+              //hacemos la modificación de la hora
+              let fecha = new Date(result[i].fecha_hora);
+              //hacemos el formateo de la fecha y hora respectivamente
+              let fechaANO = fecha.getUTCFullYear();
+              let fechaMES = fecha.getUTCMonth() + 1;
+              let fechaDIA = fecha.getUTCDate();
+              //HORA
+              let hora = fecha.getUTCHours()-6;//diferencia de lo que obtenemos respecto a lo que buscamos
+              let minutos = fecha.getUTCMinutes();
+              let segundos = fecha.getUTCSeconds();
+              
+              let fechaCompleta = ""+fechaDIA+"-"+fechaMES+"-"+fechaANO;
+              let horaCompleta = ""+hora+":"+minutos+":"+segundos;
+   
+              //GENERAMOS LOS NOMBRES COMPLETOS DE LOS PACIENTES Y PROFESIONALES
+              let nCpacientes = result[i].pacienteN + " " + result[i].pacienteAPp + " " + result[i].pacienteAPm;
+              let nCprofesionales = result[i].profesionalN + " " + result[i].profesionalAPp + " " + result[i].profesionalAPm;
+              //creamos el objeto de respuesta
+              data.push({
+                id_profesional : result[i].id_profesional,
+                nombreProfesional : nCprofesionales,
+                id_paciente : result[i].id_paciente,
+                nombrePaciente : nCpacientes,
+                fecha : fechaCompleta,
+                hora : horaCompleta
+              });
+           }
+           objeto.data = data;
+           res.send(objeto).status(200);
+          }else{
+            res.status(404).send({mensaje : "Sin información"});
           }
-          objeto.data = data;
-          res.send(objeto).status(200);
         });
-      }
     }
   });
 
-app.get("/obtenProximasCitasPaciente", (req, res) =>{
-  if(JSON.stringify(req.body) === "{}"){
-    console.log("Error, no hay datos para la busqueda");
-    res.status(500).send({error: "sin información"});
-  }else{
-    if(req.body.id === ""){
+app.get("/obtenProximasCitasPaciente/:id", (req, res) =>{
+  const idPaciente = req.params.id;
+    if(!idPaciente){
       console.log("Error no hay datos completos");
       res.status(500).send("Error, no hay datos");
     }else{
       const conn = conexion.cone;
       var objeto = {};
       var data = [];
-      console.log(req.body);
-      conn.query(`SELECT c.id_profesional, c.id_paciente, c.fecha_hora, p.nombre AS profesionalN, p.apPaterno AS profesionalAPp, p.apMaterno AS profesionalAPm, pa.nombre AS pacienteN, pa.apPaterno AS pacienteAPp, pa.apMaterno AS pacienteAPm FROM proximas_citas AS c, usuarios_profesionales AS p, usuarios_pacientes AS pa WHERE c.id_paciente = ${req.body.id} and p.id_profesional = c.id_profesional and pa.id_paciente = ${req.body.id}`, (error, result) => {
-        for(let i = 0; i < result.length; i++){
-           //hacemos la modificación de la hora
-           let fecha = new Date(result[i].fecha_hora);
-           //hacemos el formateo de la fecha y hora respectivamente
-           let fechaANO = fecha.getUTCFullYear();
-           let fechaMES = fecha.getUTCMonth() + 1;
-           let fechaDIA = fecha.getUTCDate();
-           //HORA
-           let hora = fecha.getUTCHours()-6;//diferencia de lo que obtenemos respecto a lo que buscamos
-           let minutos = fecha.getUTCMinutes();
-           let segundos = fecha.getUTCSeconds();
-           
-           let fechaCompleta = ""+fechaDIA+"-"+fechaMES+"-"+fechaANO;
-           let horaCompleta = ""+hora+":"+minutos+":"+segundos;
-
-           //GENERAMOS LOS NOMBRES COMPLETOS DE LOS PACIENTES Y PROFESIONALES
-           let nCpacientes = result[i].pacienteN + " " + result[i].pacienteAPp + " " + result[i].pacienteAPm;
-           let nCprofesionales = result[i].profesionalN + " " + result[i].profesionalAPp + " " + result[i].profesionalAPm;
-           //creamos el objeto de respuesta
-           data.push({
-             id_profesional : result[i].id_profesional,
-             nombreProfesional : nCprofesionales,
-             id_paciente : result[i].id_paciente,
-             nombrePaciente : nCpacientes,
-             fecha : fechaCompleta,
-             hora : horaCompleta
-           });
+      conn.query(`SELECT c.id_profesional, c.id_paciente, c.fecha_hora, p.nombre AS profesionalN, p.apPaterno AS profesionalAPp, p.apMaterno AS profesionalAPm, pa.nombre AS pacienteN, pa.apPaterno AS pacienteAPp, pa.apMaterno AS pacienteAPm FROM proximas_citas AS c, usuarios_profesionales AS p, usuarios_pacientes AS pa WHERE c.id_paciente = ${idPaciente} and p.id_profesional = c.id_profesional and pa.id_paciente = ${idPaciente}`, (error, result) => {
+        if(error){
+          res.status(500).send("Error al obtener los datos");
+        }else if(result.length > 0){
+          for(let i = 0; i < result.length; i++){
+            //hacemos la modificación de la hora
+            let fecha = new Date(result[i].fecha_hora);
+            //hacemos el formateo de la fecha y hora respectivamente
+            let fechaANO = fecha.getUTCFullYear();
+            let fechaMES = fecha.getUTCMonth() + 1;
+            let fechaDIA = fecha.getUTCDate();
+            //HORA
+            let hora = fecha.getUTCHours()-6;//diferencia de lo que obtenemos respecto a lo que buscamos
+            let minutos = fecha.getUTCMinutes();
+            let segundos = fecha.getUTCSeconds();
+            
+            let fechaCompleta = ""+fechaDIA+"-"+fechaMES+"-"+fechaANO;
+            let horaCompleta = ""+hora+":"+minutos+":"+segundos;
+ 
+            //GENERAMOS LOS NOMBRES COMPLETOS DE LOS PACIENTES Y PROFESIONALES
+            let nCpacientes = result[i].pacienteN + " " + result[i].pacienteAPp + " " + result[i].pacienteAPm;
+            let nCprofesionales = result[i].profesionalN + " " + result[i].profesionalAPp + " " + result[i].profesionalAPm;
+            //creamos el objeto de respuesta
+            data.push({
+              id_profesional : result[i].id_profesional,
+              nombreProfesional : nCprofesionales,
+              id_paciente : result[i].id_paciente,
+              nombrePaciente : nCpacientes,
+              fecha : fechaCompleta,
+              hora : horaCompleta
+            });
+         }
+         objeto.data = data;
+         res.send(objeto).status(200);
+        }else{
+          res.status(404).send({mensaje : "Sin información"});
         }
-        objeto.data = data;
-        res.send(objeto).status(200);
       });
     }
-  }
 });
 
 app.get("/obtenCatalogoEnfermedades", (req, res) => {
@@ -1084,17 +1089,15 @@ app.get("/obtenTipoComida", (req, res) => {
 });
 
   //METODO PARA OBTENER LA IMAGEN DEL PROFESIONAL DENTRO DE LA BD
-app.get("/obtenImgProfesional", (req, res) => {
-  if(JSON.stringify(req.body) === '{}'){
-    console.log("Error, no hay datos para la busqueda");
-    res.status(500).send({error : "sin informacion"});
-  }else{
-    if(req.body.id === ""){
+app.get("/obtenImgProfesional/:id", (req, res) => {
+  const idProfesional = req.params.id;
+  console.log(idProfesional);
+    if(!idProfesional){
       console.log("Error no hay datos");
       res.send(500).send("Error");
     }else{
       const conn = conexion.cone;
-      conn.query(`SELECT * FROM imgUsuariosProfesionales WHERE id_profesional = ${req.body.id}`, (err, result) =>{
+      conn.query(`SELECT * FROM imgUsuariosProfesionales WHERE id_profesional = ${idProfesional}`, (err, result) =>{
         if(err){
           res.status(500).send({error : err});
           throw err;
@@ -1111,7 +1114,7 @@ app.get("/obtenImgProfesional", (req, res) => {
                       error : errorFolderB
                     });
                   }else{
-                    const nombreFolder = "./archivos/imgProfesionales/id_"+req.body.id;
+                    const nombreFolder = "./archivos/imgProfesionales/id_"+idProfesional;
                     try{
                       if(!fs.existsSync(nombreFolder)){
                         fs.mkdir(nombreFolder, function(error){
@@ -1120,13 +1123,13 @@ app.get("/obtenImgProfesional", (req, res) => {
                             res.send({mensaje: "No se pudo crear la carpeta",
                                       error : error});
                           }else{
-                            var url = `${nombreFolder}/${req.body.id}_img.`+result[0].extension;
+                            var url = `${nombreFolder}/${idProfesional}_img.`+result[0].extension;
                             fs.writeFile(url, result[0].img, (err) => {
                               if(err){
                                 console.log("Error escritura de archivos decodificado", err);
                                 }else{
                                   //intentamos hacer el envio de la img
-                                  var stat = fs.statSync(`./archivos/imgProfesionales/id_${req.body.id}_img.${result[0].extension}`);
+                                  var stat = fs.statSync(`./archivos/imgProfesionales/id_${idProfesional}_img.${result[0].extension}`);
                                   res.writeHead(200, {
                                     'Content-Type' : `image/${result[0].extension}`,
                                     'Content-Length' : stat.size
@@ -1138,7 +1141,7 @@ app.get("/obtenImgProfesional", (req, res) => {
                           }
                         });
                       }else{
-                        var url = `${nombreFolder}/${req.body.id}_img.`+result[0].extension;
+                        var url = `${nombreFolder}/${idProfesional}_img.`+result[0].extension;
                         fs.writeFile(url, result[0].img, (err) => {
                           if(err){
                             console.log("Error escritura de archivos decodificado", err);
@@ -1161,7 +1164,7 @@ app.get("/obtenImgProfesional", (req, res) => {
                   }
                 });
               }else{
-                const nombreFolder = "./archivos/imgProfesionales/id_"+req.body.id;
+                const nombreFolder = "./archivos/imgProfesionales/id_"+idProfesional;
                 try{
                   if(!fs.existsSync(nombreFolder)){
                     fs.mkdir(nombreFolder, function(error){
@@ -1170,7 +1173,7 @@ app.get("/obtenImgProfesional", (req, res) => {
                         res.send({mensaje: "No se pudo crear la carpeta",
                                   error : error});
                       }else{
-                        var url = `${nombreFolder}/${req.body.id}_img.`+result[0].extension;
+                        var url = `${nombreFolder}/${idProfesional}_img.`+result[0].extension;
                         fs.writeFile(url, result[0].img, (err) => {
                           if(err){
                             console.log("Error escritura de archivos decodificado", err);
@@ -1189,7 +1192,7 @@ app.get("/obtenImgProfesional", (req, res) => {
                       }
                     });
                   }else{
-                    var url = `${nombreFolder}/${req.body.id}_img.`+result[0].extension;
+                    var url = `${nombreFolder}/${idProfesional}_img.`+result[0].extension;
                     fs.writeFile(url, result[0].img, (err) => {
                       if(err){
                         console.log("Error escritura de archivos decodificado", err);
@@ -1213,43 +1216,41 @@ app.get("/obtenImgProfesional", (req, res) => {
               res.status(500).send(errorFolderBase);
             }
           }else{
-            res.status(404).sendFile(__dirname+"/archivos/imgGeneral/noPhotoUser.png");
+            res.status(200).sendFile(__dirname+"/archivos/imgGeneral/noPhotoUser.png");
+            //console.log(res);
           }
         }
       });
     }
-  }
 });
 
   //METODO PARA OBTENER LA IMAGEN DEL PACIENTE DENTRO DE LA ID
-app.get("/obtenImgPaciente", (req, res) => {
-  if(JSON.stringify(req.body) === '{}'){
-    console.log("Error, no hay datos para la busqueda");
-    res.status(500).send({error : "sin informacion"});
-  }else{
-    if(req.body.id === ""){
+app.get("/obtenImgPaciente/:id", (req, res) => {
+  const idPaciente = req.params.id;
+  console.log(idPaciente)
+    if(!idPaciente){
       console.log("Error no hay datos");
       res.status(500).send("Error");
     }else{
       const conn = conexion.cone;
-      conn.query(`SELECT * FROM imgUsuariosPacientes WHERE id_paciente = ${req.body.id}`, (errorBusqueda, resultBusqueda) => {
+      conn.query(`SELECT * FROM imgUsuariosPacientes WHERE id_paciente = ${idPaciente}`, (errorBusqueda, resultBusqueda) => {
         if(errorBusqueda){
           res.status(500).send({error : errorBusqueda});
           throw errorBusqueda;
         }else{
           if(resultBusqueda.length > 0){//contamos con una img del paciente
-            const nombreFolderPadre = __dirname+"/archivos/imgPacientes";
+            const nombreFolderPadre = "./archivos/imgPacientes";
             try{
               if(!fs.existsSync(nombreFolderPadre)){
                 fs.mkdir(nombreFolderPadre, function(errorFolderB){
                   if(errorFolderB){
                     console.log(errorFolderB);
                     res.send({
-                      mensaje : "Ni se pudo crear la carpeta",
+                      mensaje : "No se pudo crear la carpeta",
                       error : errorFolderB
                     });
                   }else{
-                  const nombreFolder = __dirname+"/archivos/imgPacientes/id_" +req.body.id;
+                  const nombreFolder = "./archivos/imgPacientes/id_" +idPaciente;
                   try{
                     if(!fs.existsSync(nombreFolder)){
                       fs.mkdir(nombreFolder, function(error){
@@ -1258,13 +1259,13 @@ app.get("/obtenImgPaciente", (req, res) => {
                           res.send({mensaje : "No se pudo crear la carpeta base",
                                     error : error});
                         }else{
-                          var url = `${nombreFolder}/${req.body.id}_img.`+resultBusqueda[0].extension;
+                          var url = `${nombreFolder}/${idPaciente}_img.`+resultBusqueda[0].extension;
                           fs.writeFile(url, resultBusqueda[0].img, (err) => {
                             if(err){
                               console.log("Error escritura de archivos decodificado", err);
                             }else{
                               //intentamos hacer el envio de la img
-                              var stat = fs.statSync(`${__dirname}/archivos/imgPacientes/id_${req.body.id}/${req.body.id}_img.${resultBusqueda[0].extension}`);
+                              var stat = fs.statSync(`./archivos/imgPacientes/id_${idPaciente}/${idPaciente}_img.${resultBusqueda[0].extension}`);
                               res.writeHead(200, {
                                 'Content-Type' : `image/${resultBusqueda[0].extension}`,
                                 'Content-Length' : stat.size
@@ -1276,13 +1277,13 @@ app.get("/obtenImgPaciente", (req, res) => {
                         }
                       });
                     }else{
-                      var url = `${nombreFolder}/${req.body.id}_img.`+resultBusqueda[0].extension;
+                      var url = `${nombreFolder}/${idPaciente}_img.`+resultBusqueda[0].extension;
                       fs.writeFile(url, resultBusqueda[0].img, (err) => {
                         if(err){
                           console.log("Error escritura de archivos decodificado", err);
                         }else{
                           //intentamos hacer el envio de la img
-                          var stat = fs.statSync(`${__dirname}/archivos/imgPacientes/id_${req.body.id}/${req.body.id}_img.${resultBusqueda[0].extension}`);
+                          var stat = fs.statSync(url);
                           res.writeHead(200, {
                             'Content-Type' : `image/${resultBusqueda[0].extension}`,
                             'Content-Length' : stat.size
@@ -1298,7 +1299,7 @@ app.get("/obtenImgPaciente", (req, res) => {
                   }
                 });
               }else{
-                const nombreFolder = __dirname+"/archivos/imgPacientes/id_" +req.body.id;
+                const nombreFolder = "./archivos/imgPacientes/id_" +idPaciente;
                   try{
                     if(!fs.existsSync(nombreFolder)){
                       fs.mkdir(nombreFolder, function(error){
@@ -1307,13 +1308,13 @@ app.get("/obtenImgPaciente", (req, res) => {
                           res.send({mensaje : "No se pudo crear la carpeta base",
                                     error : error});
                         }else{
-                          var url = `${nombreFolder}/${req.body.id}_img.`+resultBusqueda[0].extension;
+                          var url = `${nombreFolder}/${idPaciente}_img.`+resultBusqueda[0].extension;
                           fs.writeFile(url, resultBusqueda[0].img, (err) => {
                             if(err){
                               console.log("Error escritura de archivos decodificado", err);
                             }else{
                               //intentamos hacer el envio de la img
-                              var stat = fs.statSync(`${__dirname}/archivos/imgPacientes/id_${req.body.id}/${req.body.id}_img.${resultBusqueda[0].extension}`);
+                              var stat = fs.statSync(url);
                               res.writeHead(200, {
                                 'Content-Type' : `image/${resultBusqueda[0].extension}`,
                                 'Content-Length' : stat.size
@@ -1325,13 +1326,13 @@ app.get("/obtenImgPaciente", (req, res) => {
                         }
                       });
                     }else{
-                      var url = `${nombreFolder}/${req.body.id}_img.`+resultBusqueda[0].extension;
+                      var url = `${nombreFolder}/${idPaciente}_img.`+resultBusqueda[0].extension;
                       fs.writeFile(url, resultBusqueda[0].img, (err) => {
                         if(err){
                           console.log("Error escritura de archivos decodificado", err);
                         }else{
                           //intentamos hacer el envio de la img
-                          var stat = fs.statSync(`${__dirname}/archivos/imgPacientes/id_${req.body.id}/${req.body.id}_img.${resultBusqueda[0].extension}`);
+                          var stat = fs.statSync(url);
                           res.writeHead(200, {
                             'Content-Type' : `image/${resultBusqueda[0].extension}`,
                             'Content-Length' : stat.size
@@ -1349,24 +1350,21 @@ app.get("/obtenImgPaciente", (req, res) => {
               res.status(500).send(errorFP);
             }
           }else{
-            res.status(404).sendFile(__dirname+"/archivos/imgGeneral/noPhotoUser.png");
+            res.status(200).sendFile(__dirname+"/archivos/imgGeneral/noPhotoUser.png");
           }
         }
       });
     }
-  }
 });
 
   //METODO PARA OBTENER LOS VIDEOS DE LOS PROFESIONALES DE LA SALUD MEDIANTE EL ID DE USUARIO
-app.get("/obtenVideosProfesional", (req, res) => {
-  if(JSON.stringify(req.body) === '{}'){
-    res.status(500).send({error : "Sin informacion"});
-  }else{
-    if(req.body.id === ""){
+app.get("/obtenVideosProfesional/:id", (req, res) => {
+  const idProfesional = req.params.id;
+    if(!idProfesional){
       res.status(500).send("Error");
     }else{
       const conn = conexion.cone;
-      conn.query(`SELECT * FROM videos WHERE id_profesional = ${req.body.id}`, (errorBusqueda, resultBusqueda) => {
+      conn.query(`SELECT * FROM videos WHERE id_profesional = ${idProfesional}`, (errorBusqueda, resultBusqueda) => {
         if(errorBusqueda){
           res.status(500).send({error : errorBusqueda});
           throw errorBusqueda;
@@ -1382,7 +1380,7 @@ app.get("/obtenVideosProfesional", (req, res) => {
                       error : errorFolderP
                     });
                   }else{
-                    const nombreFolder = __dirname+"/archivos/videosProfesionales/video_"+req.body.id;
+                    const nombreFolder = __dirname+"/archivos/videosProfesionales/video_"+idProfesional;
                     try {
                       if(!fs.existsSync(nombreFolder)){
                         fs.mkdir(nombreFolder, function(err){
@@ -1442,7 +1440,7 @@ app.get("/obtenVideosProfesional", (req, res) => {
                   }
                 });
               }else{
-                const nombreFolder = __dirname+"/archivos/videosProfesionales/video_"+req.body.id;
+                const nombreFolder = __dirname+"/archivos/videosProfesionales/video_"+idProfesional;
                 try {
                   if(!fs.existsSync(nombreFolder)){
                     fs.mkdir(nombreFolder, function(err){
@@ -1508,21 +1506,17 @@ app.get("/obtenVideosProfesional", (req, res) => {
         }
       });
     }
-  }
 });
 
   //METODO PARA OBTENER EL LISTADO DE NOMBRE DE LOS VIDEOS POR PROFESIONAL DE LA SALUD, ESTE SERVIRA PARA LA CREACIÓN DE RUTINAS
-app.get("/obtenListaVideoProfesional", (req, res) => {//OBTENEMOS EL ID DEL PROFESIONAL Y RETORNA EL LISTADO ASOCIADO DE VIDEOS DE ESTE PROFESIONAL
-  if(JSON.stringify(req.body) === '{}'){
-    console.log("Error, no hay datos para la busqueda");
-    res.status(500).send({error : "sin informacion"});
-  }else{
-    if(req.body.id === ""){
+app.get("/obtenListaVideoProfesional/:id", (req, res) => {//OBTENEMOS EL ID DEL PROFESIONAL Y RETORNA EL LISTADO ASOCIADO DE VIDEOS DE ESTE PROFESIONAL
+  const idProfesional = req.params.id;
+    if(!idProfesional){
       console.log("Error no hay datos");
       res.status(500).send("Error");
     }else{
       const conn = conexion.cone;
-      conn.query(`SELECT id_video, nombreVideo FROM videos WHERE id_profesional = ${req.body.id}`, (errorBusqueda, resultadoBusqueda) => {
+      conn.query(`SELECT id_video, nombreVideo FROM videos WHERE id_profesional = ${idProfesional}`, (errorBusqueda, resultadoBusqueda) => {
         if(errorBusqueda){
           res.status(500).send({error : errorBusqueda});
           throw errorBusqueda;
@@ -1534,7 +1528,7 @@ app.get("/obtenListaVideoProfesional", (req, res) => {//OBTENEMOS EL ID DEL PROF
               data.push({
                 id_video : resultadoBusqueda[i].id_video,
                 nombre : resultadoBusqueda[i].nombreVideo,
-                id_profesional : req.body.id
+                id_profesional : idProfesional
               });
             }
             objeto.data = data;
@@ -1545,17 +1539,14 @@ app.get("/obtenListaVideoProfesional", (req, res) => {//OBTENEMOS EL ID DEL PROF
         }
       });
     }
-  }
 });
 
   //METODO PARA OBTENER LA INFORMACION NECESARIA PARA CREAR EL EJERCICIO DE UNA RUTINA
     //EN ESTE METODO OBTENEMOS EL ID DEL PROFESIONAL PARA HACER LA OBTENCION DE LA INFO NECESARIA
-app.get("/obtenInfoCreaRutina", (req, res) => {//se retorna la lista de pacientes, lista de ejercicios con sus musculos y la lista de videos que el profesional tiene cargados
-  if(JSON.stringify(req.body) === '{}'){
-    console.log("Error, no hay datos para la busqueda");
-    res.status(500).send({error : "Sin informacion"});
-  }else{
-    if(req.body.id === ""){
+app.get("/obtenInfoCreaRutina/:id", (req, res) => {//se retorna la lista de pacientes, lista de ejercicios con sus musculos y la lista de videos que el profesional tiene cargados
+  const idProfesional = req.params.id;
+  
+    if(!idProfesional){
       console.log("Error no hay datos completos");
       res.status(500).send({error : "Error no hay datos"});
     }else{
@@ -1563,7 +1554,7 @@ app.get("/obtenInfoCreaRutina", (req, res) => {//se retorna la lista de paciente
       var objeto = {}, usuarios = [], ejercicios = [], musculos = [], videos = [];
       //var query = `SELECT usPac.id_paciente, usPac.nombre, usPac.apPaterno, usPac.apMaterno, ejer.id_ejercicio, ejer.id_musculo, mu.nombre_musculo, vid.id_video, vid.nombreVideo FROM usuarios_pacientes AS usPac, ejercicios AS ejer, musculos AS mu, videos AS vid WHERE  usPac.id_profesional = ${req.body.id} AND vid.id_profesional = ${req.body.id} AND ejer.id_musculo = mu.id_musculos`;
         //primero obtenemos los datos de sus pacientes
-      conn.query(`SELECT id_paciente, nombre, apPaterno, apMaterno FROM usuarios_pacientes WHERE id_profesional = ${req.body.id}`, (errorBusquedaUsuario, resultBusquedaUsuario) => {
+      conn.query(`SELECT id_paciente, nombre, apPaterno, apMaterno FROM usuarios_pacientes WHERE id_profesional = ${idProfesional}`, (errorBusquedaUsuario, resultBusquedaUsuario) => {
         if(errorBusquedaUsuario){
           res.status(500).send({mensaje : errorBusquedaUsuario});
         }else{
@@ -1599,7 +1590,7 @@ app.get("/obtenInfoCreaRutina", (req, res) => {//se retorna la lista de paciente
                   }
                   objeto.musculos = musculos;//metodo de obtener los datos : objeto.musculos[0].id
                   //obtenemos los datos de los videos 
-                  conn.query(`SELECT id_video, nombreVideo from videos WHERE id_profesional = ${req.body.id}`, (errorBusquedaVideos, resultBusquedaVideos) => {
+                  conn.query(`SELECT id_video, nombreVideo from videos WHERE id_profesional = ${idProfesional}`, (errorBusquedaVideos, resultBusquedaVideos) => {
                     if(errorBusquedaVideos){
                       res.status(500).send({mensaje : errorBusquedaVideos});
                     }else{
@@ -1621,22 +1612,19 @@ app.get("/obtenInfoCreaRutina", (req, res) => {//se retorna la lista de paciente
         }
       });
     }
-  }
 });
 
   //METODO PARA OBTENER EL VIDEO MEDIANTE UN ID DEL MISMO DADA UNA PREVIA OBTENCIÓN DEL MISMO
     //EN ESTE METODO OBTENEMOS EL ID DEL VIDEO A BUSCAR Y RETORNAMOS EL VIDEO
     //Al recibir la respuesta de la request, hacer la eliminación de los archivos
     //DENTRO DEL STATUS MESSAGE SE TIENE EL NOMBRE DEL VIDEO, CON LA FINALIDAD DE ALMACENARLO CON EL NOMBRE QUE CORRESPONDE
-app.get("/obtenVideoPorId", (req, res) => {
-  if(JSON.stringify(req.body) === '{}'){
-    res.status(500).send({mensaje : "Sin informacion"});
-  }else{
-    if(req.body.id === ""){
+app.get("/obtenVideoPorId/:id", (req, res) => {
+  const idVideo = req.params.id;
+    if(!idVideo){
       res.status(500).send({mensaje : "Error, datos incompletos"});
     }else{
       const conn = conexion.cone;
-      conn.query(`SELECT * FROM videos WHERE id_video = ${req.body.id}`, (errorBusquedaVideo, resultadoBusquedaVideo) => {
+      conn.query(`SELECT * FROM videos WHERE id_video = ${idVideo}`, (errorBusquedaVideo, resultadoBusquedaVideo) => {
         if(errorBusquedaVideo){
           res.status(500).send({mensaje : errorBusquedaVideo.message, codigo : errorBusquedaVideo.code});
         }else{
@@ -1754,26 +1742,24 @@ app.get("/obtenVideoPorId", (req, res) => {
         }
       });
     }
-  }
 });
 
   //METODO PARA OBTENER EL EJERCICIO DE LA RUTINA VIGENTE DE UN PACIENTE ESPECIFICO
     //dato a obtener: id del paciente a conocer, podemos agregar dentro del response la informacion del video o solo colocar el id y con otro metodo obtenerlo
-app.get("/obtenEjercicioRutinaPaciente", (req, res) => {
-  if(JSON.stringify(req.body) === '{}'){
-    res.status(500).send({mensaje : "Sin informacion"});
-  }else{
-    if(req.body.id === ""){
+app.get("/obtenEjercicioRutinaPaciente/:id", (req, res) => {
+  const idPaciente = req.params.id;
+  
+    if(!idPaciente){
       res.status(500).send({mensaje : "Error, datos incompletos"});
     }else{
       const conn = conexion.cone;
       var objeto = {}, data = [];
       //hacemos la busqueda de la informacion y agregamos el musculo que lo realiza
-      conn.query(`SELECT er.id_ER, er.cantidad, er.id_video, er.id_ejercicio, er.fechaInicio, er.fechaFin, er.vigencia, ejer.descripcion, mu.nombre_musculo, vid.nombreVideo, vid.video FROM ejercicio_rutina AS er, videos AS vid, ejercicios AS ejer, musculos AS mu WHERE er.id_paciente = ${req.body.id} and er.id_video = vid.id_video and er.id_ejercicio = ejer.id_ejercicio and ejer.id_musculo = mu.id_musculos`, (errorBusquedaERutina, resultadoBusquedaERutina) => {
+      conn.query(`SELECT er.id_ER, er.cantidad, er.id_video, er.id_ejercicio, er.fechaInicio, er.fechaFin, er.vigencia, ejer.descripcion, mu.nombre_musculo, vid.nombreVideo, vid.video FROM ejercicio_rutina AS er, videos AS vid, ejercicios AS ejer, musculos AS mu WHERE er.id_paciente = ${idPaciente} and er.id_video = vid.id_video and er.id_ejercicio = ejer.id_ejercicio and ejer.id_musculo = mu.id_musculos`, (errorBusquedaERutina, resultadoBusquedaERutina) => {
         if(errorBusquedaERutina){
           res.status(500).send({mensaje : errorBusquedaERutina.name, codigo : errorBusquedaERutina.code});
           throw errorBusquedaERutina;
-        }else{
+        }else if(resultadoBusquedaERutina.length > 0){
           //console.log(resultadoBusquedaERutina);
           //console.log(resultadoBusquedaERutina.length)
           for(let i = 0; i < resultadoBusquedaERutina.length; i++){
@@ -1803,27 +1789,26 @@ app.get("/obtenEjercicioRutinaPaciente", (req, res) => {
           }
           objeto.data = data;
           res.status(200).send(objeto);
+        }else{
+          res.status(404).send({mensaje : "No se encontro información"});
         }
       });
     }
-  }
 });
 
   //METODO PARA OBTENER LA LISTA DE EJERCICIOS DE RUTINA CREADOS POR PROFESIONAL
     //dato a obtener: id del profesional de la salud
-app.get("/obtenEjerciciosRutinaProfesional", (req, res) => {
-  if(JSON.stringify(req.body) === '{}'){
-    res.status(500).send({error : "Sin informacion"});
-  }else{
-    if(req.body.id === ""){
+app.get("/obtenEjerciciosRutinaProfesional/:id", (req, res) => {
+  const idProfesional = req.params.id;
+    if(!idProfesional){
       res.status(500).send({mensaje : "Datps incorrectos"});
     }else{
       const conn = conexion.cone;
       var objeto = {}, data = [];
-      conn.query(`SELECT usPac.id_paciente, usPac.nombre, usPac.apMaterno, usPac.apPaterno, er.id_ER, er.cantidad, er.id_video, vid.nombreVideo, er.id_ejercicio, ejer.descripcion, ejer.id_musculo, mu.nombre_musculo, er.fechaInicio, er.fechaFin, er.vigencia FROM ejercicio_rutina AS er, ejercicios AS ejer, musculos AS mu, videos as vid, usuarios_pacientes as usPac WHERE er.id_profesional = ${req.body.id} AND er.id_video = vid.id_video AND er.id_ejercicio = ejer.id_ejercicio AND ejer.id_musculo = mu.id_musculos AND usPac.id_profesional = er.id_profesional`, (errorBusquedaER, resultadoBusquedaER) => {
+      conn.query(`SELECT usPac.id_paciente, usPac.nombre, usPac.apMaterno, usPac.apPaterno, er.id_ER, er.cantidad, er.id_video, vid.nombreVideo, er.id_ejercicio, ejer.descripcion, ejer.id_musculo, mu.nombre_musculo, er.fechaInicio, er.fechaFin, er.vigencia FROM ejercicio_rutina AS er, ejercicios AS ejer, musculos AS mu, videos as vid, usuarios_pacientes as usPac WHERE er.id_profesional = ${idProfesional} AND er.id_video = vid.id_video AND er.id_ejercicio = ejer.id_ejercicio AND ejer.id_musculo = mu.id_musculos AND usPac.id_profesional = er.id_profesional`, (errorBusquedaER, resultadoBusquedaER) => {
         if(errorBusquedaER){
           res.status(500).send({mensaje : errorBusquedaER.message, codigo : errorBusquedaER.code});
-        }else{
+        }else if(resultadoBusquedaER.length > 0){
           for(let i = 0; i < resultadoBusquedaER.length; i++){
             let fechaI = new Date(resultadoBusquedaER[i].fechaInicio);
             let fechaIC = fechaI.getUTCFullYear() + "-" + (fechaI.getUTCMonth()+1) + "-" + fechaI.getUTCDate();
@@ -1845,29 +1830,31 @@ app.get("/obtenEjerciciosRutinaProfesional", (req, res) => {
           }
           objeto.data = data;
           res.status(200).send({objeto : objeto});
+        }else{
+          res.status(404).send({mensaje : "No se encontro información"});
         }
       });
     }
-  }
+  
 });
 
   //METODO DE LOGIN DE USUARIOS
-app.get("/login", (req, res) => { //obtenemos del body los datos de correo, password y el tipo de usuario
+app.get("/login/:correo/:password/:tipo", (req, res) => { //obtenemos del body los datos de correo, password y el tipo de usuario
   //si retorna el permiso como 0, es que no tendra acceso al contenido; de modo que si es un 1 lo tendrá
-  if(JSON.stringify(req.body) === "{}"){ //validamos que el contenido de la petición no este vació
-    console.log("req vacio");
-    res.status(500).send({error : "sin informacion"});
-  }else{//validamos que cada elemento que deseamos almacenar no se encuentre vacio
-    if(req.body.correo === "" || req.body.password === "" || req.body.tipo === ""){
+  const correo = req.params.correo;
+  const password = req.params.password;
+  const tipo = req.params.tipo;
+  //validamos que cada elemento que deseamos almacenar no se encuentre vacio
+    if(!correo || !password || !tipo){
       console.log('error no hay datos completos');
       res.status(500).send("Error. Datos incompletos");
     }else{
       const conn = conexion.cone;
       //comprobamos el tipo de usuario al que desea ingresar
       /* si es 0 = profesional, si es 1 = paciente */
-      if(req.body.tipo == 0){
+      if(tipo == 0){
         //actualizacion del query para obtener las imagenes de los profesoinales y eniarlo directo al cliente
-        conn.query(`SELECT u.id_profesional, u.nombre, u.apPaterno, u.apMaterno, u.valido, img.extension, img.img FROM usuarios_profesionales as u LEFT JOIN imgUsuariosProfesionales as img ON u.id_profesional = img.id_profesional WHERE u.email = '${req.body.correo}' AND u.password = '${req.body.password}'`, (errorLogin, resultLogin) => {
+        conn.query(`SELECT u.id_profesional, u.nombre, u.apPaterno, u.apMaterno, u.valido, img.extension, img.img FROM usuarios_profesionales as u LEFT JOIN imgUsuariosProfesionales as img ON u.id_profesional = img.id_profesional WHERE u.email = '${correo}' AND u.password = '${password}'`, (errorLogin, resultLogin) => {
           if(errorLogin){
             res.status(500).send({error : "Profesional no existente"});
             throw errorLogin;
@@ -1916,7 +1903,7 @@ app.get("/login", (req, res) => { //obtenemos del body los datos de correo, pass
           }
         });
       }else{ //caso de usuario paciente
-        conn.query(`SELECT u.id_paciente, u.nombre, u.apPaterno, u.apMaterno, img.extension, img.img FROM usuarios_pacientes as u LEFT JOIN imgUsuariosPacientes as img ON u.id_paciente = img.id_paciente WHERE u.email = '${req.body.correo}' AND u.password = '${req.body.password}'`, (errorLogin, resultLogin) => {
+        conn.query(`SELECT u.id_paciente, u.nombre, u.apPaterno, u.apMaterno, img.extension, img.img FROM usuarios_pacientes as u LEFT JOIN imgUsuariosPacientes as img ON u.id_paciente = img.id_paciente WHERE u.email = '${correo}' AND u.password = '${password}'`, (errorLogin, resultLogin) => {
           if(errorLogin){
             res.status(500).send({error : errorLogin.message, codigo : errorLogin.code});
           }else{
@@ -1959,22 +1946,22 @@ app.get("/login", (req, res) => { //obtenemos del body los datos de correo, pass
         });
       }
     }
-  }
 });
 
   //METODO PARA OBTENER TODOS LOS ARCHIVOS DE UN USUARIO PROFESIONAL Y ALMACENARLO DENTRO DE LA CARPETA DE ARCHIVOS
     //EN COMPARACIÓN CON LA VERSIÓN PASADA, AHORA ENVIA LA INFORMACIÓN DE LOS ARCHIVOS DENTRO DEL RESPONSE DE LA PETICIÓN
-app.get("/obtenArchivosProfesional", (req, res) => {
+app.get("/obtenArchivosProfesional/:id", (req, res) => {
+  const idProfesional = req.params.id;
   if(JSON.stringify(req.body) === '{}'){
     console.log("Error, no hay datos para la busqueda");
     res.status(500).send({error : "sin informacion"});
   }else{
-    if(req.body.id === ""){
+    if(idProfesional === ""){
       console.log("Error no hay datos");
       res.status(500).send("Error");
     }else{
       const conn = conexion.cone;
-      conn.query(`SELECT * FROM archivos WHERE id_profesional = ${req.body.id}`, (err, result) => {
+      conn.query(`SELECT * FROM archivos WHERE id_profesional = ${idProfesional}`, (err, result) => {
         if(err){
             throw err;
         }else{
@@ -1990,7 +1977,7 @@ app.get("/obtenArchivosProfesional", (req, res) => {
                       error: errorFolderB,
                     });
                   } else {
-                    const nombreFolder = __dirname+"/archivos/archivosProfesionales/busqueda_certificados_id_"+req.body.id;
+                    const nombreFolder = __dirname+"/archivos/archivosProfesionales/busqueda_certificados_id_"+idProfesional;
                     try{
                       if(!fs.existsSync(nombreFolder)){
                         fs.mkdir(nombreFolder, function(err){
@@ -2004,7 +1991,7 @@ app.get("/obtenArchivosProfesional", (req, res) => {
                             for(let i = 0; i < result.length; i++){
                               //var data = Buffer.from(result[i].archivo, 'binary');
                               //console.log(result[i].archivo.toString('base64'))
-                              fs.writeFile(`${__dirname}/archivos/archivosProfesionales/busqueda_certificados_id_${req.body.id}/${req.body.id}_`+result[i].nombreArchivo, result[i].archivo, (err) => {
+                              fs.writeFile(`${__dirname}/archivos/archivosProfesionales/busqueda_certificados_id_${idProfesional}/${idProfesional}_`+result[i].nombreArchivo, result[i].archivo, (err) => {
                                 if(err){
                                   console.log("Error escritura de archivos decodificado", err);
                                 }
@@ -2015,7 +2002,7 @@ app.get("/obtenArchivosProfesional", (req, res) => {
                               });
                             }
                             objeto.data = data;
-                            res.status(200).send({mensaje : `Creación correcta de los archivos del usaurio #${req.body.id} dentro del servidor, en la carpeta: /archivos/archivosProfesionales/busqueda_certificados_id_${req.body.id}/`, 
+                            res.status(200).send({mensaje : `Creación correcta de los archivos del usuario #${idProfesional} dentro del servidor, en la carpeta: /archivos/archivosProfesionales/busqueda_certificados_id_${idProfesional}/`, 
                                                 archivos : objeto});
                           }
                         });
@@ -2025,7 +2012,7 @@ app.get("/obtenArchivosProfesional", (req, res) => {
                         for(let i = 0; i < result.length; i++){
                           //var data = Buffer.from(result[i].archivo, 'binary');
                           //console.log(result[i].archivo.toString('base64'))
-                          fs.writeFile(`${__dirname}/archivos/archivosProfesionales/busqueda_certificados_id_${req.body.id}/${req.body.id}_`+result[i].nombreArchivo, result[i].archivo, (err) => {
+                          fs.writeFile(`${__dirname}/archivos/archivosProfesionales/busqueda_certificados_id_${idProfesional}/${idProfesional}_`+result[i].nombreArchivo, result[i].archivo, (err) => {
                             if(err){
                               console.log("Error escritura de archivos decodificado", err);
                               }
@@ -2036,7 +2023,7 @@ app.get("/obtenArchivosProfesional", (req, res) => {
                           });
                         }
                         objeto.data = data;
-                        res.status(200).send({mensaje : `Creación correcta de los archivos del usaurio #${req.body.id} dentro del servidor, en la carpeta: /archivos/archivosProfesionales/busqueda_certificados_id_${req.body.id}/`, 
+                        res.status(200).send({mensaje : `Creación correcta de los archivos del usuario #${idProfesional} dentro del servidor, en la carpeta: /archivos/archivosProfesionales/busqueda_certificados_id_${idProfesional}/`, 
                                             archivos : objeto});
                       }
                     }catch(err){
@@ -2045,7 +2032,7 @@ app.get("/obtenArchivosProfesional", (req, res) => {
                   }
                 });
               }else{
-                const nombreFolder = __dirname+"/archivos/archivosProfesionales/busqueda_certificados_id_"+req.body.id;
+                const nombreFolder = __dirname+"/archivos/archivosProfesionales/busqueda_certificados_id_"+idProfesional;
                 try{
                   if(!fs.existsSync(nombreFolder)){
                     fs.mkdir(nombreFolder, function(err){
@@ -2059,7 +2046,7 @@ app.get("/obtenArchivosProfesional", (req, res) => {
                         for(let i = 0; i < result.length; i++){
                           //var data = Buffer.from(result[i].archivo, 'binary');
                           //console.log(result[i].archivo.toString('base64'))
-                          fs.writeFile(`${__dirname}/archivos/archivosProfesionales/busqueda_certificados_id_${req.body.id}/${req.body.id}_`+result[i].nombreArchivo, result[i].archivo, (err) => {
+                          fs.writeFile(`${__dirname}/archivos/archivosProfesionales/busqueda_certificados_id_${idProfesional}/${idProfesional}_`+result[i].nombreArchivo, result[i].archivo, (err) => {
                             if(err){
                               console.log("Error escritura de archivos decodificado", err);
                               }
@@ -2070,7 +2057,7 @@ app.get("/obtenArchivosProfesional", (req, res) => {
                           });
                         }
                         objeto.data = data;
-                        res.status(200).send({mensaje : `Creación correcta de los archivos del usaurio #${req.body.id} dentro del servidor, en la carpeta: /archivos/archivosProfesionales/busqueda_certificados_id_${req.body.id}/`, 
+                        res.status(200).send({mensaje : `Creación correcta de los archivos del usuario #${idProfesional} dentro del servidor, en la carpeta: /archivos/archivosProfesionales/busqueda_certificados_id_${idProfesional}/`, 
                                             archivos : objeto});
                       }
                     });
@@ -2080,7 +2067,7 @@ app.get("/obtenArchivosProfesional", (req, res) => {
                     for(let i = 0; i < result.length; i++){
                       //var data = Buffer.from(result[i].archivo, 'binary');
                       //console.log(result[i].archivo.toString('base64'))
-                      fs.writeFile(`${__dirname}/archivos/archivosProfesionales/busqueda_certificados_id_${req.body.id}/${req.body.id}_`+result[i].nombreArchivo, result[i].archivo, (err) => {
+                      fs.writeFile(`${__dirname}/archivos/archivosProfesionales/busqueda_certificados_id_${idProfesional}/${idProfesional}_`+result[i].nombreArchivo, result[i].archivo, (err) => {
                         if(err){
                           console.log("Error escritura de archivos decodificado", err);
                           }
@@ -2091,7 +2078,7 @@ app.get("/obtenArchivosProfesional", (req, res) => {
                       });
                     }
                     objeto.data = data;
-                    res.status(200).send({mensaje : `Creación correcta de los archivos del usaurio #${req.body.id} dentro del servidor, en la carpeta: /archivos/archivosProfesionales/busqueda_certificados_id_${req.body.id}/`, 
+                    res.status(200).send({mensaje : `Creación correcta de los archivos del usuario #${idProfesional} dentro del servidor, en la carpeta: /archivos/archivosProfesionales/busqueda_certificados_id_${idProfesional}/`, 
                                         archivos : objeto});
                   }
                 }catch(err){
@@ -2116,25 +2103,26 @@ app.get("/obtenArchivosProfesional", (req, res) => {
 });
 
   //MÉTODO DE BUSQUEDA DE MEDICIONES POR PACIENTE 
-app.get("/busquedaMediciones", (req, res) => {
+app.get("/busquedaMediciones/:id", (req, res) => {
+  const idPaciente = req.params.id;
   //La busqueda se realizara mediante el identificador del paciente
-  if(JSON.stringify(req.body) === '{}'){//validamos que el contenido de la petición no este vacío
+  if(!idPaciente){//validamos que el contenido de la petición no este vacío
     res.status(500).send({error : "Sin información"});
   }else{
     //validamos que se cuente con el valor dentro del cuerpo de la petición
-    if(req.body.id === ""){
+    if(idPaciente === ""){
       res.status(500).send({mensaje : "Error. Datos incompletos"});
     }else{
       const conn = conexion.cone;
       //realizamos una busqueda para comprobar que hay
-      conn.query(`SELECT COUNT(*) as total FROM mediciones WHERE id_paciente = ${req.body.id}`, (errorBusqueda, resultBusqueda) => {
+      conn.query(`SELECT COUNT(*) as total FROM mediciones WHERE id_paciente = ${idPaciente}`, (errorBusqueda, resultBusqueda) => {
         if(errorBusqueda){
           console.log(errorBusqueda);
           res.status(500).send({mensaje : errorBusqueda.message, codigo : errorBusqueda.code});
         }else{
           if(resultBusqueda[0].total > 0){//contamos con mediciones
             //hacemos la busqueda
-            conn.query(`SELECT * FROM mediciones WHERE id_paciente = ${req.body.id}`, (errorBMediciones, resultBMediciones) => {
+            conn.query(`SELECT * FROM mediciones WHERE id_paciente = ${idPaciente}`, (errorBMediciones, resultBMediciones) => {
               if(errorBMediciones){
                 console.log(errorBMediciones);
                 res.status(500).send({mensaje : errorBMediciones.message, codigo : errorBMediciones.code});
@@ -2182,7 +2170,7 @@ app.get("/busquedaMediciones", (req, res) => {
     }
   }
 });
-  
+
 
   //METODOS DE ELIMINACIÓN DE ELEMENTO
     //se eliminan todos los registros relacionados con el profesional, solo se modifican los usuarios_pacientes, historial_profesionales, mediciones, alimento_dieta
@@ -2202,7 +2190,7 @@ app.delete("/borraProfesional", (req, res) => {//obtenemos el id del profesional
   if(JSON.stringify(req.body) === '{}'){
     res.status(500).send({mensaje : "Sin informacion"});
   }else{
-    if(req.body.id === ""){
+    if(idPaciente === ""){
       res.status(500).send({mensaje : "Error, datos incompletos"});
     }else{
       const conn = conexion.cone;
@@ -3914,7 +3902,7 @@ app.get("/obtenReporteMedico", (req, res) => {
         }else{
           if(resultBusqueda.length > 0){
             let queryobtenInfo = "SELECT up.id_paciente, up.nombre, up.apPaterno, up.apMaterno, up.fecha_N, infoM.estatura, infoM.ocupacion, infoM.imc, infoM.objetivo, infoM.alergias, infoM.medicamentosC, infoM.enferm, infoM.enfermFam, up.email, up.edad, up.fecha_n, up.numTel FROM infompaciente as infoM, usuarios_pacientes as up WHERE infoM.id_paciente = ? and up.id_paciente = infoM.id_paciente";
-            //obtenemos la información basica del usaurio            
+            //obtenemos la información basica del usuario            
             conn.query(queryobtenInfo, [req.body.id], (errorBusquedaInfo, resultBusquedaInfo) => {
               if(errorBusquedaInfo){
                 console.log(errorBusquedaInfo);
