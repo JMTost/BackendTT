@@ -1,5 +1,5 @@
---ejemplo de script, esta es una propuesta dados los comentarios recibidos de los profesores
---script de creación de las tablas de la base de datos
+/*ALTER USER 'root'@'localhost' IDENTIFIED WITH mysql_native_password BY '123';
+flush privileges;*/
 
 create database TTb040;
 
@@ -13,17 +13,18 @@ create table tipos_profesional(
 create table usuarios_profesionales(
     id_profesional int auto_increment primary key,
     nombre char(25) not null,
-    apPaterno char(25) not null,
-    apMaterno char(25) not null,
+    apPaterno char(25) ,
+    apMaterno char(25) ,
     email varchar(40) not null unique,
     edad int not null,
     fecha_N date not null,
+    numTel varchar(20) ,
     password char(16) not null,
     id_tipoProfesional int,
     valido char(1) not null,
+    direccion char(200),
     foreign key(id_tipoProfesional) references tipos_profesional(id_tipo) ON UPDATE CASCADE
 );
-
 
 create table usuarios_pacientes(
     id_paciente int auto_increment primary key,
@@ -104,13 +105,7 @@ create table videos(
     video longblob not null,
     foreign key(id_profesional) references usuarios_profesionales(id_profesional) ON DELETE CASCADE
 );
-/*DENTRO DE ESTA TABLA DEBEMOS DE CONTENER UN REGISTRO QUE FUNCIONE COMO VALOR NULL, EL CUAL SOLO SERA PARA TENER UN VALOR QUE ASIGNAR CUANDO NO EXISTE UN VIDEO PREVIAMENTE CREADO
-    CON ESTO DEBEMOS DE TENER UN REGISTRO DE PROFESIONAL DE LA SALUD QUE SEA EL DE PRUEBA O BASE*/
-UPDATE usuarios_profesionales set id_profesional = 0 where id_profesional = 1;
-ALTER TABLE usuarios_profesionales AUTO_INCREMENT = 1;
-INSERT INTO videos VALUES (0, 0, "Sin video", "");
-UPDATE videos set id_video = 0 where id_video = 1;
-ALTER TABLE videos AUTO_INCREMENT = 1;
+
 create table imgUsuariosProfesionales(
     id_profesional int not null,
     extension char(5) not null,
@@ -744,3 +739,15 @@ INSERT INTO proteinas VALUES (0, "Sesos de cerdo");
 INSERT INTO proteinas VALUES (0, "Sesos de res");
 INSERT INTO proteinas VALUES (0, "Tripas de res");
 INSERT INTO proteinas VALUES (0, "Yema de huevo");
+
+/*DENTRO DE ESTA TABLA DEBEMOS DE CONTENER UN REGISTRO QUE FUNCIONE COMO VALOR NULL, EL CUAL SOLO SERA PARA TENER UN VALOR QUE ASIGNAR CUANDO NO EXISTE UN VIDEO PREVIAMENTE CREADO
+    CON ESTO DEBEMOS DE TENER UN REGISTRO DE PROFESIONAL DE LA SALUD QUE SEA EL DE PRUEBA O BASE*/
+INSERT INTO usuarios_profesionales VALUES (0, 'admin', '', '', 'app2bfit@gmail.com', 23, '2023-1-1', '', 'adminRoot_', 1, 1, '');
+ALTER TABLE usuarios_profesionales MODIFY COLUMN apPaterno char(25) not null;
+ALTER TABLE usuarios_profesionales MODIFY COLUMN apMaterno char(25) not null;
+ALTER TABLE usuarios_profesionales MODIFY COLUMN numTel varchar(20) not null;
+UPDATE usuarios_profesionales set id_profesional = 0 where id_profesional = 1;
+ALTER TABLE usuarios_profesionales AUTO_INCREMENT = 1;
+INSERT INTO videos VALUES (0, 0, "Sin video", "");
+UPDATE videos set id_video = 0 where id_video = 1;
+ALTER TABLE videos AUTO_INCREMENT = 1;

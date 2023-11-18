@@ -102,7 +102,7 @@ app.post("/cargaArchivos", (req, res) => {
       const query = "INSERT INTO archivos VALUES (?, ?, ?)";
       conn.query(query, [id, id+' '+archivoObtenido[i].name, archivoObtenido[i].data], (error, resultInsert) => {
         if(error){
-          throw error;
+          res.status(500).send({mensaje : "Error en la carga de archivos"});
         }
       });
     }
@@ -111,7 +111,7 @@ app.post("/cargaArchivos", (req, res) => {
     const query = "INSERT INTO archivos VALUES (?, ?, ?)";
       conn.query(query, [id, id+' '+archivoObtenido.name, archivoObtenido.data], (error, resultInsert) => {
         if(error){
-          throw error;
+          res.status(500).send({mensaje : "Error en la carga de archivos"});
         }else{
           res.status(200).send({mensaje : 'archivo cargado'});
         }
@@ -130,6 +130,7 @@ app.post("/cargaArchivos", (req, res) => {
 //METODOS DE ALTA DE INFORMACIÓN
 
 app.post("/altaprofesionales", (req, res) => {
+  //console.log(req.body)
   //valores a almacenar:
   /*
     nombre, apPaterno, apMaterno, email, edad, fechaN, pass, tipo, archivos, valido = 0
@@ -140,7 +141,7 @@ app.post("/altaprofesionales", (req, res) => {
     res.status(500).send({ error: "sin informacion" });
   } else {
     //validamos que cada elemento que deseamos almacenar no se encuentre vacio
-    if (req.body.nombre === "" || req.body.apPaterno === "" || req.body.apMaterno === "" || req.body.email === "" ||( req.body.edad < 0 || req.body.edad > 100) || req.body.fechaN === "" || req.body.pass === "" ) {
+    if (req.body.nombre === "" || req.body.apPaterno === "" || req.body.apMaterno === "" || req.body.email === "" ||( req.body.edad < 0 || req.body.edad > 100) || req.body.fechaN === "" || req.body.pass === ""  || req.body.numTel === "") {
       console.log("error no hay datos completos");
       res.status(500).send("Error. Datos incompletos");
     } else {
@@ -154,8 +155,10 @@ app.post("/altaprofesionales", (req, res) => {
           res.status(500).send({error:"Profesional ya existente"});
         }else{
            //hacemos la inserción en la base de datos
-          //let info = `INSERT INTO usuarios_profesionales VALUES (0, '${req.body.nombre}', '${req.body.apPaterno}', '${req.body.apMaterno}', '${req.body.email}', ${req.body.edad}, '${req.body.fechaN}', '${req.body.pass}', ${req.body.tipo}, '0')` //en este caso el valor de valido se pone en 0, debido a que debe entrar en proceso de validar los documentos que proporcione
-          conn.query(`INSERT INTO usuarios_profesionales VALUES (0, '${req.body.nombre}', '${req.body.apPaterno}', '${req.body.apMaterno}', '${req.body.email}', ${req.body.edad}, '${req.body.fechaN}', '${req.body.pass}', ${req.body.tipo}, '0')`, function (errInsert, resultInsert) {
+          //let info = `INSERT INTO usuarios_profesionales VALUES (0, '${req.body.nombre}', '${req.body.apPaterno}', '${req.body.apMaterno}', '${req.body.email}', ${req.body.edad}, '${req.body.fechaN}', '${req.body.pass}', ${req.body.tipo}, '0')` //en este caso el valor de valido se pone en 0, debido a que debe entrar en proceso de validar los documentos que proporcion
+          //console.log(`INSERT INTO usuarios_profesionales VALUES (0, '${req.body.nombre}', '${req.body.apPaterno}', '${req.body.apMaterno}', '${req.body.email}', ${req.body.edad}, '${req.body.fechaN}', '${req.body.numTel}', '${req.body.pass}', ${req.body.tipo}, '0', '${req.body.direccion}')`);
+          
+          conn.query(`INSERT INTO usuarios_profesionales VALUES (0, '${req.body.nombre}', '${req.body.apPaterno}', '${req.body.apMaterno}', '${req.body.email}', ${req.body.edad}, '${req.body.fechaN}', '${req.body.numTel}', '${req.body.pass}', ${req.body.tipo}, '0', '${req.body.direccion}')`, function (errInsert, resultInsert) {
             if (errInsert){
               res.status(500).send({mensaje : errInsert.message, codigo : errInsert.code});
             }else {
@@ -746,10 +749,12 @@ app.get("/obtenProfesionalesValidados", (req, res) => { //metodo para obtener a 
       var objeto = {};
       var data = [];
       for(let i = 0; i < result.length; i++){
-        data.push({
-          id : result[i].id_profesional,
-          nombreC : result[i].nombre + " " + result[i].apPaterno + " " + result[i].apMaterno
-        });
+        if(result[i].id_profesional != 0){
+          data.push({
+            id : result[i].id_profesional,
+            nombreC : result[i].nombre + " " + result[i].apPaterno + " " + result[i].apMaterno
+          });
+        }
       }
       objeto.data = data;
       res.status(200).send(objeto);
@@ -1227,7 +1232,6 @@ app.get("/obtenImgProfesional/:id", (req, res) => {
   //METODO PARA OBTENER LA IMAGEN DEL PACIENTE DENTRO DE LA ID
 app.get("/obtenImgPaciente/:id", (req, res) => {
   const idPaciente = req.params.id;
-  console.log(idPaciente)
     if(!idPaciente){
       console.log("Error no hay datos");
       res.status(500).send("Error");
@@ -1891,14 +1895,17 @@ app.get("/login/:correo/:password/:tipo", (req, res) => { //obtenemos del body l
                   }
                 });
               }
-            }else{
+            }else if(resultLogin.length > 0){
               //no existe
               let razon = "";
+              console.log(resultLogin, correo, password, tipo)
               if(resultLogin[0].valido === '2')
                 razon = "Usuario deshabilitado";
               else
                 razon = "Valores erroneos";
               res.status(500).send({mensaje : "Comprueba los datos", permiso : 0, razon : razon});
+            }else{
+              res.status(500).send({mensaje : "Comprueba los datos", permiso : 0});
             }
           }
         });
@@ -4058,17 +4065,17 @@ app.post("/recuperaContra", (req, res) => {
   if(JSON.stringify(req.body) === '{}'){
     res.status(500).send({mensaje : "Sin información"});
   }else{
-    if(req.body.correo === "" || req.body.tipoUsuario === ""){
+    if(req.body.correo === "" || req.body.tipoUsuario === "" || req.body.nombre === "" || req.body.apPaterno === "" || req.body.apMaterno === "" || req.body.fechaN === "" ){
       res.status(500).send({mensaje : "Error, datos incompletos"});
     }else{
       const conn = conexion.cone;
       let queryBusquedaUsuario = "";
       //valor de tipos de usuario 1 si es profesional y 2 si es paciente
       if(req.body.tipoUsuario == 1)
-        queryBusquedaUsuario = "SELECT * FROM usuarios_profesionales WHERE email = ?";
+        queryBusquedaUsuario = `SELECT * FROM usuarios_profesionales WHERE email = '${req.body.correo}' AND nombre LIKE '%${req.body.nombre}%' AND apPaterno LIKE '%${req.body.apPaterno}%' AND apMaterno LIKE '%${req.body.apMaterno}%' AND fecha_N LIKE '%${req.body.fechaN}%'`;
       else if(req.body.tipoUsuario == 2)
-        queryBusquedaUsuario = "SELECT * FROM usuarios_pacientes WHERE email = ?";
-      conn.query(queryBusquedaUsuario, [req.body.correo], (errorBusqueda, resultBusqueda) => {
+        queryBusquedaUsuario = `SELECT * FROM usuarios_pacientes WHERE email = '${req.body.correo}' AND nombre LIKE '%${req.body.nombre}%' AND apPaterno LIKE '%${req.body.apPaterno}%' AND apMaterno LIKE '%${req.body.apMaterno}%' AND fecha_N LIKE '%${req.body.fechaN}%'`;
+      conn.query(queryBusquedaUsuario,  (errorBusqueda, resultBusqueda) => {
         if(errorBusqueda){
           console.log(errorBusqueda);
           res.status(500).send({mensaje : errorBusqueda.message, codigo : errorBusqueda.code});
