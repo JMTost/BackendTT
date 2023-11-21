@@ -94,7 +94,7 @@ create table habito_alimenticio(
 create table imgUsuariosPacientes(
     id_paciente int not null,
     extension char(5) not null,
-    img blob not null,
+    img longblob not null,
     foreign key(id_paciente) references usuarios_pacientes(id_paciente) ON DELETE CASCADE
 );
 
@@ -109,7 +109,7 @@ create table videos(
 create table imgUsuariosProfesionales(
     id_profesional int not null,
     extension char(5) not null,
-    img blob not null,
+    img longblob not null,
     foreign key(id_profesional) references usuarios_profesionales(id_profesional) ON DELETE CASCADE
 );
 

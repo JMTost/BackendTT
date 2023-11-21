@@ -97,6 +97,7 @@ app.post("/cargaArchivos", (req, res) => {
   const conn = conexion.cone;
   let archivoObtenido = req.files.archivo;
   let id = req.body.id; 
+  console.log(archivoObtenido);
   if(archivoObtenido.length > 1){
     for(let i = 0; i < archivoObtenido.length; i++){
       const query = "INSERT INTO archivos VALUES (?, ?, ?)";
@@ -354,10 +355,12 @@ app.post("/altaFotoProfesional", (req, res) => {//validamos desde el cliente que
         img de tipo file, el cual debera ser solo una imagen (un archivo) y el id de tipo texto 
     */
 app.post("/altaFotoPaciente", (req, res) => {
+  //console.log(req.body)
   const conn = conexion.cone;
   let archivoObtenido = req.files.img;
   let id = req.body.id;
   let extension = archivoObtenido.name.split('.');
+  //console.log(archivoObtenido);
   //Hacemos un select para comprobar que no exista una imagen previa y si hay, eliminarla y subir la nueva, sino crear el archivo 
   conn.query(`SELECT * FROM imgUsuariosPacientes WHERE id_paciente = ${id}`, (errBusqueda, resultBusqueda) => {
     if(errBusqueda){
@@ -2197,7 +2200,7 @@ app.delete("/borraProfesional", (req, res) => {//obtenemos el id del profesional
   if(JSON.stringify(req.body) === '{}'){
     res.status(500).send({mensaje : "Sin informacion"});
   }else{
-    if(idPaciente === ""){
+    if(req.body.id === ""){
       res.status(500).send({mensaje : "Error, datos incompletos"});
     }else{
       const conn = conexion.cone;
@@ -4132,6 +4135,7 @@ function generaContrasRecuperacion(){
   //MÉTODO DE CAMBIO DE CONTRASEÑA
     //obtenemos el id del usuario, contraseña nueva y pasada, tambien el tipo de usuario
 app.put("/cambioContra", (req, res) => {
+  console.log(req.body);
   if(JSON.stringify(req.body) === '{}'){
     res.status(500).send({mensaje : "Sin información"});
   }else{
