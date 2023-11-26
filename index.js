@@ -97,7 +97,7 @@ app.post("/cargaArchivos", (req, res) => {
   const conn = conexion.cone;
   let archivoObtenido = req.files.archivo;
   let id = req.body.id; 
-  console.log(archivoObtenido);
+  //console.log(archivoObtenido);
   if(archivoObtenido.length > 1){
     for(let i = 0; i < archivoObtenido.length; i++){
       const query = "INSERT INTO archivos VALUES (?, ?, ?)";
@@ -627,6 +627,36 @@ app.get("/obtenPacientes", (req, res) => {
   });
 });
 
+//OBTENCIÓN DE PACIENTES MEDIANTE EL IDENTIFICADOR DEL PROFESIONAL
+app.get("/obtenPacientesProfesional/:id", (req, res) => {
+  const idProfesional = req.params.id;
+  if(!idProfesional){
+    console.log('error no hay datos completos');
+    res.status(500).send("Error. Datos incompletos");
+  }else{
+    const conn = conexion.cone;
+    conn.query("SELECT * FROM usuarios_pacientes WHERE id_profesional = ?", [idProfesional], (errorObtencion, resultObtencion) => {
+      if(errorObtencion){
+        res.status(500).send({error : "Error al realizar la operacion", errorC : errorObtencion});
+      }else{
+        if(resultObtencion.length > 0){
+          var objeto = {}, data = [];
+          for(let i = 0; i < resultObtencion.length; i++){
+            data.push({
+              id : resultObtencion[i].id_paciente,
+              nombreC : resultObtencion[i].nombre + " " + resultObtencion[i].apPaterno + " " + resultObtencion[i].apMaterno,
+            });
+          }
+          objeto.data = data;
+          res.status(200).send(objeto);
+        }else{
+          res.status(404).send({mensaje : "No se cuenta con pacientes"});
+        }
+      }
+    });
+  }
+});
+
 
 app.get("/obtenTiposCitas", (req, res) => {
   const conn = conexion.cone;
@@ -1099,7 +1129,7 @@ app.get("/obtenTipoComida", (req, res) => {
   //METODO PARA OBTENER LA IMAGEN DEL PROFESIONAL DENTRO DE LA BD
 app.get("/obtenImgProfesional/:id", (req, res) => {
   const idProfesional = req.params.id;
-  console.log(idProfesional);
+  //console.log(idProfesional);
     if(!idProfesional){
       console.log("Error no hay datos");
       res.send(500).send("Error");
@@ -1528,7 +1558,7 @@ app.get("/obtenListaVideoProfesional/:id", (req, res) => {//OBTENEMOS EL ID DEL 
           res.status(500).send({error : errorBusqueda});
           throw errorBusqueda;
         }else{
-          console.log(resultadoBusqueda.length);
+          //console.log(resultadoBusqueda.length);
           if(resultadoBusqueda.length > 0){//obtenemos los videos
             var objeto = {}, data = [];
             for(let i = 0; i < resultadoBusqueda.length; i++){
@@ -1626,6 +1656,132 @@ app.get("/obtenInfoCreaRutina/:id", (req, res) => {//se retorna la lista de paci
     //Al recibir la respuesta de la request, hacer la eliminación de los archivos
     //DENTRO DEL STATUS MESSAGE SE TIENE EL NOMBRE DEL VIDEO, CON LA FINALIDAD DE ALMACENARLO CON EL NOMBRE QUE CORRESPONDE
 app.get("/obtenVideoPorId/:id", (req, res) => {
+  const idVideo = req.params.id;
+    if(!idVideo){
+      res.status(500).send({mensaje : "Error, datos incompletos"});
+    }else{
+      const conn = conexion.cone;
+      conn.query(`SELECT * FROM videos WHERE id_video = ${idVideo}`, (errorBusquedaVideo, resultadoBusquedaVideo) => {
+        if(errorBusquedaVideo){
+          res.status(500).send({mensaje : errorBusquedaVideo.message, codigo : errorBusquedaVideo.code});
+        }else{
+          //validamos que haya registros
+          if(resultadoBusquedaVideo.length > 0){//encontramos el video
+            const nombreFolderPadre = __dirname+"/archivos/videosProfesionales";
+            try {
+              //comprobación de que exista los directorios necesarios
+              if(!fs.existsSync(nombreFolderPadre)){
+                fs.mkdir(nombreFolderPadre, function(errorFolderP){
+                  if(errorFolderP){
+                    res.send({mensaje : "No se pudo crear la carpeta: "+nombreFolderPadre, error : errorFolderP});
+                  }else{
+                    const nombreFolder = __dirname+"/archivos/videosProfesionales/video_"+resultadoBusquedaVideo[0].id_profesional;
+                    try {
+                      if(!fs.existsSync(nombreFolder)){
+                        fs.mkdir(nombreFolder, function(errorNF){
+                          if(errorNF){
+                            res.send({mensaje : "No se pudo crear la carpeta: "+nombreFolder, error : errorNF});
+                          }else{
+                            var url = `${nombreFolder}/${resultadoBusquedaVideo[0].nombreVideo}`;
+                            fs.writeFile(url, resultadoBusquedaVideo[0].video, (err) => {
+                              if(err){
+                                res.send({mensaje : "Error de escrutira del archivo de video"});
+                              }else{
+                                //realizamos el envio del video
+                                var stat = fs.statSync(url);
+                                res.writeHead(200, {
+                                  'Content-Type' : 'video/mp4',
+                                  'Content-Length' : stat.size
+                                });
+                                var lectura = fs.createReadStream(url);
+                                lectura.pipe(res);
+                              }
+                            });
+                          }
+                        });
+                      }else{
+                        var url = `${nombreFolder}/${resultadoBusquedaVideo[0].nombreVideo}`;
+                        fs.writeFile(url, resultadoBusquedaVideo[0].video, (err) => {
+                          if(err){
+                            res.send({mensaje : "Error de escrutira del archivo de video"});
+                          }else{
+                            //realizamos el envio del video
+                            var stat = fs.statSync(url);
+                            res.writeHead(200, {
+                              'Content-Type' : 'video/mp4',
+                              'Content-Length' : stat.size
+                            });
+                            var lectura = fs.createReadStream(url);
+                            lectura.pipe(res);
+                          }
+                        });
+                      }
+                    } catch (errorFolderB) {
+                      res.status(500).send({mensaje : errorFolderB})
+                    }
+                  }
+                });
+              }else{
+                const nombreFolder = __dirname+"/archivos/videosProfesionales/video_"+resultadoBusquedaVideo[0].id_profesional;
+                try {
+                  if(!fs.existsSync(nombreFolder)){
+                    fs.mkdir(nombreFolder, function(errorNF){
+                      if(errorNF){
+                        res.send({mensaje : "No se pudo crear la carpeta: "+nombreFolder, error : errorNF});
+                      }else{
+                        var url = `${nombreFolder}/${resultadoBusquedaVideo[0].nombreVideo}`;
+                        fs.writeFile(url, resultadoBusquedaVideo[0].video, (err) => {
+                          if(err){
+                            res.send({mensaje : "Error de escrutira del archivo de video"});
+                          }else{
+                            //realizamos el envio del video
+                            var stat = fs.statSync(url);
+                            res.writeHead(200, {
+                              'Content-Type' : 'video/mp4',
+                              'Content-Length' : stat.size
+                            });
+                            var lectura = fs.createReadStream(url);
+                            lectura.pipe(res);
+                          }
+                        });
+                      }
+                    });
+                  }else{
+                    var url = `${nombreFolder}/${resultadoBusquedaVideo[0].nombreVideo}`;
+                    fs.writeFile(url, resultadoBusquedaVideo[0].video, (err) => {
+                      if(err){
+                        res.send({mensaje : "Error de escrutira del archivo de video"});
+                      }else{
+                        //realizamos el envio del video
+                        var stat = fs.statSync(url);
+                        res.writeHead(200, resultadoBusquedaVideo[0].nombreVideo, 
+                          {
+                          'Content-Type' : 'video/mp4',
+                          'Content-Length' : stat.size
+                        });
+                        //res.write(resultadoBusquedaVideo[0].nombreVideo);
+                        var lectura = fs.createReadStream(url);
+                        lectura.pipe(res);
+                      }
+                    });
+                  }
+                } catch (errorFolderB) {
+                  res.status(500).send({mensaje : errorFolderB})
+                }
+              }
+            } catch (errorFolderPadre) {
+              res.status(500).send({mensaje : errorFolderPadre});
+            }
+            
+          }else{
+            res.status(200).send({mensaje : "No hay archivos de video que se puedan obtener dado el identificador"});
+          }
+        }
+      });
+    }
+});
+
+app.get("/obtenVideoPorNombre/:id/:nombre", (req, res) => {
   const idVideo = req.params.id;
     if(!idVideo){
       res.status(500).send({mensaje : "Error, datos incompletos"});
@@ -1962,10 +2118,6 @@ app.get("/login/:correo/:password/:tipo", (req, res) => { //obtenemos del body l
     //EN COMPARACIÓN CON LA VERSIÓN PASADA, AHORA ENVIA LA INFORMACIÓN DE LOS ARCHIVOS DENTRO DEL RESPONSE DE LA PETICIÓN
 app.get("/obtenArchivosProfesional/:id", (req, res) => {
   const idProfesional = req.params.id;
-  if(JSON.stringify(req.body) === '{}'){
-    console.log("Error, no hay datos para la busqueda");
-    res.status(500).send({error : "sin informacion"});
-  }else{
     if(idProfesional === ""){
       console.log("Error no hay datos");
       res.status(500).send("Error");
@@ -2109,6 +2261,36 @@ app.get("/obtenArchivosProfesional/:id", (req, res) => {
         }
     });
     }
+  
+});
+
+  //METODO PARA OBTENER LA LISTA DE TODOS LOS ARCHIVOS QUE EL PROFESIONAL HAYA SUBIDO A LA PLATAFORMA
+    //SOLO FUNCIONA PARA OBTENER LA LISTA, NO PARA MOSTRARLOS
+app.get("/obtenListaArchivosProfesional/:id", (req, res) => {
+  const idProfesional = req.params.id;
+  if(idProfesional === ""){
+    console.log("No hay datos");
+    res.status(500).send("Error");
+  }else{
+    const conn = conexion.cone;
+    conn.query(`SELECT id_profesional, nombreArchivo FROM archivos WHERE id_profesional = ${idProfesional}`, (err, result) => {
+      if(err){
+        console.log(err);
+        res.status(500).send({mensaje : err.message, codigo : err.code});
+      }else if(result.length > 0){
+        var objeto = {}, data = [];
+        for(let i = 0; i < result.length; i++){
+          data.push({
+            nombreArchivo : result[i].nombreArchivo,
+          });
+        }
+        objeto.idProfesional = result[0].id_profesional;
+        objeto.archivos = data;
+        res.status(200).send({objeto : objeto});
+      }else{
+        res.status(200).send({mensaje : "No hay archivos cargados"});
+      }
+    });
   }
 });
 
@@ -4186,6 +4368,103 @@ app.put("/cambioContra", (req, res) => {
     }
   }
 });
+
+  //MÉTODO DE ACTUALIZACIÓN DE FECHAS
+    //SE HARÁ USO DE FUNCIONES COMO NOW Y CURDATE DE MYSQL, DEBIDO A QUE NOS ENCONTRAMOS USANDO EN LA MISMA MAQUINA LA BD Y EL BACKEND SINO HABRÍA QUE USAR UNA API DE TIEMPO Y REALIZAR LA ACTUALIZACION
+    /*
+    usuarios_profesionales //actualizar fecha de nacimiento
+    usuarios_pacientes //actualizar fecha de nacimiento
+    citas //este es datetime de modo que hay que corroborrar el metodo
+    ejercicio_rutina
+    proximas_citas
+     */
+app.put("/actualizaFechas", async (req, res) => {
+  const dataApiTiempo = await fetch('http://worldtimeapi.org/api/timezone/America/Mexico_City');
+  if(dataApiTiempo.ok){
+    const json = await dataApiTiempo.json();
+    let fecha = new Date(json.datetime);
+    //obtenemos la fecha de la api
+    let hora = fecha.getHours() + ":" + fecha.getUTCMinutes() + ":" + fecha.getUTCSeconds();
+    let fechaFinal = fecha.getUTCFullYear() + "-" + (fecha.getUTCMonth() + 1 ) + "-" + fecha.getDate();
+    let horaFecha = fechaFinal+" "+hora;
+    //console.log(hora, fechaFinal );
+    const conn = conexion.cone;
+    const operaciones = [
+      //valor 1 es cuando es necesario realizar la actualización de fecha de nacimiento
+      //2 para el caso de actualizar el valor de valido
+      //3 este caso es para eliminar los registros
+      {operacion : 1,  tabla : "usuarios_profesionales", datos : fechaFinal, conexion : conn, campo : "id_profesional"},
+      {operacion : 1,  tabla : "usuarios_pacientes", datos : fechaFinal, conexion : conn, campo : "id_paciente"},
+      {operacion : 3,  tabla : "citas", datos : horaFecha, conexion : conn },
+      {operacion : 3,  tabla : "proximas_citas", datos : horaFecha, conexion : conn},
+      {operacion : 2,  tabla : "ejercicio_rutina", datos : fechaFinal, conexion : conn }
+    ];
+    const promesasOP = operaciones.map(operacion => {
+      if(operacion.operacion == 1){
+        return actualizaFechaNacimiento(operacion.tabla, operacion.datos, operacion.conexion, operacion.campo);
+      }else if(operacion.operacion == 2){
+        return actualizaValorDeValido(operacion.tabla, operacion.datos, operacion.conexion);
+      }else if(operacion.operacion == 3){
+        return eliminaRegistrosCitas(operacion.tabla, operacion.datos, operacion.conexion);
+      }
+    });
+    Promise.all(promesasOP).then(resultados => {
+      const errores = resultados.filter(resultado => !resultado.exitosa).length;
+      if(errores > 0){
+        res.status(500).send({mensaje : "Error en las operaciones", error : errores});
+      }else{
+        res.status(200).send({mensaje : "Actualizacion de datos correctos"});
+      }
+    }).catch(error => {
+      console.log(error);
+      res.status(500).send({mensaje : "Error en las promesas", error : error});
+    });
+    
+  }else{//realizamos la actualización utilizando los valores del
+    res.status(404).send("Error al obtener la información de la API")
+  }
+});
+function actualizaFechaNacimiento(tabla, datos, conexion, campo){
+ return new Promise((resolve, reject) => {
+  var query = `UPDATE ${tabla} SET edad = TIMESTAMPDIFF(YEAR, fecha_N, '${datos}')  Where ${campo} > 0;`;
+  conexion.query(query, (error, result) => {
+    if(error){
+      console.log("Error al actualizar las fechas de nacimiento", error);
+      resolve({operacion : "Actualizacion", tabla : tabla, exitosa : false});
+    }else{
+      resolve({operacion : "Actualizacion", tabla : tabla, exitosa : true});
+    }
+  });
+
+
+ });
+}
+function actualizaValorDeValido(tabla, datos, conexion){
+  return new Promise((resolve, reject) => {
+    var query = ` UPDATE ${tabla} SET vigencia = '0' WHERE fechaFin < '${datos}' AND vigencia = '1'`;
+    conexion.query(query, (error, result) => {
+      if(error){
+        console.log("Error al actualizar los ejerciciosRutina", error);
+        resolve({operacion : "Actualizacion", tabla : tabla, exitosa : false});
+      }else{
+        resolve({operacion : "Actualizacion", tabla : tabla, exitosa : true});
+      }
+    });
+  });
+}
+function eliminaRegistrosCitas(tabla, datos, conexion){
+  return new Promise((resolve, reject) => {
+    var query = `DELETE FROM ${tabla} WHERE fecha_hora < '${datos}'`;
+    conexion.query(query, (error, result) => {
+      if(error){
+        console.log("Error al eliminar los registro de las citas", error);
+        resolve({operacion : "Eliminacion", tabla : tabla, exitosa : false});
+      }else{
+        resolve({operacion : "Eliminacion", tabla : tabla, exitosa : true});
+      }
+    });
+  });
+}
   //METODOS DE CONFIGURACIÓN DEL SERVIDOR
   //192.168.100.9 192.168.56.1
 app.listen(3000, "192.168.100.9", function () {

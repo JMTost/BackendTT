@@ -5,7 +5,7 @@ obtener de forma exacta la misma */
 const http = require('http');
 const axios = require('axios');
 var info;
-function apiTiempo(){//reailzamos una consulta a una API de tiempo para obtener la fecha actual de la CDMX para que el usuario no tenga que realizar la inserción de su edad
+function apiTiempo (){//reailzamos una consulta a una API de tiempo para obtener la fecha actual de la CDMX para que el usuario no tenga que realizar la inserción de su edad
     const urlp = 'http://worldtimeapi.org/api/timezone/America/Mexico_City';
     return new Promise((resolve, reject) => {
         axios.get(urlp)
