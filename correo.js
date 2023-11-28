@@ -4,7 +4,7 @@ var opcionesCorreo = {
     from : 'app2bfit@gmail.com'
 }
 
-
+/*
 var transporter = nodemailer.createTransport({
     service : 'gmail',
     auth : {
@@ -16,7 +16,7 @@ var transporter = nodemailer.createTransport({
         refreshToken : ""
     }
 });
-
+*/
 
 function crearOpcionesCorreo(correoDestino, titulo, texto){
     opcionesCorreo.to = correoDestino;

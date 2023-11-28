@@ -2931,7 +2931,9 @@ app.get("/infoMed/obten/:id", (req, res) => {
               imc : resultBusqueda[0].imc,
               objetivo : resultBusqueda[0].objetivo,
               alergias : resultBusqueda[0].alergias,
-              medicamentosC : resultBusqueda[0].medicamentosC
+              medicamentosC : resultBusqueda[0].medicamentosC, 
+              idEnfermedades : resultBusqueda[0].enferm,
+              idEnfermedadesFam : resultBusqueda[0].enfermFam
             };
             if(cantEnferm.length > 0){
               for(let i = 0; i < cantEnferm.length; i++)
