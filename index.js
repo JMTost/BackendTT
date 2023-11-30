@@ -645,6 +645,7 @@ app.get("/obtenPacientesProfesional/:id", (req, res) => {
             data.push({
               id : resultObtencion[i].id_paciente,
               nombreC : resultObtencion[i].nombre + " " + resultObtencion[i].apPaterno + " " + resultObtencion[i].apMaterno,
+              num : resultObtencion[i].numTel
             });
           }
           objeto.data = data;
@@ -4119,7 +4120,7 @@ app.get("/obtenReporteMedico/:id", (req, res) => {
                     objeto.habitoAlimenticio = objetoCompleto.habitoAlimenticio;
                     objeto.mediciones = objetoCompleto.mediciones;
                     objeto.enfermedadesPaciente = objetoCompleto.enfermedadesPaciente;
-                    objeto.enfermedadesPaciente = objetoCompleto.enfermedadesFam;
+                    objeto.enfermedadesFamiliares = objetoCompleto.enfermedadesFam;
                     res.status(200).send({mensaje : "Obtención exitosa de información", objeto : objeto});
                   }).catch(error =>{
                     console.log(error);
