@@ -534,6 +534,29 @@ app.post("/altaEjercicioRutina", (req, res) => {
   }
 });
 
+//METODO DE ELIMINACIÓN DE RUTINA
+
+app.delete("/borra/EjercicioRutina", (req, res) => {
+  if(JSON.stringify(req.body) === '{}'){
+    res.status(500).send({mensaje : "Sin información"});
+  }else{
+    if(req.body.idRutina === ""){
+      res.status(500).send({mensaje : "Error, datos incompletos"});
+    }else{
+      const conn = conexion.cone;
+
+      conn.query("DELETE FROM ejercicio_rutina WHERE id_ER = ?", [req.body.idRutina], (errorElimina, resultElimina) => {
+        if(errorElimina){
+          res.status(500).send({mensaje : errorElimina.message, codigo : errorElimina.code});
+          throw errorElimina;
+        }else{
+          res.status(200).send({mensaje : "Eliminación de ejercicio de rutina exitoso"});
+        }
+      });
+    }
+  }
+})
+
   //METODO DE ALTA DE MEDICIONES 
 app.post("/altaMedicion", (req, res) => {
   if(JSON.stringify(req.body) === '{}'){//validamos que el contenido de la petición no este vacío
@@ -1106,6 +1129,28 @@ app.get("/obtenMusculos", (req, res) => {
     }
   });
 });
+
+//obtención de Ejercicios de la base de datos
+app.get("/obtenEjercicios", (req, res) => {
+  const conn = conexion.cone;
+  conn.query("SELECT * FROM ejercicios", (error, resultado) => {
+    if(error){
+      res.status(500).send(error);
+      console.log(error);
+    }else{
+      let objeto = {}, data = [];
+      for(let i= 0; i < resultado.length; i++){
+        data.push({
+          id : resultado[i].id_ejercicio,
+          descripcion : resultado[i].descripcion,
+          id_musculo : resultado[i].id_musculo
+        });
+      }
+      objeto.data = data;
+      res.status(200).send(objeto);
+    }
+  });
+})
 
 app.get("/obtenTipoComida", (req, res) => {
   const conn = conexion.cone;
@@ -2058,7 +2103,7 @@ app.get("/login/:correo/:password/:tipo", (req, res) => { //obtenemos del body l
             }else if(resultLogin.length > 0){
               //no existe
               let razon = "";
-              console.log(resultLogin, correo, password, tipo)
+              //console.log(resultLogin, correo, password, tipo)
               if(resultLogin[0].valido === '2')
                 razon = "Usuario deshabilitado";
               else
@@ -4152,37 +4197,42 @@ function obtenInfo(tabla, id, conexion, tipo){
       }else{
         if(tabla == "mediciones"){
           //hago el envio del primer y ultimo valor
-          var objeto = {
-            primeraFecha : result[0].fecha, 
-            primeraMedicion: {
-              peso: result[0].peso,
-              axiliar_media: result[0].axiliar_media,
-              abdominal: result[0].abdominal,
-              bicipital: result[0].bicipital,
-              muslo: result[0].muslo,
-              suprailiaco: result[0].suprailiaco,
-              triceps: result[0].triceps,
-              subescapular: result[0].subescapular,
-              toracica: result[0].toracica,
-              pantorrilla_medial: result[0].pantorrilla_medial,
-              cintura: result[0].cintura
-            },
-            ultimaFecha : result[result.length-1].fecha,
-            ultimaMedicion : {
-              peso: result[result.length-1].peso,
-              axiliar_media: result[result.length-1].axiliar_media,
-              abdominal: result[result.length-1].abdominal,
-              bicipital: result[result.length-1].bicipital,
-              muslo: result[result.length-1].muslo,
-              suprailiaco: result[result.length-1].suprailiaco,
-              triceps: result[result.length-1].triceps,
-              subescapular: result[result.length-1].subescapular,
-              toracica: result[result.length-1].toracica,
-              pantorrilla_medial: result[result.length-1].pantorrilla_medial,
-              cintura: result[result.length-1].cintura
-            }
-          };
-          resolve({operacion : "Busqueda", exitosa : true, data : objeto, tabla : tabla, tipo : tipo});
+          //console.log(result);
+          if(result.length>0){
+            var objeto = {
+              primeraFecha : result[0].fecha, 
+              primeraMedicion: {
+                peso: result[0].peso,
+                axiliar_media: result[0].axiliar_media,
+                abdominal: result[0].abdominal,
+                bicipital: result[0].bicipital,
+                muslo: result[0].muslo,
+                suprailiaco: result[0].suprailiaco,
+                triceps: result[0].triceps,
+                subescapular: result[0].subescapular,
+                toracica: result[0].toracica,
+                pantorrilla_medial: result[0].pantorrilla_medial,
+                cintura: result[0].cintura
+              },
+              ultimaFecha : result[result.length-1].fecha,
+              ultimaMedicion : {
+                peso: result[result.length-1].peso,
+                axiliar_media: result[result.length-1].axiliar_media,
+                abdominal: result[result.length-1].abdominal,
+                bicipital: result[result.length-1].bicipital,
+                muslo: result[result.length-1].muslo,
+                suprailiaco: result[result.length-1].suprailiaco,
+                triceps: result[result.length-1].triceps,
+                subescapular: result[result.length-1].subescapular,
+                toracica: result[result.length-1].toracica,
+                pantorrilla_medial: result[result.length-1].pantorrilla_medial,
+                cintura: result[result.length-1].cintura
+              }
+            };
+            resolve({operacion : "Busqueda", exitosa : true, data : objeto, tabla : tabla, tipo : tipo});
+          }else{
+            resolve({operacion : "Busqueda", exitosa : false, data : objeto, tabla : tabla, tipo : tipo});
+          }
         }else if(tabla == "c_enfermedades"){
           resolve({operacion : "Busqueda", exitosa : true, data : {id: id, descripcion : result[0].descripcion}, tabla : tabla, tipo : tipo});
         }else{
@@ -4199,29 +4249,35 @@ function generaObjetoJSONReporteMedico(promesasTabla){
     var habitoPersonal = {}, habitoAlimenticio = {}, mediciones = {};
     for(let i = 0; i < resultados.length; i++){
         if(resultados[i].tabla === "habito_personal"){
-          habitoPersonal.horaDespierto = resultados[i].data.horaD;
-          habitoPersonal.horaSueno = resultados[i].data.horaS;
-          habitoPersonal.descFisica = resultados[i].data.desc_fisica;
-          habitoPersonal.rutinaDiaria = resultados[i].data.rutinaDia;
-          //console.log(objetoRM);
+          if(resultados[i].data != undefined){
+            habitoPersonal.horaDespierto = resultados[i].data.horaD;
+            habitoPersonal.horaSueno = resultados[i].data.horaS;
+            habitoPersonal.descFisica = resultados[i].data.desc_fisica;
+            habitoPersonal.rutinaDiaria = resultados[i].data.rutinaDia;
+            //console.log(objetoRM);
+          }
         }else if(resultados[i].tabla === "habito_alimenticio"){
-          //console.log(resultados[i])
-          habitoAlimenticio.alimentosMasConsumidos = resultados[i].data.masConsumidos;
-          habitoAlimenticio.alimentosAlergia = resultados[i].data.alimentos_alergia;
-          habitoAlimenticio.cantidadConsumoAgua = resultados[i].data.cantidad_agua;
-          habitoAlimenticio.cantidadComidas = resultados[i].data.cantidad_comidas;
-          habitoAlimenticio.cantidad_colaciones = resultados[i].data.cantidad_colaciones;
-          habitoAlimenticio.horaDesayuno = resultados[i].data.horaDesayuno;
-          habitoAlimenticio.horaComida = resultados[i].data.horaComida;
-          habitoAlimenticio.horaCena = resultados[i].data.horaCena;
+          if(resultados[i].data != undefined){
+            //console.log(resultados[i])
+            habitoAlimenticio.alimentosMasConsumidos = resultados[i].data.masConsumidos;
+            habitoAlimenticio.alimentosAlergia = resultados[i].data.alimentos_alergia;
+            habitoAlimenticio.cantidadConsumoAgua = resultados[i].data.cantidad_agua;
+            habitoAlimenticio.cantidadComidas = resultados[i].data.cantidad_comidas;
+            habitoAlimenticio.cantidad_colaciones = resultados[i].data.cantidad_colaciones;
+            habitoAlimenticio.horaDesayuno = resultados[i].data.horaDesayuno;
+            habitoAlimenticio.horaComida = resultados[i].data.horaComida;
+            habitoAlimenticio.horaCena = resultados[i].data.horaCena;
+          }
         }else if(resultados[i].tabla === "mediciones"){
-          let fechaInicial = new Date(resultados[i].data.primeraFecha);
-          let fechaFinal = new Date(resultados[i].data.ultimaFecha);
-          mediciones.primeraFecha = ""+fechaInicial.getUTCDate()+"-"+(fechaInicial.getUTCMonth()+1)+"-"+fechaInicial.getUTCFullYear();
-          mediciones.primeraMedicion = resultados[i].data.primeraMedicion;
-          mediciones.ultimaFecha = ""+fechaFinal.getUTCDate()+"-"+(fechaFinal.getUTCMonth()+1)+"-"+fechaFinal.getUTCFullYear();
-          mediciones.ultimaMedicion = resultados[i].data.ultimaMedicion;
-          //console.log(objetoRM);
+          if(resultados[i].data != undefined){
+            let fechaInicial = new Date(resultados[i].data.primeraFecha);
+            let fechaFinal = new Date(resultados[i].data.ultimaFecha);
+            mediciones.primeraFecha = ""+fechaInicial.getUTCDate()+"-"+(fechaInicial.getUTCMonth()+1)+"-"+fechaInicial.getUTCFullYear();
+            mediciones.primeraMedicion = resultados[i].data.primeraMedicion;
+            mediciones.ultimaFecha = ""+fechaFinal.getUTCDate()+"-"+(fechaFinal.getUTCMonth()+1)+"-"+fechaFinal.getUTCFullYear();
+            mediciones.ultimaMedicion = resultados[i].data.ultimaMedicion;
+            //console.log(objetoRM);
+          }
         }else if(resultados[i].tabla === "c_enfermedades"){
           if(resultados[i].tipo == "paciente"){
             enfermedadesPaciente.push({id : resultados[i].data.id, descripcion : resultados[i].data.descripcion});
@@ -4320,7 +4376,7 @@ function generaContrasRecuperacion(){
   //MÉTODO DE CAMBIO DE CONTRASEÑA
     //obtenemos el id del usuario, contraseña nueva y pasada, tambien el tipo de usuario
 app.put("/cambioContra", (req, res) => {
-  console.log(req.body);
+  //console.log(req.body);
   if(JSON.stringify(req.body) === '{}'){
     res.status(500).send({mensaje : "Sin información"});
   }else{
