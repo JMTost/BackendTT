@@ -3255,7 +3255,8 @@ function obtenDescripcionAlimento(id, conexion, tipo){
       if(error){
         resolve({tabla : tipo, exito : false, operacion : "Busqueda"});
       }else{
-        resolve({tabla : tipo, exito : true, data : result[0].descripcion, operacion : "Busqueda"});
+        const descripcion = result[0] ? result[0].descripcion : "0";
+        resolve({tabla : tipo, exito : true, data : descripcion, operacion : "Busqueda"});
       }
     });
   });
