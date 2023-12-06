@@ -3496,10 +3496,16 @@ app.put("/alimentodieta/actualiza", (req, res) => {
     req.body.duracion === "" || req.body.vigencia === ""){
       res.status(500).send({mensaje : "Error. Datos incompletos"});
     }else{
+      //console.log(req.body);
+      let query = `UPDATE alimento_dieta SET proteinas = '${req.body.proteinas.toString()}', cantidades_proteinas = '${req.body.cantidadesProteinas.toString()}', lacteos = '${req.body.lacteos.toString()}', frutas = '${req.body.frutas.toString()}', cantidades_frutas = '${req.body.cantidadesFrutas.toString()}', verduras = '${req.body.verduras.toString()}', cantidades_frutas = '${req.body.cantidadesVerduras.toString()}', granos = '${req.body.granos.toString()}', cantidades_granos = '${req.body.cantidadesGranos.toString()}', duracion = ${req.body.duracion}, vigencia = ${req.body.vigencia} WHERE id_profesional = ${req.body.idProfesional} AND id_paciente = ${req.body.idPaciente} AND id_comida = ${req.body.idComida}`;
+      
+      let query2 = `UPDATE alimento_dieta SET proteinas = '${req.body.proteinas.toString()}', cantidades_proteinas = '${req.body.cantidadesProteinas.toString()}', lacteos = '${req.body.lacteos.toString()}', cantidades_lacteos = '${req.body.cantidadesLacteos.toString()}', frutas = '${req.body.frutas.toString()}', cantidades_frutas = '${req.body.cantidadesFrutas.toString()}', verduras = '${req.body.verduras.toString()}', cantidades_verduras = '${req.body.cantidadesVerduras.toString()}', granos = '${req.body.granos.toString()}', cantidades_granos = '${req.body.cantidadesGranos.toString()}', duracion = ${req.body.duracion}, vigencia = '${req.body.vigencia}'  WHERE id_profesional = ${req.body.idProfesional} AND id_paciente = ${req.body.idPaciente} AND id_comida = ${req.body.idComida}`;
+      //console.log(query2)
+      
       const conn = conexion.cone;
-      let query = "UPDATE alimento_dieta SET proteinas = ?, cantidades_proteinas = ?, lacteos = ?, cantidades_lacteos = ?, frutas = ?, cantidades_frutas = ?, verduras = ?, cantidades_frutas = ?, granos = ?, cantidades_granos = ?, duracion = ?, vigencia = ? WHERE id_profesional = ? AND id_paciente = ? AND id_comida = ?";
-      conn.query(query, [
-        req.body.proteinas.toString(),req.body.cantidadesProteinas.toString(),req.body.lacteos.toString(),req.body.cantidadesLacteos.toString(),req.body.frutas.toString(),req.body.cantidadesFrutas.toString(),req.body.verduras.toString(),req.body.cantidadesVerduras.toString(),req.body.granos.toString(),req.body.cantidadesGranos.toString(), req.body.duracion, req.body.vigencia, req.body.idProfesional, req.body.idPaciente, req.body.idComida], 
+      //let query = "UPDATE alimento_dieta SET proteinas = ?, cantidades_proteinas = ?, lacteos = ?, cantidades_lacteos = ?, frutas = ?, cantidades_frutas = ?, verduras = ?, cantidades_frutas = ?, granos = ?, cantidades_granos = ?, duracion = ?, vigencia = ? WHERE id_profesional = ? AND id_paciente = ? AND id_comida = ?";
+      conn.query(query2, 
+        //[req.body.proteinas.toString(),req.body.cantidadesProteinas.toString(),req.body.lacteos.toString(),req.body.cantidadesLacteos.toString(),req.body.frutas.toString(),req.body.cantidadesFrutas.toString(),req.body.verduras.toString(),req.body.cantidadesVerduras.toString(),req.body.granos.toString(),req.body.cantidadesGranos.toString(), req.body.duracion, req.body.vigencia, req.body.idProfesional, req.body.idPaciente, req.body.idComida]        , 
         (errorActualizacion, resultActualizacion) => {
           if(errorActualizacion){
             console.log(errorActualizacion);
@@ -3510,6 +3516,7 @@ app.put("/alimentodieta/actualiza", (req, res) => {
             }
           }
         });
+      
     }
   }
 });
