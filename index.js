@@ -608,7 +608,7 @@ app.get("/obtenTipos", (req, res) => {
 app.get("/obtenProfesionales", (req, res) => {//obtención completa de los profesionales, retornando sus ID y nombre completo
   //obtenemos la lista de profesionales que se encuentren registrados dentro de la base de datos
   const conn = conexion.cone;
-  conn.query( "select id_profesional, nombre, apPaterno, apMaterno from usuarios_profesionales", (err, result) => {
+  conn.query( "select id_profesional, nombre, apPaterno, apMaterno from usuarios_profesionales WHERE valido = '1'", (err, result) => {
      if(err){
       res.send(err).status(500);
       throw err;
@@ -1964,7 +1964,7 @@ app.get("/obtenEjercicioRutinaPaciente/:id", (req, res) => {
       const conn = conexion.cone;
       var objeto = {}, data = [];
       //hacemos la busqueda de la informacion y agregamos el musculo que lo realiza
-      conn.query(`SELECT er.id_ER, er.cantidad, er.id_video, er.id_ejercicio, er.fechaInicio, er.fechaFin, er.vigencia, ejer.descripcion, mu.nombre_musculo, vid.nombreVideo, vid.video FROM ejercicio_rutina AS er, videos AS vid, ejercicios AS ejer, musculos AS mu WHERE er.id_paciente = ${idPaciente} and er.id_video = vid.id_video and er.id_ejercicio = ejer.id_ejercicio and ejer.id_musculo = mu.id_musculos`, (errorBusquedaERutina, resultadoBusquedaERutina) => {
+      conn.query(`SELECT er.id_ER, er.cantidad, er.id_video, er.id_ejercicio, er.fechaInicio, er.fechaFin, er.vigencia, ejer.descripcion, mu.nombre_musculo, vid.nombreVideo, vid.video FROM ejercicio_rutina AS er, videos AS vid, ejercicios AS ejer, musculos AS mu WHERE er.id_paciente = ${idPaciente} and er.id_video = vid.id_video and er.id_ejercicio = ejer.id_ejercicio and ejer.id_musculo = mu.id_musculos AND er.vigencia = '1'`, (errorBusquedaERutina, resultadoBusquedaERutina) => {
         if(errorBusquedaERutina){
           res.status(500).send({mensaje : errorBusquedaERutina.name, codigo : errorBusquedaERutina.code});
           throw errorBusquedaERutina;
@@ -3498,12 +3498,22 @@ app.put("/alimentodieta/actualiza", (req, res) => {
     }else{
       //console.log(req.body);
       let query = `UPDATE alimento_dieta SET proteinas = '${req.body.proteinas.toString()}', cantidades_proteinas = '${req.body.cantidadesProteinas.toString()}', lacteos = '${req.body.lacteos.toString()}', frutas = '${req.body.frutas.toString()}', cantidades_frutas = '${req.body.cantidadesFrutas.toString()}', verduras = '${req.body.verduras.toString()}', cantidades_frutas = '${req.body.cantidadesVerduras.toString()}', granos = '${req.body.granos.toString()}', cantidades_granos = '${req.body.cantidadesGranos.toString()}', duracion = ${req.body.duracion}, vigencia = ${req.body.vigencia} WHERE id_profesional = ${req.body.idProfesional} AND id_paciente = ${req.body.idPaciente} AND id_comida = ${req.body.idComida}`;
-      
-      let query2 = `UPDATE alimento_dieta SET proteinas = '${req.body.proteinas.toString()}', cantidades_proteinas = '${req.body.cantidadesProteinas.toString()}', lacteos = '${req.body.lacteos.toString()}', cantidades_lacteos = '${req.body.cantidadesLacteos.toString()}', frutas = '${req.body.frutas.toString()}', cantidades_frutas = '${req.body.cantidadesFrutas.toString()}', verduras = '${req.body.verduras.toString()}', cantidades_verduras = '${req.body.cantidadesVerduras.toString()}', granos = '${req.body.granos.toString()}', cantidades_granos = '${req.body.cantidadesGranos.toString()}', duracion = ${req.body.duracion}, vigencia = '${req.body.vigencia}'  WHERE id_profesional = ${req.body.idProfesional} AND id_paciente = ${req.body.idPaciente} AND id_comida = ${req.body.idComida}`;
+      //console.log("Req", req.body);
+      let cantidadesPasadas = {
+        'cProteinas' : req.body.pasadaCproteinas.length > 0 ? req.body.pasadaCproteinas.toString() : '',
+        'cVerduras' : req.body.pasadaCverduras.length > 0 ? req.body.pasadaCverduras.toString() : '',
+        'cLacteos' : req.body.pasadaClacteos.length > 0 ? req.body.pasadaClacteos.toString() : '',
+        'cFrutas' : req.body.pasadaCfrutas.length > 0 ? req.body.pasadaCfrutas.toString() : '',
+        'cGranos' : req.body.pasadaCgranos.length > 0 ? req.body.pasadaCgranos.toString() : ''
+      }
+      //console.log(cantidadesPasadas);
+      let query2 = `UPDATE alimento_dieta SET proteinas = '${req.body.proteinas.toString()}', cantidades_proteinas = '${req.body.cantidadesProteinas.toString()}', lacteos = '${req.body.lacteos.toString()}', cantidades_lacteos = '${req.body.cantidadesLacteos.toString()}', frutas = '${req.body.frutas.toString()}', cantidades_frutas = '${req.body.cantidadesFrutas.toString()}', verduras = '${req.body.verduras.toString()}', cantidades_verduras = '${req.body.cantidadesVerduras.toString()}', granos = '${req.body.granos.toString()}', cantidades_granos = '${req.body.cantidadesGranos.toString()}', duracion = ${req.body.duracion}, vigencia = '${req.body.vigencia}'  WHERE id_profesional = ${req.body.idProfesional} AND id_paciente = ${req.body.idPaciente} AND id_comida = ${req.body.idComida} AND cantidades_proteinas = '${cantidadesPasadas.cProteinas}' AND cantidades_lacteos = '${cantidadesPasadas.cLacteos}' AND cantidades_frutas = '${cantidadesPasadas.cFrutas}' AND cantidades_verduras = '${cantidadesPasadas.cVerduras}' AND cantidades_granos = '${cantidadesPasadas.cGranos}'`;
+      //console.log(query2)
       //console.log(query2)
       
       const conn = conexion.cone;
       //let query = "UPDATE alimento_dieta SET proteinas = ?, cantidades_proteinas = ?, lacteos = ?, cantidades_lacteos = ?, frutas = ?, cantidades_frutas = ?, verduras = ?, cantidades_frutas = ?, granos = ?, cantidades_granos = ?, duracion = ?, vigencia = ? WHERE id_profesional = ? AND id_paciente = ? AND id_comida = ?";
+      
       conn.query(query2, 
         //[req.body.proteinas.toString(),req.body.cantidadesProteinas.toString(),req.body.lacteos.toString(),req.body.cantidadesLacteos.toString(),req.body.frutas.toString(),req.body.cantidadesFrutas.toString(),req.body.verduras.toString(),req.body.cantidadesVerduras.toString(),req.body.granos.toString(),req.body.cantidadesGranos.toString(), req.body.duracion, req.body.vigencia, req.body.idProfesional, req.body.idPaciente, req.body.idComida]        , 
         (errorActualizacion, resultActualizacion) => {
@@ -3516,7 +3526,6 @@ app.put("/alimentodieta/actualiza", (req, res) => {
             }
           }
         });
-      
     }
   }
 });
@@ -4536,7 +4545,7 @@ function eliminaRegistrosCitas(tabla, datos, conexion){
   //192.168.100.9 192.168.56.1
 app.listen(3000, "192.168.100.9", function () {
   console.log("Funcionando en el puerto: 3000");
-  //obtenemos la fecha actual de CDMX
+  //obtenemos la fecha actual de CDMX0
   apis.apiTiempo()
   .then(data => {//obtenemos la fecha actual en CDMX
     //separamos los elementos
